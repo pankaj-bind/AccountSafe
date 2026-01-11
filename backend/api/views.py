@@ -304,6 +304,9 @@ def update_user_profile(request):
     serializer = UserProfileUpdateSerializer(profile, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
+        # Refresh the profile from database to get updated data
+        profile.refresh_from_db()
+        profile.user.refresh_from_db()
         # Return full profile data
         response_serializer = UserProfileSerializer(profile)
         return Response(response_serializer.data)
