@@ -301,7 +301,12 @@ def update_user_profile(request):
         # Create profile if it doesn't exist
         profile = UserProfile.objects.create(user=request.user)
 
-    serializer = UserProfileUpdateSerializer(profile, data=request.data, partial=True)
+    serializer = UserProfileUpdateSerializer(
+        profile, 
+        data=request.data, 
+        partial=True,
+        context={'request': request}
+    )
     if serializer.is_valid():
         serializer.save()
         # Return full profile data
