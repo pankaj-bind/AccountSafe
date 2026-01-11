@@ -1,0 +1,12 @@
+# Django and related packages
+django
+djangorestframework
+dj-rest-auth[with_social]
+django-allauth
+django-cors-headers
+
+# Environment variables
+python-dotenv
+
+# Image support
+Pillow

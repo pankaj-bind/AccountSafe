@@ -1,0 +1,305 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Windows 11 Fluent Design System Styles */
+
+/* Font imports for Segoe UI Variable (Windows 11 system font) */
+@font-face {
+  font-family: 'Segoe UI Variable';
+  src: local('Segoe UI Variable Display'), local('Segoe UI Variable Text'), local('Segoe UI');
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+/* Base styles */
+:root {
+  /* Windows 11 Light Mode tokens */
+  --win-bg-solid: #f3f3f3;
+  --win-bg-layer: #ffffff;
+  --win-bg-subtle: #f9f9f9;
+  --win-bg-hover: #f5f5f5;
+  --win-text-primary: #1a1a1a;
+  --win-text-secondary: #5c5c5c;
+  --win-text-tertiary: #8a8a8a;
+  --win-border-default: #e0e0e0;
+  --win-border-subtle: #ebebeb;
+  --win-accent: #0078d4;
+  --win-accent-hover: #106ebe;
+  --win-accent-light: #60cdff;
+  --win-radius: 8px;
+  --win-radius-lg: 12px;
+}
+
+.dark {
+  /* Windows 11 Dark Mode tokens */
+  --win-bg-solid: #202020;
+  --win-bg-layer: #2d2d2d;
+  --win-bg-subtle: #383838;
+  --win-bg-hover: #3d3d3d;
+  --win-text-primary: #ffffff;
+  --win-text-secondary: #c5c5c5;
+  --win-text-tertiary: #9a9a9a;
+  --win-border-default: #454545;
+  --win-border-subtle: #3a3a3a;
+  --win-accent: #60cdff;
+  --win-accent-hover: #98d9ff;
+  --win-accent-light: #60cdff;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #888888 transparent;
+}
+
+.dark * {
+  scrollbar-color: #5a5a5a transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #888888;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background-color: #5a5a5a;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #666666;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background-color: #787878;
+}
+
+body {
+  font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.5;
+  background-color: var(--win-bg-solid);
+  color: var(--win-text-primary);
+}
+
+/* Acrylic effect */
+.acrylic {
+  backdrop-filter: blur(30px) saturate(125%);
+  -webkit-backdrop-filter: blur(30px) saturate(125%);
+}
+
+.acrylic {
+  background-color: rgba(255, 255, 255, 0.75);
+}
+
+.dark .acrylic {
+  background-color: rgba(32, 32, 32, 0.85);
+}
+
+/* Windows 11 component styles */
+@layer components {
+  /* Card */
+  .win-card {
+    @apply rounded-xl p-6 transition-all duration-200;
+    background-color: var(--win-bg-layer);
+    border: 1px solid var(--win-border-default);
+  }
+  
+  .win-card-static {
+    @apply win-card;
+  }
+  
+  .win-card:not(.win-card-static):hover {
+    border-color: var(--win-border-subtle);
+  }
+  
+  /* Primary Button */
+  .win-btn-primary {
+    @apply px-4 py-2.5 rounded-lg font-medium transition-all duration-150;
+    font-size: 14px;
+    background-color: var(--win-accent);
+    color: #ffffff;
+  }
+  
+  .win-btn-primary:hover:not(:disabled) {
+    background-color: var(--win-accent-hover);
+  }
+  
+  .dark .win-btn-primary {
+    color: #000000;
+  }
+  
+  /* Secondary Button */
+  .win-btn-secondary {
+    @apply px-4 py-2.5 rounded-lg font-medium transition-all duration-150;
+    font-size: 14px;
+    background-color: var(--win-bg-subtle);
+    color: var(--win-text-primary);
+    border: 1px solid var(--win-border-default);
+  }
+  
+  .win-btn-secondary:hover:not(:disabled) {
+    background-color: var(--win-bg-hover);
+  }
+  
+  /* Input */
+  .win-input {
+    @apply w-full px-4 py-2.5 rounded-lg transition-all duration-150;
+    font-size: 14px;
+    background-color: var(--win-bg-layer);
+    border: 1px solid var(--win-border-default);
+    color: var(--win-text-primary);
+  }
+  
+  .win-input:focus {
+    @apply outline-none;
+    border-color: var(--win-accent);
+    box-shadow: 0 0 0 1px var(--win-accent);
+  }
+  
+  .win-input::placeholder {
+    color: var(--win-text-tertiary);
+  }
+  
+  /* Select */
+  .win-select {
+    @apply win-input appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239a9a9a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+  }
+  
+  /* Navbar */
+  .win-navbar {
+    @apply sticky top-0 z-50;
+    backdrop-filter: blur(30px) saturate(125%);
+    -webkit-backdrop-filter: blur(30px) saturate(125%);
+    background-color: rgba(255, 255, 255, 0.75);
+    border-bottom: 1px solid var(--win-border-subtle);
+  }
+  
+  .dark .win-navbar {
+    background-color: rgba(32, 32, 32, 0.75);
+  }
+  
+  /* Section Header */
+  .win-section-header {
+    @apply text-sm font-semibold mb-4;
+    color: var(--win-text-primary);
+  }
+  
+  /* Text utilities using CSS variables */
+  .win-text-primary {
+    color: var(--win-text-primary);
+  }
+  
+  .win-text-secondary {
+    color: var(--win-text-secondary);
+  }
+  
+  .win-text-tertiary {
+    color: var(--win-text-tertiary);
+  }
+  
+  .win-text-accent {
+    color: var(--win-accent);
+  }
+  
+  /* Background utilities */
+  .win-bg-solid {
+    background-color: var(--win-bg-solid);
+  }
+  
+  .win-bg-layer {
+    background-color: var(--win-bg-layer);
+  }
+  
+  .win-bg-subtle {
+    background-color: var(--win-bg-subtle);
+  }
+  
+  .win-bg-hover {
+    background-color: var(--win-bg-hover);
+  }
+  
+  /* Border utilities */
+  .win-border {
+    border-color: var(--win-border-default);
+  }
+  
+  .win-border-subtle {
+    border-color: var(--win-border-subtle);
+  }
+  
+  /* Typography */
+  .win-title {
+    @apply font-semibold;
+    font-size: 28px;
+    line-height: 36px;
+    color: var(--win-text-primary);
+  }
+  
+  .win-subtitle {
+    @apply font-semibold;
+    font-size: 20px;
+    line-height: 28px;
+    color: var(--win-text-primary);
+  }
+  
+  .win-body {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--win-text-secondary);
+  }
+  
+  .win-caption {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--win-text-tertiary);
+  }
+  
+  /* Divider */
+  .win-divider {
+    @apply my-4;
+    border-top: 1px solid var(--win-border-subtle);
+  }
+  
+  /* Badge */
+  .win-badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .win-badge-accent {
+    background-color: rgba(0, 120, 212, 0.1);
+    color: var(--win-accent);
+  }
+  
+  .dark .win-badge-accent {
+    background-color: rgba(96, 205, 255, 0.15);
+  }
+
+  /* Link */
+  .win-link {
+    color: var(--win-accent);
+    @apply transition-colors;
+  }
+  
+  .win-link:hover {
+    color: var(--win-accent-hover);
+    @apply underline;
+  }
+}
