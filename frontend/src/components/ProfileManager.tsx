@@ -13,6 +13,8 @@ interface Profile {
   title: string;
   username: string | null;
   password?: string;
+  email: string | null;
+  recovery_codes: string | null;
   document: string | null;
   document_url: string | null;
   notes: string | null;
@@ -33,10 +35,14 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [showPassword, setShowPassword] = useState<{[key: number]: boolean}>({});
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<{[key: number]: string[]}>({});
+  const [expandedNotes, setExpandedNotes] = useState<{[key: number]: boolean}>({});
   const [newProfile, setNewProfile] = useState({
     title: '',
     username: '',
     password: '',
+    email: '',
+    recovery_codes: '',
     notes: '',
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -45,6 +51,18 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     fetchOrganizationData();
     fetchProfiles();
   }, [organization.id]);
+
+  // Initialize recovery codes for each profile
+  useEffect(() => {
+    const codes: {[key: number]: string[]} = {};
+    profiles.forEach(profile => {
+      if (profile.recovery_codes) {
+        // Split by whitespace and filter out empty strings
+        codes[profile.id] = profile.recovery_codes.split(/\s+/).filter(code => code.trim() !== '');
+      }
+    });
+    setRecoveryCodes(codes);
+  }, [profiles]);
 
   const fetchOrganizationData = async () => {
     try {
@@ -78,6 +96,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
       if (newProfile.title) formData.append('title', newProfile.title);
       if (newProfile.username) formData.append('username', newProfile.username);
       if (newProfile.password) formData.append('password', newProfile.password);
+      if (newProfile.email) formData.append('email', newProfile.email);
+      if (newProfile.recovery_codes) formData.append('recovery_codes', newProfile.recovery_codes);
       if (newProfile.notes) formData.append('notes', newProfile.notes);
       if (selectedFile) formData.append('document', selectedFile);
 
@@ -107,7 +127,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
       setShowModal(false);
       setEditingProfile(null);
-      setNewProfile({ title: '', username: '', password: '', notes: '' });
+      setNewProfile({ title: '', username: '', password: '', email: '', recovery_codes: '', notes: '' });
       setSelectedFile(null);
     } catch (err: any) {
       console.error('Error:', err.response || err);
@@ -138,6 +158,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
       title: profile.title || '',
       username: profile.username || '',
       password: '',
+      email: profile.email || '',
+      recovery_codes: profile.recovery_codes || '',
       notes: profile.notes || '',
     });
     setShowModal(true);
@@ -158,6 +180,56 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
       ...prev,
       [profileId]: !prev[profileId]
     }));
+  };
+
+  const toggleNotesExpansion = (profileId: number) => {
+    setExpandedNotes(prev => ({
+      ...prev,
+      [profileId]: !prev[profileId]
+    }));
+  };
+
+  const handleCopyRecoveryCode = async (profileId: number, code: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedField(`recovery-${profileId}-${index}`);
+      setTimeout(() => setCopiedField(null), 1000);
+      
+      // Remove the copied code from the list
+      setRecoveryCodes(prev => {
+        const updated = { ...prev };
+        if (updated[profileId]) {
+          updated[profileId] = updated[profileId].filter((_, i) => i !== index);
+          
+          // Update the profile with the new recovery codes
+          const updatedCodes = updated[profileId].join(' ');
+          updateProfileRecoveryCodes(profileId, updatedCodes);
+        }
+        return updated;
+      });
+    } catch (err) {
+      console.error('Failed to copy recovery code:', err);
+    }
+  };
+
+  const updateProfileRecoveryCodes = async (profileId: number, newCodes: string) => {
+    try {
+      const formData = new FormData();
+      formData.append('recovery_codes', newCodes);
+      
+      await apiClient.put(`profiles/${profileId}/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Update the profiles list
+      setProfiles(profiles.map(p => 
+        p.id === profileId ? { ...p, recovery_codes: newCodes } : p
+      ));
+    } catch (err) {
+      console.error('Failed to update recovery codes:', err);
+    }
   };
 
   return (
@@ -334,6 +406,63 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                     </div>
                   )}
                   
+                  {profile.email && (
+                    <div className="mb-2 sm:mb-3">
+                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Email</label>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <p className="flex-1 text-xs sm:text-sm win-text-primary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle break-all">{profile.email}</p>
+                        <button
+                          onClick={() => copyToClipboard(profile.email!, `email-${profile.id}`)}
+                          className={`p-1.5 sm:p-2 rounded transition-colors flex-shrink-0 ${
+                            copiedField === `email-${profile.id}` 
+                              ? 'bg-green-100 text-green-600' 
+                              : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                          }`}
+                          title={copiedField === `email-${profile.id}` ? 'Copied!' : 'Copy email'}
+                        >
+                          {copiedField === `email-${profile.id}` ? (
+                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {recoveryCodes[profile.id] && recoveryCodes[profile.id].length > 0 && (
+                    <div className="mb-2 sm:mb-3">
+                      <label className="block text-xs font-semibold win-text-tertiary mb-1">
+                        Recovery Codes ({recoveryCodes[profile.id].length} remaining)
+                      </label>
+                      <div className="overflow-x-auto pb-1">
+                        <div className="flex gap-1.5 sm:gap-2 min-w-max">
+                          {recoveryCodes[profile.id].map((code, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleCopyRecoveryCode(profile.id, code, index)}
+                              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-mono rounded transition-all border whitespace-nowrap ${
+                                copiedField === `recovery-${profile.id}-${index}`
+                                  ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700'
+                                  : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800 dark:hover:bg-purple-900/30'
+                              }`}
+                              title={copiedField === `recovery-${profile.id}-${index}` ? 'Copied! Code will be deleted' : 'Click to copy and delete'}
+                            >
+                              {code}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[10px] sm:text-xs win-text-tertiary mt-1.5">
+                        Click a code to copy it. The code will be automatically deleted after copying.
+                      </p>
+                    </div>
+                  )}
+                  
                   {profile.document_url && (
                     <div className="mb-2 sm:mb-3">
                       <label className="block text-xs font-semibold win-text-tertiary mb-1">Document</label>
@@ -354,7 +483,21 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   {profile.notes && (
                     <div className="mb-1 sm:mb-2">
                       <label className="block text-xs font-semibold win-text-tertiary mb-1">Notes</label>
-                      <p className="text-xs sm:text-sm win-text-secondary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle whitespace-pre-wrap break-words">{profile.notes}</p>
+                      <div className="win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle">
+                        <p className={`text-xs sm:text-sm win-text-secondary whitespace-pre-wrap break-words ${
+                          !expandedNotes[profile.id] ? 'line-clamp-3' : ''
+                        }`}>
+                          {profile.notes}
+                        </p>
+                        {profile.notes.length > 30 && (
+                          <button
+                            onClick={() => toggleNotesExpansion(profile.id)}
+                            className="text-xs win-text-accent hover:underline mt-1 font-medium"
+                          >
+                            {expandedNotes[profile.id] ? 'Show less' : 'Show more'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -414,6 +557,29 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                 </div>
 
                 <div className="mb-4 sm:mb-5">
+                  <label className="block win-text-primary text-sm font-semibold mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={newProfile.email}
+                    onChange={(e) => setNewProfile({ ...newProfile, email: e.target.value })}
+                    placeholder="e.g., user@example.com"
+                    className="win-input text-sm sm:text-base"
+                  />
+                </div>
+
+                <div className="mb-4 sm:mb-5">
+                  <label className="block win-text-primary text-sm font-semibold mb-2">Recovery Codes</label>
+                  <textarea
+                    value={newProfile.recovery_codes}
+                    onChange={(e) => setNewProfile({ ...newProfile, recovery_codes: e.target.value })}
+                    placeholder="Paste recovery codes here (space-separated, e.g., ababf-f07ba 3664b-e1841 8bad0-8a77c)"
+                    rows={3}
+                    className="win-input resize-none text-sm sm:text-base font-mono"
+                  />
+                  <p className="text-xs win-text-tertiary mt-2">Recovery codes will be displayed as individual buttons that can be copied and deleted</p>
+                </div>
+
+                <div className="mb-4 sm:mb-5">
                   <label className="block win-text-primary text-sm font-semibold mb-2">Document</label>
                   <input
                     type="file"
@@ -440,7 +606,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                     onClick={() => {
                       setShowModal(false);
                       setEditingProfile(null);
-                      setNewProfile({ title: '', username: '', password: '', notes: '' });
+                      setNewProfile({ title: '', username: '', password: '', email: '', recovery_codes: '', notes: '' });
                       setSelectedFile(null);
                     }}
                     className="win-btn-secondary text-sm sm:text-base px-4 sm:px-6"

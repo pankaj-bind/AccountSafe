@@ -120,11 +120,13 @@ class ProfileSerializer(serializers.ModelSerializer):
     document_url = serializers.SerializerMethodField()
     username = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     password = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    email = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    recovery_codes = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     notes = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     
     class Meta:
         model = Profile
-        fields = ['id', 'organization', 'title', 'username', 'password', 'document', 'document_url', 'notes', 'created_at', 'updated_at']
+        fields = ['id', 'organization', 'title', 'username', 'password', 'email', 'recovery_codes', 'document', 'document_url', 'notes', 'created_at', 'updated_at']
         read_only_fields = ['organization', 'created_at', 'updated_at']
     
     def validate_document(self, value):
@@ -140,6 +142,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         username = validated_data.pop('username', None)
         password = validated_data.pop('password', None)
+        email = validated_data.pop('email', None)
+        recovery_codes = validated_data.pop('recovery_codes', None)
         notes = validated_data.pop('notes', None)
         
         profile = Profile(**validated_data)
@@ -147,6 +151,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             profile.username = username
         if password:
             profile.password = password
+        if email:
+            profile.email = email
+        if recovery_codes:
+            profile.recovery_codes = recovery_codes
         if notes:
             profile.notes = notes
         profile.save()
@@ -161,6 +169,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             instance.username = validated_data['username']
         if 'password' in validated_data:
             instance.password = validated_data['password']
+        if 'email' in validated_data:
+            instance.email = validated_data['email']
+        if 'recovery_codes' in validated_data:
+            instance.recovery_codes = validated_data['recovery_codes']
         if 'notes' in validated_data:
             instance.notes = validated_data['notes']
         if 'document' in validated_data:

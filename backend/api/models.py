@@ -124,6 +124,8 @@ class Profile(models.Model):
     title = models.CharField(max_length=200, blank=True, null=True, help_text="Profile title or name")
     _username = models.TextField(blank=True, null=True, db_column='username')
     _password = models.TextField(blank=True, null=True, db_column='password')
+    _email = models.TextField(blank=True, null=True, db_column='email')
+    _recovery_codes = models.TextField(blank=True, null=True, db_column='recovery_codes')
     document = models.FileField(
         upload_to='profile_documents/',
         blank=True,
@@ -164,6 +166,26 @@ class Profile(models.Model):
     def notes(self, value):
         """Encrypt and store notes"""
         self._notes = encrypt_data(value) if value else None
+
+    @property
+    def email(self):
+        """Decrypt and return email"""
+        return decrypt_data(self._email) if self._email else None
+    
+    @email.setter
+    def email(self, value):
+        """Encrypt and store email"""
+        self._email = encrypt_data(value) if value else None
+
+    @property
+    def recovery_codes(self):
+        """Decrypt and return recovery codes"""
+        return decrypt_data(self._recovery_codes) if self._recovery_codes else None
+    
+    @recovery_codes.setter
+    def recovery_codes(self, value):
+        """Encrypt and store recovery codes"""
+        self._recovery_codes = encrypt_data(value) if value else None
 
     def __str__(self):
         return f"{self.title or 'Untitled'} - {self.organization.name}"
