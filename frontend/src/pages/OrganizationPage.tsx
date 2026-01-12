@@ -1,0 +1,37 @@
+import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import ProfileManager from '../components/ProfileManager';
+
+interface Organization {
+  id: number;
+  name: string;
+  logo_url: string | null;
+  logo_image: string | null;
+}
+
+const OrganizationPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  // Create a placeholder organization object
+  // ProfileManager will fetch actual data
+  const organization: Organization = {
+    id: parseInt(id || '0'),
+    name: '', // Will be loaded by ProfileManager
+    logo_url: null,
+    logo_image: null,
+  };
+
+  const handleBack = () => {
+    navigate('/dashboard');
+  };
+
+  return (
+    <ProfileManager 
+      organization={organization}
+      onBack={handleBack}
+    />
+  );
+};
+
+export default OrganizationPage;

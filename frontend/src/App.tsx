@@ -21,6 +21,7 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import OrganizationPage from './pages/OrganizationPage';
 import './App.css';
 
 const App: React.FC = () => {
@@ -43,6 +44,7 @@ const App: React.FC = () => {
                   {/* Protected Routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                  <Route path="/organization/:id" element={<ProtectedRoute><OrganizationPage /></ProtectedRoute>} />
                 </Routes>
               </main>
             </div>

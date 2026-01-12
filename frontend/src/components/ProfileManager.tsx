@@ -26,6 +26,7 @@ interface ProfileManagerProps {
 
 const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack }) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [orgData, setOrgData] = useState<Organization>(organization);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -41,8 +42,18 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
+    fetchOrganizationData();
     fetchProfiles();
   }, [organization.id]);
+
+  const fetchOrganizationData = async () => {
+    try {
+      const response = await apiClient.get(`organizations/${organization.id}/`);
+      setOrgData(response.data);
+    } catch (err: any) {
+      console.error('Error fetching organization:', err);
+    }
+  };
 
   const fetchProfiles = async () => {
     setLoading(true);
@@ -150,13 +161,13 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   };
 
   return (
-    <div className="w-full bg-white min-h-screen">
+    <div className="w-full win-bg-solid min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <button
             onClick={onBack}
-            className="mb-3 sm:mb-4 flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+            className="mb-3 sm:mb-4 flex items-center gap-2 win-text-accent hover:opacity-80 font-medium text-sm sm:text-base"
           >
             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -165,27 +176,27 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
           </button>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
-              {organization.logo_url ? (
+              {orgData.logo_url ? (
                 <img
-                  src={organization.logo_url}
-                  alt={organization.name}
+                  src={orgData.logo_url}
+                  alt={orgData.name}
                   className="w-12 h-12 sm:w-16 sm:h-16 object-contain flex-shrink-0"
                 />
               ) : (
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-bold text-xl sm:text-2xl">
-                    {organization.name.charAt(0).toUpperCase()}
+                    {orgData.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
                   </span>
                 </div>
               )}
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{organization.name}</h1>
-                <p className="text-sm sm:text-base text-gray-600">{profiles.length} {profiles.length === 1 ? 'profile' : 'profiles'}</p>
+                <h1 className="text-2xl sm:text-3xl font-bold win-text-primary">{orgData.name || 'Loading...'}</h1>
+                <p className="text-sm sm:text-base win-text-secondary">{profiles.length} {profiles.length === 1 ? 'profile' : 'profiles'}</p>
               </div>
             </div>
             <button
               onClick={() => { setShowModal(true); setError(null); }}
-              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow text-sm sm:text-base"
+              className="w-full sm:w-auto win-btn-primary text-sm sm:text-base px-4 sm:px-6"
             >
               + Add Profile
             </button>
@@ -194,7 +205,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
         {/* Error */}
         {error && (
-          <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-base">
+          <div className="mb-4 sm:mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-base">
             <div className="flex justify-between items-center gap-2">
               <span className="flex-1">{error}</span>
               <button onClick={() => setError(null)} className="font-bold text-xl flex-shrink-0">&times;</button>
@@ -205,8 +216,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {/* Loading */}
         {loading && (
           <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-win-accent border-t-transparent"></div>
+            <p className="mt-4 win-text-secondary">Loading...</p>
           </div>
         )}
 
@@ -214,8 +225,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {!loading && profiles.length === 0 && (
           <div className="text-center py-20">
             <div className="text-7xl mb-4">🔐</div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No profiles yet</h3>
-            <p className="text-gray-500">Create your first profile to store credentials or documents!</p>
+            <h3 className="text-xl font-semibold win-text-primary mb-2">No profiles yet</h3>
+            <p className="win-text-tertiary">Create your first profile to store credentials or documents!</p>
           </div>
         )}
 
@@ -225,19 +236,19 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             {profiles.map((profile) => (
               <div
                 key={profile.id}
-                className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 hover:shadow-lg transition-all group relative"
+                className="win-bg-layer border border-win-border-default rounded-lg p-4 sm:p-6 hover:shadow-win-elevated transition-all group relative"
               >
                 <div className="absolute -top-1.5 sm:-top-2 -right-1.5 sm:-right-2 flex gap-1">
                   <button
                     onClick={() => handleEditProfile(profile)}
-                    className="w-6 h-6 sm:w-7 sm:h-7 bg-blue-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs sm:text-sm hover:bg-blue-600"
+                    className="w-6 h-6 sm:w-7 sm:h-7 bg-blue-500 dark:bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs sm:text-sm hover:bg-blue-600 dark:hover:bg-blue-700 shadow-win-card"
                     title="Edit"
                   >
                     ✎
                   </button>
                   <button
                     onClick={() => handleDeleteProfile(profile.id)}
-                    className="w-6 h-6 sm:w-7 sm:h-7 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs sm:text-sm hover:bg-red-600"
+                    className="w-6 h-6 sm:w-7 sm:h-7 bg-red-500 dark:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs sm:text-sm hover:bg-red-600 dark:hover:bg-red-700 shadow-win-card"
                     title="Delete"
                   >
                     ✕
@@ -245,13 +256,13 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                 </div>
 
                 <div className="mb-3 sm:mb-4">
-                  {profile.title && <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 pr-12">{profile.title}</h3>}
+                  {profile.title && <h3 className="text-base sm:text-lg font-bold win-text-primary mb-2 sm:mb-3 pr-12">{profile.title}</h3>}
                   
                   {profile.username && (
                     <div className="mb-2 sm:mb-3">
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Username</label>
+                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Username</label>
                       <div className="flex items-center gap-1.5 sm:gap-2">
-                        <p className="flex-1 text-xs sm:text-sm text-gray-800 bg-gray-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded border break-all">{profile.username}</p>
+                        <p className="flex-1 text-xs sm:text-sm win-text-primary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle break-all">{profile.username}</p>
                         <button
                           onClick={() => copyToClipboard(profile.username!, `username-${profile.id}`)}
                           className={`p-1.5 sm:p-2 rounded transition-colors flex-shrink-0 ${
@@ -277,15 +288,15 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   
                   {profile.password && (
                     <div className="mb-2 sm:mb-3">
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Password</label>
+                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Password</label>
                       <div className="flex items-center gap-1.5 sm:gap-2">
-                        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 bg-gray-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded border">
-                          <p className="flex-1 text-xs sm:text-sm text-gray-800 font-mono break-all">
+                        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle">
+                          <p className="flex-1 text-xs sm:text-sm win-text-primary font-mono break-all">
                             {showPassword[profile.id] ? profile.password : '••••••••'}
                           </p>
                           <button
                             onClick={() => togglePasswordVisibility(profile.id)}
-                            className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+                            className="win-text-tertiary hover:win-text-secondary flex-shrink-0"
                             title={showPassword[profile.id] ? 'Hide password' : 'Show password'}
                           >
                             {showPassword[profile.id] ? (
@@ -325,12 +336,12 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   
                   {profile.document_url && (
                     <div className="mb-2 sm:mb-3">
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Document</label>
+                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Document</label>
                       <a
                         href={profile.document_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-blue-600 hover:underline bg-blue-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-blue-200 break-all"
+                        className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm win-text-accent hover:underline bg-blue-50 dark:bg-blue-900/20 px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-blue-200 dark:border-blue-800 break-all"
                       >
                         <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -342,12 +353,12 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   
                   {profile.notes && (
                     <div className="mb-1 sm:mb-2">
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Notes</label>
-                      <p className="text-xs sm:text-sm text-gray-700 bg-gray-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded border whitespace-pre-wrap break-words">{profile.notes}</p>
+                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Notes</label>
+                      <p className="text-xs sm:text-sm win-text-secondary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle whitespace-pre-wrap break-words">{profile.notes}</p>
                     </div>
                   )}
                 </div>
-                <div className="text-[10px] sm:text-xs text-gray-400 pt-2 border-t">
+                <div className="text-[10px] sm:text-xs win-text-tertiary pt-2 border-t border-win-border-subtle">
                   Created {new Date(profile.created_at).toLocaleDateString()}
                 </div>
               </div>
@@ -357,14 +368,14 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
         {/* Create Profile Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-3 sm:p-4" onClick={() => setShowModal(false)}>
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-lg w-full max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm" onClick={() => setShowModal(false)}>
+            <div className="win-bg-layer rounded-xl sm:rounded-2xl shadow-win-flyout max-w-lg w-full max-h-[95vh] overflow-y-auto border border-win-border-default" onClick={(e) => e.stopPropagation()}>
               <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 sm:px-6 py-4 sm:py-5 sticky top-0 z-10">
                 <h3 className="text-xl sm:text-2xl font-bold text-white">{editingProfile ? 'Edit Profile' : 'Add Profile'}</h3>
               </div>
               <form onSubmit={handleCreateProfile} className="p-4 sm:p-6">
                 <div className="mb-4 sm:mb-5">
-                  <label className="block text-gray-700 text-sm font-semibold mb-2">
+                  <label className="block win-text-primary text-sm font-semibold mb-2">
                     Profile Title
                   </label>
                   <input
@@ -372,54 +383,54 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                     value={newProfile.title}
                     onChange={(e) => setNewProfile({ ...newProfile, title: e.target.value })}
                     placeholder="e.g., Admin Account, License Key, Certificate"
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                    className="win-input text-sm sm:text-base"
                     autoFocus
                   />
                 </div>
 
                 <div className="mb-4 sm:mb-5">
-                  <label className="block text-gray-700 text-sm font-semibold mb-2">Username</label>
+                  <label className="block win-text-primary text-sm font-semibold mb-2">Username</label>
                   <input
                     type="text"
                     value={newProfile.username}
                     onChange={(e) => setNewProfile({ ...newProfile, username: e.target.value })}
                     placeholder="e.g., admin@example.com"
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                    className="win-input text-sm sm:text-base"
                   />
                 </div>
 
                 <div className="mb-4 sm:mb-5">
-                  <label className="block text-gray-700 text-sm font-semibold mb-2">Password</label>
+                  <label className="block win-text-primary text-sm font-semibold mb-2">Password</label>
                   <input
                     type="text"
                     value={newProfile.password}
                     onChange={(e) => setNewProfile({ ...newProfile, password: e.target.value })}
                     placeholder="Enter password"
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                    className="win-input text-sm sm:text-base"
                   />
                   {editingProfile && !newProfile.password && (
-                    <p className="text-xs text-gray-500 mt-2">Leave blank to keep current password</p>
+                    <p className="text-xs win-text-tertiary mt-2">Leave blank to keep current password</p>
                   )}
                 </div>
 
                 <div className="mb-4 sm:mb-5">
-                  <label className="block text-gray-700 text-sm font-semibold mb-2">Document</label>
+                  <label className="block win-text-primary text-sm font-semibold mb-2">Document</label>
                   <input
                     type="file"
                     onChange={handleFileChange}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm file:mr-3 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="win-input text-sm file:mr-3 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
                   />
-                  <p className="text-xs text-gray-500 mt-2">Upload PDF, images, or other documents</p>
+                  <p className="text-xs win-text-tertiary mt-2">Upload PDF, images, or other documents</p>
                 </div>
 
                 <div className="mb-5 sm:mb-6">
-                  <label className="block text-gray-700 text-sm font-semibold mb-2">Notes</label>
+                  <label className="block win-text-primary text-sm font-semibold mb-2">Notes</label>
                   <textarea
                     value={newProfile.notes}
                     onChange={(e) => setNewProfile({ ...newProfile, notes: e.target.value })}
                     placeholder="Additional information..."
                     rows={4}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm sm:text-base"
+                    className="win-input resize-none text-sm sm:text-base"
                   />
                 </div>
 
@@ -432,11 +443,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                       setNewProfile({ title: '', username: '', password: '', notes: '' });
                       setSelectedFile(null);
                     }}
-                    className="px-4 sm:px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm sm:text-base"
+                    className="win-btn-secondary text-sm sm:text-base px-4 sm:px-6"
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="px-4 sm:px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base">
+                  <button type="submit" className="win-btn-primary text-sm sm:text-base px-4 sm:px-6">
                     {editingProfile ? 'Update' : 'Create'}
                   </button>
                 </div>

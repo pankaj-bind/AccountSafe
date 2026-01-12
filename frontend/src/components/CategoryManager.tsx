@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/apiClient';
-import ProfileManager from './ProfileManager';
 
 interface Organization {
   id: number;
@@ -20,6 +20,7 @@ interface Category {
 
 const CategoryManager: React.FC = () => {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,6 @@ const CategoryManager: React.FC = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
   const [newCategory, setNewCategory] = useState({ name: '', description: '' });
   const [newOrg, setNewOrg] = useState({ name: '', logo_url: '' });
 
@@ -136,16 +136,6 @@ const CategoryManager: React.FC = () => {
     );
   }
 
-  // If organization is selected, show profile manager
-  if (selectedOrganization) {
-    return (
-      <ProfileManager 
-        organization={selectedOrganization}
-        onBack={() => setSelectedOrganization(null)}
-      />
-    );
-  }
-
   return (
     <div className="w-full win-bg-solid min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
@@ -250,7 +240,7 @@ const CategoryManager: React.FC = () => {
                     .map((org) => (
                       <div
                         key={org.id}
-                        onClick={() => setSelectedOrganization(org)}
+                        onClick={() => navigate(`/organization/${org.id}`)}
                         className="win-bg-layer border border-win-border-default rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-win-elevated transition-all duration-200 group relative cursor-pointer hover:scale-105 hover:border-win-accent"
                       >
                         <button
