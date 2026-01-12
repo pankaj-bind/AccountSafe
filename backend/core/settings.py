@@ -23,7 +23,7 @@ allowed_hosts_str = os.getenv('ALLOWED_HOSTS', '')
 if allowed_hosts_str:
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
 else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1'] if DEBUG else []
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'accountsafe.pythonanywhere.com'] if DEBUG else ['accountsafe.pythonanywhere.com']
 
 # --- Application Definitions ---
 INSTALLED_APPS = [
@@ -134,7 +134,8 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
 
 # --- CORS Settings ---
-default_cors = 'http://localhost:3000,https://accountsafe.vercel.app,app://.'
+default_cors = 'http://localhost:3000,https://accountsafe.vercel.app,https://accountsafe-git-main-pankaj-binds-projects.vercel.app,https://accountsafe-pankaj-binds-projects.vercel.app,app://.'
 cors_origins_str = os.getenv('CORS_ALLOWED_ORIGINS', default_cors)
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',') if origin.strip()]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
