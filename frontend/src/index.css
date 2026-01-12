@@ -305,4 +305,52 @@ body {
     color: var(--win-accent-hover);
     @apply underline;
   }
+  
+  /* Mobile utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Touch target size for mobile */
+  @media (hover: none) and (pointer: coarse) {
+    button, a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+}
+
+/* Responsive text utilities */
+@media (max-width: 640px) {
+  body {
+    font-size: 13px;
+  }
+}
+
+/* Dropdown animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Dark mode gray scale */
+.dark .dark\:bg-gray-750 {
+  background-color: #2d3748;
+}
+
+.dark .dark\:hover\:bg-gray-750:hover {
+  background-color: #2d3748;
 }

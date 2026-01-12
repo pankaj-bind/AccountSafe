@@ -148,18 +148,18 @@ const CategoryManager: React.FC = () => {
 
   return (
     <div className="w-full win-bg-solid min-h-screen">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold win-text-primary mb-3">Benchmark Directory</h1>
-          <p className="win-text-secondary">Select a technology to generate its CIS hardening script.</p>
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold win-text-primary mb-2 sm:mb-3">Secure Vault</h1>
+          <p className="text-sm sm:text-base win-text-secondary px-2">Organize and manage your credentials securely in one place.</p>
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-8">
+        <div className="max-w-2xl mx-auto mb-6 sm:mb-8">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 win-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 sm:h-5 sm:w-5 win-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -168,16 +168,16 @@ const CategoryManager: React.FC = () => {
               placeholder="Search for an organization..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 border win-border rounded-xl shadow-win-card focus:outline-none focus:ring-2 focus:ring-win-accent focus:border-transparent win-bg-layer win-text-primary placeholder:text-win-text-tertiary"
+              className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3.5 text-sm sm:text-base border win-border rounded-xl shadow-win-card focus:outline-none focus:ring-2 focus:ring-win-accent focus:border-transparent win-bg-layer win-text-primary placeholder:text-win-text-tertiary"
             />
           </div>
         </div>
 
         {/* Create Button */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-6 sm:mb-10">
           <button
             onClick={() => { setShowCategoryModal(true); setError(null); }}
-            className="win-btn-primary shadow-win-card"
+            className="win-btn-primary shadow-win-card text-sm sm:text-base px-4 sm:px-6"
           >
             + Create New Category
           </button>
@@ -185,10 +185,10 @@ const CategoryManager: React.FC = () => {
 
         {/* Error */}
         {error && (
-          <div className="max-w-2xl mx-auto mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl">
-            <div className="flex justify-between items-center">
-              <span>{error}</span>
-              <button onClick={() => setError(null)} className="font-bold text-xl hover:opacity-70">&times;</button>
+          <div className="max-w-2xl mx-auto mb-4 sm:mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 sm:px-4 py-2 sm:py-3 rounded-xl text-sm sm:text-base">
+            <div className="flex justify-between items-center gap-2">
+              <span className="flex-1">{error}</span>
+              <button onClick={() => setError(null)} className="font-bold text-xl hover:opacity-70 flex-shrink-0">&times;</button>
             </div>
           </div>
         )}
@@ -211,27 +211,27 @@ const CategoryManager: React.FC = () => {
         )}
 
         {/* Categories */}
-        <div className="space-y-12">
+        <div className="space-y-8 sm:space-y-12">
           {filteredCategories.map((category) => (
             <div key={category.id}>
               {/* Category Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6 win-text-accent" fill="currentColor" viewBox="0 0 20 20">
+              <div className="mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-0">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 win-text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                   </svg>
-                  <h2 className="text-2xl font-bold win-text-primary">{category.name}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold win-text-primary">{category.name}</h2>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-3 sm:mt-4">
                   <button
                     onClick={() => { setSelectedCategoryId(category.id); setShowOrgModal(true); setError(null); }}
-                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg shadow-win-card transition-colors"
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs sm:text-sm rounded-lg shadow-win-card transition-colors whitespace-nowrap"
                   >
                     + Add Organization
                   </button>
                   <button
                     onClick={() => handleDeleteCategory(category.id)}
-                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg shadow-win-card transition-colors"
+                    className="px-3 sm:px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm rounded-lg shadow-win-card transition-colors"
                   >
                     Delete
                   </button>
@@ -240,27 +240,27 @@ const CategoryManager: React.FC = () => {
 
               {/* Organizations Grid */}
               {category.organizations.length === 0 ? (
-                <div className="text-center py-16 win-text-tertiary win-bg-subtle rounded-xl border border-win-border-subtle">
+                <div className="text-center py-12 sm:py-16 win-text-tertiary win-bg-subtle rounded-xl border border-win-border-subtle text-sm sm:text-base">
                   <p>No organizations yet</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
                   {category.organizations
                     .filter(org => !searchQuery || org.name.toLowerCase().includes(searchQuery.toLowerCase()))
                     .map((org) => (
                       <div
                         key={org.id}
                         onClick={() => setSelectedOrganization(org)}
-                        className="win-bg-layer border border-win-border-default rounded-xl p-6 hover:shadow-win-elevated transition-all duration-200 group relative cursor-pointer hover:scale-105 hover:border-win-accent"
+                        className="win-bg-layer border border-win-border-default rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-win-elevated transition-all duration-200 group relative cursor-pointer hover:scale-105 hover:border-win-accent"
                       >
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDeleteOrganization(org.id, category.id); }}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs hover:bg-red-600 shadow-win-card"
+                          className="absolute -top-1.5 sm:-top-2 -right-1.5 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs hover:bg-red-600 shadow-win-card"
                         >
                           ✕
                         </button>
 
-                        <div className="h-20 flex items-center justify-center mb-4">
+                        <div className="h-12 sm:h-16 md:h-20 flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
                           {org.logo_url ? (
                             <img
                               src={org.logo_url}
@@ -274,17 +274,17 @@ const CategoryManager: React.FC = () => {
                               }}
                             />
                           ) : null}
-                          <div className={`w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 dark:from-blue-500 dark:to-blue-700 rounded-xl flex items-center justify-center shadow-win-card ${org.logo_url ? 'hidden' : ''}`}>
-                            <span className="text-white font-bold text-2xl">
+                          <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-400 to-blue-600 dark:from-blue-500 dark:to-blue-700 rounded-lg sm:rounded-xl flex items-center justify-center shadow-win-card ${org.logo_url ? 'hidden' : ''}`}>
+                            <span className="text-white font-bold text-base sm:text-xl md:text-2xl">
                               {org.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </div>
 
-                        <h4 className="font-medium win-text-primary text-center text-sm mb-1" title={org.name}>
+                        <h4 className="font-medium win-text-primary text-center text-xs sm:text-sm mb-0.5 sm:mb-1 line-clamp-2" title={org.name}>
                           {org.name}
                         </h4>
-                        <p className="text-xs win-text-tertiary text-center">
+                        <p className="text-[10px] sm:text-xs win-text-tertiary text-center">
                           {org.profile_count} Profile{org.profile_count === 1 ? '' : 's'}
                         </p>
                       </div>
@@ -298,13 +298,13 @@ const CategoryManager: React.FC = () => {
 
       {/* Category Modal */}
       {showCategoryModal && (
-        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setShowCategoryModal(false)}>
-          <div className="win-bg-layer rounded-2xl shadow-win-flyout max-w-lg w-full border border-win-border-default" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-500 dark:to-blue-600 px-6 py-5 rounded-t-2xl">
-              <h3 className="text-2xl font-bold text-white">Create New Category</h3>
+        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm" onClick={() => setShowCategoryModal(false)}>
+          <div className="win-bg-layer rounded-xl sm:rounded-2xl shadow-win-flyout max-w-lg w-full border border-win-border-default max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-500 dark:to-blue-600 px-4 sm:px-6 py-4 sm:py-5 rounded-t-xl sm:rounded-t-2xl sticky top-0 z-10">
+              <h3 className="text-xl sm:text-2xl font-bold text-white">Create New Category</h3>
             </div>
-            <form onSubmit={handleAddCategory} className="p-6">
-              <div className="mb-5">
+            <form onSubmit={handleAddCategory} className="p-4 sm:p-6">
+              <div className="mb-4 sm:mb-5">
                 <label className="block win-text-primary text-sm font-semibold mb-2">
                   Category Name <span className="text-red-500">*</span>
                 </label>
@@ -313,30 +313,30 @@ const CategoryManager: React.FC = () => {
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                   placeholder="e.g., Microsoft Windows"
-                  className="win-input"
+                  className="win-input text-sm sm:text-base"
                   autoFocus
                   required
                 />
               </div>
-              <div className="mb-6">
+              <div className="mb-5 sm:mb-6">
                 <label className="block win-text-primary text-sm font-semibold mb-2">Description</label>
                 <textarea
                   value={newCategory.description}
                   onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
                   placeholder="Optional description"
-                  className="win-input resize-none"
+                  className="win-input resize-none text-sm sm:text-base"
                   rows={3}
                 />
               </div>
-              <div className="flex gap-3 justify-end">
+              <div className="flex gap-2 sm:gap-3 justify-end">
                 <button
                   type="button"
                   onClick={() => { setShowCategoryModal(false); setNewCategory({ name: '', description: '' }); }}
-                  className="win-btn-secondary"
+                  className="win-btn-secondary text-sm sm:text-base px-4 sm:px-6"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="win-btn-primary">
+                <button type="submit" className="win-btn-primary text-sm sm:text-base px-4 sm:px-6">
                   Create
                 </button>
               </div>
@@ -347,13 +347,13 @@ const CategoryManager: React.FC = () => {
 
       {/* Organization Modal */}
       {showOrgModal && (
-        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setShowOrgModal(false)}>
-          <div className="win-bg-layer rounded-2xl shadow-win-flyout max-w-lg w-full border border-win-border-default" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-green-600 to-green-700 dark:from-green-500 dark:to-green-600 px-6 py-5 rounded-t-2xl">
-              <h3 className="text-2xl font-bold text-white">Add Organization</h3>
+        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm" onClick={() => setShowOrgModal(false)}>
+          <div className="win-bg-layer rounded-xl sm:rounded-2xl shadow-win-flyout max-w-lg w-full border border-win-border-default max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-green-600 to-green-700 dark:from-green-500 dark:to-green-600 px-4 sm:px-6 py-4 sm:py-5 rounded-t-xl sm:rounded-t-2xl sticky top-0 z-10">
+              <h3 className="text-xl sm:text-2xl font-bold text-white">Add Organization</h3>
             </div>
-            <form onSubmit={handleAddOrganization} className="p-6">
-              <div className="mb-5">
+            <form onSubmit={handleAddOrganization} className="p-4 sm:p-6">
+              <div className="mb-4 sm:mb-5">
                 <label className="block win-text-primary text-sm font-semibold mb-2">
                   Organization Name <span className="text-red-500">*</span>
                 </label>
@@ -362,31 +362,31 @@ const CategoryManager: React.FC = () => {
                   value={newOrg.name}
                   onChange={(e) => setNewOrg({ ...newOrg, name: e.target.value })}
                   placeholder="e.g., Windows 11"
-                  className="win-input"
+                  className="win-input text-sm sm:text-base"
                   autoFocus
                   required
                 />
               </div>
-              <div className="mb-6">
+              <div className="mb-5 sm:mb-6">
                 <label className="block win-text-primary text-sm font-semibold mb-2">Logo URL</label>
                 <input
                   type="url"
                   value={newOrg.logo_url}
                   onChange={(e) => setNewOrg({ ...newOrg, logo_url: e.target.value })}
                   placeholder="https://example.com/logo.png"
-                  className="win-input"
+                  className="win-input text-sm sm:text-base"
                 />
                 <p className="text-xs win-text-tertiary mt-2">Optional: URL to organization logo</p>
               </div>
-              <div className="flex gap-3 justify-end">
+              <div className="flex gap-2 sm:gap-3 justify-end">
                 <button
                   type="button"
                   onClick={() => { setShowOrgModal(false); setNewOrg({ name: '', logo_url: '' }); setSelectedCategoryId(null); }}
-                  className="win-btn-secondary"
+                  className="win-btn-secondary text-sm sm:text-base px-4 sm:px-6"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="px-6 py-2.5 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white rounded-lg font-medium transition-colors">
+                <button type="submit" className="px-4 sm:px-6 py-2.5 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white rounded-lg font-medium transition-colors text-sm sm:text-base">
                   Add
                 </button>
               </div>

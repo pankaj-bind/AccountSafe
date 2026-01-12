@@ -90,21 +90,38 @@ const Navbar: React.FC = () => {
                     />
                   </button>
                   {isUserDropdownOpen && (
-                    <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-win-lg shadow-win-flyout py-1 bg-win-bg-layer border border-win-border-default backdrop-blur-win z-50">
-                      <div className="px-4 py-3 border-b border-win-border-default">
-                        <p className="text-sm font-medium text-win-text-primary">Your Account</p>
+                    <div className="origin-top-right absolute right-0 mt-3 w-56 rounded-xl shadow-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-fadeIn">
+                      <div className="px-5 py-4 bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Your Account</p>
                       </div>
-                      <Link to="/dashboard" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center px-4 py-2.5 text-sm text-win-text-secondary hover:bg-win-bg-hover transition-colors duration-150">
-                        <svg className="w-4 h-4 mr-3 text-win-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                        Dashboard
-                      </Link>
-                      <Link to="/profile" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center px-4 py-2.5 text-sm text-win-text-secondary hover:bg-win-bg-hover transition-colors duration-150">
-                        <svg className="w-4 h-4 mr-3 text-win-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                        Profile
-                      </Link>
-                      <div className="border-t border-win-border-default mt-1">
-                        <button onClick={handleLogout} className="flex items-center w-full px-4 py-2.5 text-sm text-red-500 hover:bg-win-bg-hover transition-colors duration-150">
-                          <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                      <div className="py-2">
+                        <Link 
+                          to="/dashboard" 
+                          onClick={() => setIsUserDropdownOpen(false)} 
+                          className="flex items-center px-5 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors duration-150"
+                        >
+                          <svg className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                          </svg>
+                          Dashboard
+                        </Link>
+                        <Link 
+                          to="/profile" 
+                          onClick={() => setIsUserDropdownOpen(false)} 
+                          className="flex items-center px-5 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors duration-150"
+                        >
+                          <svg className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Profile
+                        </Link>
+                        <button 
+                          onClick={handleLogout} 
+                          className="flex items-center w-full px-5 py-3 text-sm text-red-600 dark:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors duration-150"
+                        >
+                          <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
                           Sign out
                         </button>
                       </div>
