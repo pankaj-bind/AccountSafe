@@ -127,6 +127,16 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['id', 'organization', 'title', 'username', 'password', 'document', 'document_url', 'notes', 'created_at', 'updated_at']
         read_only_fields = ['organization', 'created_at', 'updated_at']
     
+    def validate_document(self, value):
+        """Validate document file size (max 10MB)"""
+        if value:
+            max_size = 10 * 1024 * 1024  # 10MB
+            if value.size > max_size:
+                raise serializers.ValidationError(
+                    f"File size cannot exceed 10MB. Current size: {value.size / (1024 * 1024):.2f}MB"
+                )
+        return value
+    
     def create(self, validated_data):
         username = validated_data.pop('username', None)
         password = validated_data.pop('password', None)

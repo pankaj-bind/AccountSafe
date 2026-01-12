@@ -5,9 +5,21 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from .encryption import encrypt_data, decrypt_data
+
+
+def validate_file_size(file):
+    """
+    Validate that uploaded file size does not exceed 10MB.
+    """
+    max_size_mb = 10
+    max_size_bytes = max_size_mb * 1024 * 1024  # 10MB in bytes
+    
+    if file.size > max_size_bytes:
+        raise ValidationError(f'File size cannot exceed {max_size_mb}MB. Current size: {file.size / (1024 * 1024):.2f}MB')
 
 
 # --- Model for Password Reset ---
@@ -116,7 +128,8 @@ class Profile(models.Model):
         upload_to='profile_documents/',
         blank=True,
         null=True,
-        help_text="Upload document (PDF, images, etc.)"
+        validators=[validate_file_size],
+        help_text="Upload document (PDF, images, etc.) - Max 10MB"
     )
     _notes = models.TextField(blank=True, null=True, db_column='notes')
     created_at = models.DateTimeField(auto_now_add=True)
