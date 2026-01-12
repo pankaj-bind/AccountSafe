@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+from .encryption import encrypt_data, decrypt_data
 
 
 # --- Model for Password Reset ---
@@ -64,3 +65,97 @@ class UserProfile(models.Model):
     class Meta:
         verbose_name = "User Profile"
         verbose_name_plural = "User Profiles"
+
+# --- Category Model ---
+class Category(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories')
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+        ordering = ['-created_at']
+
+
+# --- Organization Model ---
+class Organization(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='organizations')
+    name = models.CharField(max_length=100)
+    logo_url = models.URLField(blank=True, null=True)
+    logo_image = models.ImageField(
+        upload_to='organization_logos/',
+        blank=True,
+        null=True,
+        help_text="Upload organization logo"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Organization"
+        verbose_name_plural = "Organizations"
+        ordering = ['-created_at']
+
+
+# --- Profile Model ---
+class Profile(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='profiles')
+    title = models.CharField(max_length=200, blank=True, null=True, help_text="Profile title or name")
+    _username = models.TextField(blank=True, null=True, db_column='username')
+    _password = models.TextField(blank=True, null=True, db_column='password')
+    document = models.FileField(
+        upload_to='profile_documents/',
+        blank=True,
+        null=True,
+        help_text="Upload document (PDF, images, etc.)"
+    )
+    _notes = models.TextField(blank=True, null=True, db_column='notes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def username(self):
+        """Decrypt and return username"""
+        return decrypt_data(self._username) if self._username else None
+    
+    @username.setter
+    def username(self, value):
+        """Encrypt and store username"""
+        self._username = encrypt_data(value) if value else None
+
+    @property
+    def password(self):
+        """Decrypt and return password"""
+        return decrypt_data(self._password) if self._password else None
+    
+    @password.setter
+    def password(self, value):
+        """Encrypt and store password"""
+        self._password = encrypt_data(value) if value else None
+
+    @property
+    def notes(self):
+        """Decrypt and return notes"""
+        return decrypt_data(self._notes) if self._notes else None
+    
+    @notes.setter
+    def notes(self, value):
+        """Encrypt and store notes"""
+        self._notes = encrypt_data(value) if value else None
+
+    def __str__(self):
+        return f"{self.title or 'Untitled'} - {self.organization.name}"
+
+    class Meta:
+        verbose_name = "Profile"
+        verbose_name_plural = "Profiles"
+        ordering = ['-created_at']

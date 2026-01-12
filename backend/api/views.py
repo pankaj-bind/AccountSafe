@@ -10,13 +10,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 
-from .models import PasswordResetOTP, UserProfile
+from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile
 from .serializers import (
     OTPRequestSerializer,
     OTPVerifySerializer,
     SetNewPasswordSerializer,
     UserProfileSerializer,
     UserProfileUpdateSerializer,
+    CategorySerializer,
+    CategoryCreateSerializer,
+    OrganizationSerializer,
+    ProfileSerializer,
 )
 
 
@@ -311,3 +315,261 @@ def update_user_profile(request):
         response_serializer = UserProfileSerializer(profile)
         return Response(response_serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# --- Category Views ---
+class CategoryListCreateView(APIView):
+    """List all categories for authenticated user or create a new category"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Get all categories for the authenticated user"""
+        categories = Category.objects.filter(user=request.user)
+        serializer = CategorySerializer(categories, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        """Create a new category for the authenticated user"""
+        serializer = CategoryCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            # Return the full serialized category with organizations
+            category = Category.objects.get(pk=serializer.instance.pk)
+            response_serializer = CategorySerializer(category)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CategoryDetailView(APIView):
+    """Retrieve, update, or delete a specific category"""
+    permission_classes = [IsAuthenticated]
+
+    def get_category(self, pk, user):
+        """Helper method to get category and ensure user ownership"""
+        try:
+            return Category.objects.get(pk=pk, user=user)
+        except Category.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        """Get a specific category"""
+        category = self.get_category(pk, request.user)
+        if not category:
+            return Response(
+                {"error": "Category not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = CategorySerializer(category)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        """Update a specific category"""
+        category = self.get_category(pk, request.user)
+        if not category:
+            return Response(
+                {"error": "Category not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = CategoryCreateSerializer(category, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            category.refresh_from_db()
+            response_serializer = CategorySerializer(category)
+            return Response(response_serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        """Delete a specific category"""
+        category = self.get_category(pk, request.user)
+        if not category:
+            return Response(
+                {"error": "Category not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        category.delete()
+        return Response(
+            {"message": "Category deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+# --- Organization Views ---
+class OrganizationListCreateView(APIView):
+    """List all organizations for a category or create a new organization"""
+    permission_classes = [IsAuthenticated]
+
+    def get_category(self, category_id, user):
+        """Helper method to get category and ensure user ownership"""
+        try:
+            return Category.objects.get(pk=category_id, user=user)
+        except Category.DoesNotExist:
+            return None
+
+    def get(self, request, category_id):
+        """Get all organizations for a specific category"""
+        category = self.get_category(category_id, request.user)
+        if not category:
+            return Response(
+                {"error": "Category not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        organizations = category.organizations.all()
+        serializer = OrganizationSerializer(organizations, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, category_id):
+        """Create a new organization for a specific category"""
+        category = self.get_category(category_id, request.user)
+        if not category:
+            return Response(
+                {"error": "Category not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = OrganizationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(category=category)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OrganizationDetailView(APIView):
+    """Retrieve, update, or delete a specific organization"""
+    permission_classes = [IsAuthenticated]
+
+    def get_organization(self, organization_id, user):
+        """Helper method to get organization and ensure user ownership"""
+        try:
+            return Organization.objects.get(pk=organization_id, category__user=user)
+        except Organization.DoesNotExist:
+            return None
+
+    def get(self, request, organization_id):
+        """Get a specific organization"""
+        organization = self.get_organization(organization_id, request.user)
+        if not organization:
+            return Response(
+                {"error": "Organization not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = OrganizationSerializer(organization)
+        return Response(serializer.data)
+
+    def put(self, request, organization_id):
+        """Update a specific organization"""
+        organization = self.get_organization(organization_id, request.user)
+        if not organization:
+            return Response(
+                {"error": "Organization not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = OrganizationSerializer(organization, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, organization_id):
+        """Delete a specific organization"""
+        organization = self.get_organization(organization_id, request.user)
+        if not organization:
+            return Response(
+                {"error": "Organization not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        organization.delete()
+        return Response(
+            {"message": "Organization deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+# ===========================
+# PROFILE MANAGEMENT VIEWS
+# ===========================
+
+class ProfileListCreateView(APIView):
+    """List all profiles for an organization or create a new profile"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, organization_id):
+        """Get all profiles for a specific organization"""
+        # Ensure user owns the organization through category
+        try:
+            organization = Organization.objects.get(pk=organization_id, category__user=request.user)
+        except Organization.DoesNotExist:
+            return Response(
+                {"error": "Organization not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        profiles = Profile.objects.filter(organization=organization)
+        serializer = ProfileSerializer(profiles, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request, organization_id):
+        """Create a new profile for an organization"""
+        # Ensure user owns the organization through category
+        try:
+            organization = Organization.objects.get(pk=organization_id, category__user=request.user)
+        except Organization.DoesNotExist:
+            return Response(
+                {"error": "Organization not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = ProfileSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(organization=organization)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfileDetailView(APIView):
+    """Retrieve, update, or delete a specific profile"""
+    permission_classes = [IsAuthenticated]
+
+    def get_profile(self, profile_id, user):
+        """Helper method to get profile and ensure user ownership"""
+        try:
+            return Profile.objects.get(pk=profile_id, organization__category__user=user)
+        except Profile.DoesNotExist:
+            return None
+
+    def get(self, request, profile_id):
+        """Get a specific profile"""
+        profile = self.get_profile(profile_id, request.user)
+        if not profile:
+            return Response(
+                {"error": "Profile not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = ProfileSerializer(profile, context={'request': request})
+        return Response(serializer.data)
+
+    def put(self, request, profile_id):
+        """Update a specific profile"""
+        profile = self.get_profile(profile_id, request.user)
+        if not profile:
+            return Response(
+                {"error": "Profile not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = ProfileSerializer(profile, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, profile_id):
+        """Delete a specific profile"""
+        profile = self.get_profile(profile_id, request.user)
+        if not profile:
+            return Response(
+                {"error": "Profile not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        profile.delete()
+        return Response(
+            {"message": "Profile deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT
+        )

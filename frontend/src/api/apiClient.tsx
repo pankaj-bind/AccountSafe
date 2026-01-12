@@ -2,10 +2,7 @@
 import axios from 'axios';
 
 // Use environment variable or fallback to localhost
-// Ensure trailing slash for consistency
-const API_URL = process.env.REACT_APP_API_URL 
-  ? `${process.env.REACT_APP_API_URL.replace(/\/+$/, '')}/`
-  : 'http://localhost:8000/api/';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/';
 
 const apiClient = axios.create({
   baseURL: API_URL,

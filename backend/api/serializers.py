@@ -3,7 +3,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from dj_rest_auth.registration.serializers import RegisterSerializer
-from .models import UserProfile
+from .models import UserProfile, Category, Organization, Profile
 
 
 class CustomRegisterSerializer(RegisterSerializer):
@@ -85,3 +85,83 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+# --- Organization Serializer ---
+class OrganizationSerializer(serializers.ModelSerializer):
+    profile_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Organization
+        fields = ['id', 'category', 'name', 'logo_url', 'logo_image', 'profile_count', 'created_at', 'updated_at']
+        read_only_fields = ['category', 'created_at', 'updated_at']
+    
+    def get_profile_count(self, obj):
+        return obj.profiles.count()
+
+
+# --- Category Serializer ---
+class CategorySerializer(serializers.ModelSerializer):
+    organizations = OrganizationSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'description', 'organizations', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+
+class CategoryCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['name', 'description']
+
+
+# --- Profile Serializer ---
+class ProfileSerializer(serializers.ModelSerializer):
+    document_url = serializers.SerializerMethodField()
+    username = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    password = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    notes = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
+    class Meta:
+        model = Profile
+        fields = ['id', 'organization', 'title', 'username', 'password', 'document', 'document_url', 'notes', 'created_at', 'updated_at']
+        read_only_fields = ['organization', 'created_at', 'updated_at']
+    
+    def create(self, validated_data):
+        username = validated_data.pop('username', None)
+        password = validated_data.pop('password', None)
+        notes = validated_data.pop('notes', None)
+        
+        profile = Profile(**validated_data)
+        if username:
+            profile.username = username
+        if password:
+            profile.password = password
+        if notes:
+            profile.notes = notes
+        profile.save()
+        return profile
+    
+    def update(self, instance, validated_data):
+        # Update regular fields
+        instance.title = validated_data.get('title', instance.title)
+        
+        # Update encrypted fields using properties
+        if 'username' in validated_data:
+            instance.username = validated_data['username']
+        if 'password' in validated_data:
+            instance.password = validated_data['password']
+        if 'notes' in validated_data:
+            instance.notes = validated_data['notes']
+        if 'document' in validated_data:
+            instance.document = validated_data['document']
+        
+        instance.save()
+        return instance
+    
+    def get_document_url(self, obj):
+        if obj.document:
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.document.url)
+        return None

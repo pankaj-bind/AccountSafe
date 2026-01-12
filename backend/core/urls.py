@@ -14,6 +14,12 @@ from api.views import (
     DeleteAccountView,
     get_user_profile,
     update_user_profile,
+    CategoryListCreateView,
+    CategoryDetailView,
+    OrganizationListCreateView,
+    OrganizationDetailView,
+    ProfileListCreateView,
+    ProfileDetailView,
 )
 
 urlpatterns = [
@@ -28,6 +34,18 @@ urlpatterns = [
     # Profile endpoints
     path('api/profile/', get_user_profile, name='get-profile'),
     path('api/profile/update/', update_user_profile, name='update-profile'),
+
+    # Category endpoints
+    path('api/categories/', CategoryListCreateView.as_view(), name='category-list-create'),
+    path('api/categories/<int:pk>/', CategoryDetailView.as_view(), name='category-detail'),
+
+    # Organization endpoints
+    path('api/categories/<int:category_id>/organizations/', OrganizationListCreateView.as_view(), name='organization-list-create'),
+    path('api/organizations/<int:organization_id>/', OrganizationDetailView.as_view(), name='organization-detail'),
+
+    # Profile endpoints
+    path('api/organizations/<int:organization_id>/profiles/', ProfileListCreateView.as_view(), name='profile-list-create'),
+    path('api/profiles/<int:profile_id>/', ProfileDetailView.as_view(), name='profile-detail'),
 
     # dj-rest-auth endpoints (login, logout, user details, registration)
     path('api/auth/', include('dj_rest_auth.urls')),
