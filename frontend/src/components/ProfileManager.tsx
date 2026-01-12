@@ -93,12 +93,13 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
     try {
       const formData = new FormData();
-      if (newProfile.title) formData.append('title', newProfile.title);
-      if (newProfile.username) formData.append('username', newProfile.username);
-      if (newProfile.password) formData.append('password', newProfile.password);
-      if (newProfile.email) formData.append('email', newProfile.email);
-      if (newProfile.recovery_codes) formData.append('recovery_codes', newProfile.recovery_codes);
-      if (newProfile.notes) formData.append('notes', newProfile.notes);
+      // Always append fields, even if empty, to allow clearing values
+      formData.append('title', newProfile.title || '');
+      formData.append('username', newProfile.username || '');
+      formData.append('password', newProfile.password || '');
+      formData.append('email', newProfile.email || '');
+      formData.append('recovery_codes', newProfile.recovery_codes || '');
+      formData.append('notes', newProfile.notes || '');
       if (selectedFile) formData.append('document', selectedFile);
 
       if (editingProfile) {

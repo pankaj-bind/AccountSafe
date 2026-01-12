@@ -118,11 +118,11 @@ class CategoryCreateSerializer(serializers.ModelSerializer):
 # --- Profile Serializer ---
 class ProfileSerializer(serializers.ModelSerializer):
     document_url = serializers.SerializerMethodField()
-    username = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    password = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    email = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    recovery_codes = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    notes = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    username = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    password = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    email = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    recovery_codes = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    notes = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
     
     class Meta:
         model = Profile
@@ -165,16 +165,22 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.title = validated_data.get('title', instance.title)
         
         # Update encrypted fields using properties
+        # Convert empty strings or whitespace-only strings to None to clear fields
         if 'username' in validated_data:
-            instance.username = validated_data['username']
+            value = validated_data['username']
+            instance.username = value.strip() if value and value.strip() else None
         if 'password' in validated_data:
-            instance.password = validated_data['password']
+            value = validated_data['password']
+            instance.password = value.strip() if value and value.strip() else None
         if 'email' in validated_data:
-            instance.email = validated_data['email']
+            value = validated_data['email']
+            instance.email = value.strip() if value and value.strip() else None
         if 'recovery_codes' in validated_data:
-            instance.recovery_codes = validated_data['recovery_codes']
+            value = validated_data['recovery_codes']
+            instance.recovery_codes = value.strip() if value and value.strip() else None
         if 'notes' in validated_data:
-            instance.notes = validated_data['notes']
+            value = validated_data['notes']
+            instance.notes = value.strip() if value and value.strip() else None
         if 'document' in validated_data:
             instance.document = validated_data['document']
         
