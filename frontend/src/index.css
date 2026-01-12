@@ -92,6 +92,7 @@ body {
   line-height: 1.5;
   background-color: var(--win-bg-solid);
   color: var(--win-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Acrylic effect */
@@ -123,6 +124,8 @@ body {
   
   .win-card:not(.win-card-static):hover {
     border-color: var(--win-border-subtle);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12), 0 0 2px rgba(0, 0, 0, 0.08);
   }
   
   /* Primary Button */

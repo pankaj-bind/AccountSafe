@@ -1,54 +1,33 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import CategoryManager from '../components/CategoryManager';
 
 const HomePage: React.FC = () => {
   const { token } = useAuth();
 
   return (
-    <div className="min-h-screen bg-win-bg-solid flex items-center justify-center px-4">
-      <div className="text-center max-w-2xl">
-        <h1 className="text-5xl font-bold text-win-text-primary mb-6">
-          Welcome to AccountSafe
-        </h1>
-        <p className="text-xl text-win-text-secondary mb-12">
-          A complete authentication system with Django and React
-        </p>
-        
-        <div className="flex gap-4 justify-center">
-          {!token ? (
-            <>
-              <Link to="/login" className="win-btn-primary px-8 py-3 text-lg">
-                Sign In
+    <div className="min-h-screen win-bg-solid">
+      {token ? (
+        <CategoryManager />
+      ) : (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold win-text-primary mb-8">Welcome to AccountSafe</h1>
+            <div className="flex gap-4 justify-center">
+              <Link to="/login" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg transition-colors shadow-win-card">
+                Log in
               </Link>
-              <Link to="/register" className="win-btn-secondary px-8 py-3 text-lg">
-                Create Account
+              <Link to="/register" className="px-6 py-3 win-bg-layer border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors shadow-win-card">
+                Sign up
               </Link>
-            </>
-          ) : (
-            <p className="text-lg text-win-text-primary">
-              You're logged in! 🎉
-            </p>
-          )}
-        </div>
-
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-          <div className="win-card p-6">
-            <h3 className="text-lg font-semibold text-win-text-primary mb-2">🔐 Secure Authentication</h3>
-            <p className="text-sm text-win-text-secondary">Token-based auth with Django Rest Framework</p>
-          </div>
-          <div className="win-card p-6">
-            <h3 className="text-lg font-semibold text-win-text-primary mb-2">📧 Password Reset</h3>
-            <p className="text-sm text-win-text-secondary">OTP-based email verification for password recovery</p>
-          </div>
-          <div className="win-card p-6">
-            <h3 className="text-lg font-semibold text-win-text-primary mb-2">⚡ Modern UI</h3>
-            <p className="text-sm text-win-text-secondary">Clean design with Tailwind CSS</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
 export default HomePage;
+
