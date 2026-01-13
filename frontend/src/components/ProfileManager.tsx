@@ -167,18 +167,18 @@ const CredentialField: React.FC<CredentialFieldProps> = ({
 }) => (
   <div className="group/field">
     <div className="flex items-center gap-2 mb-1.5">
-      <span className="text-zinc-500">{icon}</span>
-      <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{label}</span>
+      <span className="text-zinc-400 dark:text-zinc-500">{icon}</span>
+      <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{label}</span>
     </div>
     <div className="flex items-center gap-2">
-      <div className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[42px] ${mono ? 'font-mono' : ''}`}>
-        <span className="flex-1 text-sm text-zinc-200 break-all">
+      <div className={`flex-1 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[42px] ${mono ? 'font-mono' : ''}`}>
+        <span className="flex-1 text-sm text-zinc-700 dark:text-zinc-200 break-all">
           {isPassword && !showPassword ? '••••••••••••' : value}
         </span>
         {isPassword && onTogglePassword && (
           <button
             onClick={onTogglePassword}
-            className="p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="p-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
             title={showPassword ? 'Hide' : 'Show'}
           >
             {showPassword ? <EyeOffIcon /> : <EyeIcon />}
@@ -189,8 +189,8 @@ const CredentialField: React.FC<CredentialFieldProps> = ({
         onClick={onCopy}
         className={`p-2.5 rounded-lg transition-all ${
           isCopied
-            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-            : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border border-zinc-700'
+            ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30'
+            : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700'
         }`}
         title={isCopied ? 'Copied!' : 'Copy'}
       >
@@ -324,11 +324,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         {recoveryCodes && recoveryCodes.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-zinc-500"><ShieldIcon className="w-4 h-4" /></span>
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+              <span className="text-zinc-400 dark:text-zinc-500"><ShieldIcon className="w-4 h-4" /></span>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Recovery Codes
               </span>
-              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-400 rounded">
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded">
                 {recoveryCodes.length} left
               </span>
             </div>
@@ -339,8 +339,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                   onClick={() => onCopyRecoveryCode(code, index)}
                   className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
                     copiedField === `recovery-${profile.id}-${index}`
-                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                      : 'bg-purple-500/10 text-purple-300 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30'
+                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                      : 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30'
                   }`}
                   title="Click to copy & remove"
                 >
@@ -348,7 +348,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 </button>
               ))}
             </div>
-            <p className="text-[10px] text-zinc-600 mt-2">
+            <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-2">
               Click a code to copy it. Codes are removed after copying.
             </p>
           </div>
@@ -358,14 +358,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         {profile.document_url && (
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-zinc-500"><DocumentIcon className="w-4 h-4" /></span>
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Document</span>
+              <span className="text-zinc-400 dark:text-zinc-500"><DocumentIcon className="w-4 h-4" /></span>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Document</span>
             </div>
             <a
               href={profile.document_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
             >
               <DocumentIcon className="w-4 h-4" />
               <span>View Document</span>
@@ -380,8 +380,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         {profile.notes && (
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Notes</span>
+              <span className="text-zinc-400 dark:text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Notes</span>
             </div>
             <div className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-3">
               <p className={`text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
@@ -401,7 +401,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         
         {/* Empty State */}
         {!hasCredentials && !profile.notes && !profile.document_url && recoveryCodes.length === 0 && (
-          <div className="text-center py-4 text-zinc-500 text-sm">
+          <div className="text-center py-4 text-zinc-400 dark:text-zinc-500 text-sm">
             No credentials or data stored yet
           </div>
         )}

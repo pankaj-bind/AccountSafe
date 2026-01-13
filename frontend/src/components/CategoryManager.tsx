@@ -513,8 +513,8 @@ const CategoryManager: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                <div className="p-2 sm:p-2.5 bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-lg sm:rounded-xl border border-blue-500/20">
-                  <ShieldIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+                <div className="p-2 sm:p-2.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg sm:rounded-xl border border-emerald-200 dark:border-emerald-500/20 overflow-hidden">
+                  <img src="/logo.png" alt="AccountSafe" className="w-5 h-5 sm:w-6 sm:h-6 object-contain" />
                 </div>
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">Secure Vault</h1>
                 {hasPin && (
