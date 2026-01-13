@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register, login, checkUsername } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
+import { initializeUserEncryption, storeKeyData, storeMasterPasswordForSession } from '../services/encryptionService';
+import RecoveryKeyModal from '../components/RecoveryKeyModal';
 
 // Icons
 const UserIcon = () => (
@@ -46,6 +48,10 @@ const RegisterPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Recovery key modal
+    const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+    const [recoveryKey, setRecoveryKey] = useState('');
 
     const { setToken } = useAuth();
     const navigate = useNavigate();
@@ -95,14 +101,28 @@ const RegisterPage: React.FC = () => {
 
         setIsLoading(true);
         try {
+            // Initialize client-side encryption
+            const { salt, recoveryKey: generatedRecoveryKey } = await initializeUserEncryption();
+            
+            // Register account
             await register(username, email, password, password2);
             setSuccess('Account created successfully!');
             
+            // Auto-login
             const loginResponse = await login(username, password);
             const authToken = loginResponse.key || loginResponse.token;
+            
             if (authToken) {
                 setToken(authToken);
-                setTimeout(() => navigate('/'), 1500);
+                
+                // Store encryption data
+                localStorage.setItem(`encryption_salt_${username}`, salt);
+                storeKeyData(salt, generatedRecoveryKey);
+                storeMasterPasswordForSession(password);
+                
+                // Show recovery key modal
+                setRecoveryKey(generatedRecoveryKey);
+                setShowRecoveryModal(true);
             } else {
                 setError('Auto-login failed. Please log in manually.');
             }
@@ -117,6 +137,11 @@ const RegisterPage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleRecoveryKeyConfirm = () => {
+        setShowRecoveryModal(false);
+        navigate('/', { replace: true });
     };
 
     const renderUsernameFeedback = () => {
@@ -306,6 +331,14 @@ const RegisterPage: React.FC = () => {
                     Protected by end-to-end encryption
                 </p>
             </div>
+
+            {/* Recovery Key Modal */}
+            <RecoveryKeyModal
+                isOpen={showRecoveryModal}
+                recoveryKey={recoveryKey}
+                username={username}
+                onConfirm={handleRecoveryKeyConfirm}
+            />
         </div>
     );
 };

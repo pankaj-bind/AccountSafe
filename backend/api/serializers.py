@@ -115,18 +115,44 @@ class CategoryCreateSerializer(serializers.ModelSerializer):
         fields = ['name', 'description']
 
 
-# --- Profile Serializer ---
+# --- Profile Serializer (Client-Side Encrypted) ---
 class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Profile with CLIENT-SIDE ENCRYPTION.
+    
+    The server stores encrypted ciphertext and IV pairs exactly as received
+    from the browser. No server-side decryption occurs.
+    """
     document_url = serializers.SerializerMethodField()
-    username = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
-    password = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
-    email = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
-    recovery_codes = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
-    notes = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    
+    # Client-encrypted fields with IVs
+    username_encrypted = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    username_iv = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    
+    password_encrypted = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    password_iv = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    
+    email_encrypted = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    email_iv = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    
+    notes_encrypted = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    notes_iv = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    
+    recovery_codes_encrypted = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
+    recovery_codes_iv = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
     
     class Meta:
         model = Profile
-        fields = ['id', 'organization', 'title', 'username', 'password', 'email', 'recovery_codes', 'document', 'document_url', 'notes', 'created_at', 'updated_at']
+        fields = [
+            'id', 'organization', 'title',
+            'username_encrypted', 'username_iv',
+            'password_encrypted', 'password_iv',
+            'email_encrypted', 'email_iv',
+            'notes_encrypted', 'notes_iv',
+            'recovery_codes_encrypted', 'recovery_codes_iv',
+            'document', 'document_url',
+            'created_at', 'updated_at'
+        ]
         read_only_fields = ['organization', 'created_at', 'updated_at']
     
     def validate_document(self, value):
@@ -140,49 +166,15 @@ class ProfileSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
-        username = validated_data.pop('username', None)
-        password = validated_data.pop('password', None)
-        email = validated_data.pop('email', None)
-        recovery_codes = validated_data.pop('recovery_codes', None)
-        notes = validated_data.pop('notes', None)
-        
-        profile = Profile(**validated_data)
-        if username:
-            profile.username = username
-        if password:
-            profile.password = password
-        if email:
-            profile.email = email
-        if recovery_codes:
-            profile.recovery_codes = recovery_codes
-        if notes:
-            profile.notes = notes
-        profile.save()
+        """Store client-encrypted data as-is"""
+        profile = Profile.objects.create(**validated_data)
         return profile
     
     def update(self, instance, validated_data):
-        # Update regular fields
-        instance.title = validated_data.get('title', instance.title)
-        
-        # Update encrypted fields using properties
-        # Convert empty strings or whitespace-only strings to None to clear fields
-        if 'username' in validated_data:
-            value = validated_data['username']
-            instance.username = value.strip() if value and value.strip() else None
-        if 'password' in validated_data:
-            value = validated_data['password']
-            instance.password = value.strip() if value and value.strip() else None
-        if 'email' in validated_data:
-            value = validated_data['email']
-            instance.email = value.strip() if value and value.strip() else None
-        if 'recovery_codes' in validated_data:
-            value = validated_data['recovery_codes']
-            instance.recovery_codes = value.strip() if value and value.strip() else None
-        if 'notes' in validated_data:
-            value = validated_data['notes']
-            instance.notes = value.strip() if value and value.strip() else None
-        if 'document' in validated_data:
-            instance.document = validated_data['document']
+        """Update profile with client-encrypted data"""
+        # Update all fields
+        for field_name, value in validated_data.items():
+            setattr(instance, field_name, value)
         
         instance.save()
         return instance

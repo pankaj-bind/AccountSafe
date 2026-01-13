@@ -202,7 +202,7 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onEdit, onCli
                 <svg className="w-3 h-3 text-zinc-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                <span className="text-xs text-zinc-400 dark:text-zinc-500 italic">Add first</span>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 italic">Add first credential</span>
               </motion.div>
             ) : (
               <>

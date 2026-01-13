@@ -1,6 +1,8 @@
 // src/services/authService.ts
 import axios from 'axios';
 import apiClient from '../api/apiClient';
+import { storeMasterPasswordForSession, storeKeyData } from './encryptionService';
+import { generateSalt } from '../utils/encryption';
 
 // Ensure consistent API URL with trailing slash
 const API_URL = process.env.REACT_APP_API_URL 
@@ -22,6 +24,20 @@ export const login = async (username: string, password: string) => {
     
     localStorage.setItem('authToken', token);
     
+    // Store master password in session for encryption key derivation
+    storeMasterPasswordForSession(password);
+    
+    // Retrieve or generate encryption salt for this user
+    // In a real app, this would be fetched from backend or stored with user profile
+    const existingSalt = localStorage.getItem(`encryption_salt_${username}`);
+    if (!existingSalt) {
+      const salt = generateSalt();
+      localStorage.setItem(`encryption_salt_${username}`, salt);
+      storeKeyData(salt);
+    } else {
+      storeKeyData(existingSalt);
+    }
+    
     return response.data;
   } catch (error) {
     throw error;
@@ -30,6 +46,8 @@ export const login = async (username: string, password: string) => {
 
 export const logout = () => {
   localStorage.removeItem('authToken');
+  // Clear encryption keys from session
+  sessionStorage.removeItem('accountsafe_master_key');
 };
 
 export const deleteAccount = async (password: string) => {

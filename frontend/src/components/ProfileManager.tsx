@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import apiClient from '../api/apiClient';
 import { generatePassword, getPasswordStrength } from '../utils/passwordGenerator';
 import { maskSensitiveData } from '../utils/formatters';
+import { encryptCredentialFields, decryptCredentialFields } from '../utils/encryption';
+import { getSessionEncryptionKey } from '../services/encryptionService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icon Components
@@ -496,7 +498,42 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     setError(null);
     try {
       const response = await apiClient.get(`organizations/${organization.id}/profiles/`);
-      setProfiles(response.data);
+      
+      // Decrypt credentials client-side
+      const encryptionKey = await getSessionEncryptionKey();
+      if (!encryptionKey) {
+        setError('Encryption key not found. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      const decryptedProfiles = await Promise.all(
+        response.data.map(async (profile: any) => {
+          try {
+            const decryptedFields = await decryptCredentialFields(profile, encryptionKey);
+            return {
+              ...profile,
+              username: decryptedFields.username || null,
+              password: decryptedFields.password || null,
+              email: decryptedFields.email || null,
+              notes: decryptedFields.notes || null,
+              recovery_codes: decryptedFields.recovery_codes || null,
+            };
+          } catch (error) {
+            console.error(`Failed to decrypt profile ${profile.id}:`, error);
+            return {
+              ...profile,
+              username: null,
+              password: null,
+              email: null,
+              notes: null,
+              recovery_codes: null,
+            };
+          }
+        })
+      );
+
+      setProfiles(decryptedProfiles);
     } catch (err: any) {
       console.error('Error:', err.response || err);
       setError('Failed to load profiles');
@@ -510,14 +547,51 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     setError(null);
 
     try {
+      // Get encryption key from session
+      const encryptionKey = await getSessionEncryptionKey();
+      if (!encryptionKey) {
+        setError('Encryption key not found. Please log in again.');
+        return;
+      }
+
+      // Encrypt sensitive fields client-side
+      const encryptedFields = await encryptCredentialFields(
+        {
+          username: newProfile.username,
+          password: newProfile.password,
+          email: newProfile.email,
+          notes: newProfile.notes,
+          recovery_codes: newProfile.recovery_codes,
+        },
+        encryptionKey
+      );
+
       const formData = new FormData();
-      // Always append fields, even if empty, to allow clearing values
+      // Append non-encrypted fields
       formData.append('title', newProfile.title || '');
-      formData.append('username', newProfile.username || '');
-      formData.append('password', newProfile.password || '');
-      formData.append('email', newProfile.email || '');
-      formData.append('recovery_codes', newProfile.recovery_codes || '');
-      formData.append('notes', newProfile.notes || '');
+      
+      // Append encrypted fields
+      if (encryptedFields.username_encrypted) {
+        formData.append('username_encrypted', encryptedFields.username_encrypted);
+        formData.append('username_iv', encryptedFields.username_iv!);
+      }
+      if (encryptedFields.password_encrypted) {
+        formData.append('password_encrypted', encryptedFields.password_encrypted);
+        formData.append('password_iv', encryptedFields.password_iv!);
+      }
+      if (encryptedFields.email_encrypted) {
+        formData.append('email_encrypted', encryptedFields.email_encrypted);
+        formData.append('email_iv', encryptedFields.email_iv!);
+      }
+      if (encryptedFields.notes_encrypted) {
+        formData.append('notes_encrypted', encryptedFields.notes_encrypted);
+        formData.append('notes_iv', encryptedFields.notes_iv!);
+      }
+      if (encryptedFields.recovery_codes_encrypted) {
+        formData.append('recovery_codes_encrypted', encryptedFields.recovery_codes_encrypted);
+        formData.append('recovery_codes_iv', encryptedFields.recovery_codes_iv!);
+      }
+      
       if (selectedFile) formData.append('document', selectedFile);
 
       if (editingProfile) {

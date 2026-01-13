@@ -8,7 +8,6 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
-from .encryption import encrypt_data, decrypt_data
 
 
 def validate_file_size(file):
@@ -184,14 +183,34 @@ class Organization(models.Model):
         ordering = ['-created_at']
 
 
-# --- Profile Model ---
+# --- Profile Model (Client-Side Encrypted) ---
 class Profile(models.Model):
+    """
+    Profile stores user credentials with CLIENT-SIDE ENCRYPTION.
+    
+    Encryption is performed in the browser using AES-256-GCM before transmission.
+    The server stores encrypted ciphertext and never sees plaintext credentials.
+    This implements a zero-knowledge architecture.
+    """
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='profiles')
     title = models.CharField(max_length=200, blank=True, null=True, help_text="Profile title or name")
-    _username = models.TextField(blank=True, null=True, db_column='username')
-    _password = models.TextField(blank=True, null=True, db_column='password')
-    _email = models.TextField(blank=True, null=True, db_column='email')
-    _recovery_codes = models.TextField(blank=True, null=True, db_column='recovery_codes')
+    
+    # Client-encrypted fields (stored as-is from browser encryption)
+    username_encrypted = models.TextField(blank=True, null=True, help_text="AES-256-GCM encrypted username")
+    username_iv = models.CharField(max_length=100, blank=True, null=True, help_text="Initialization vector for username")
+    
+    password_encrypted = models.TextField(blank=True, null=True, help_text="AES-256-GCM encrypted password")
+    password_iv = models.CharField(max_length=100, blank=True, null=True, help_text="Initialization vector for password")
+    
+    email_encrypted = models.TextField(blank=True, null=True, help_text="AES-256-GCM encrypted email")
+    email_iv = models.CharField(max_length=100, blank=True, null=True, help_text="Initialization vector for email")
+    
+    notes_encrypted = models.TextField(blank=True, null=True, help_text="AES-256-GCM encrypted notes")
+    notes_iv = models.CharField(max_length=100, blank=True, null=True, help_text="Initialization vector for notes")
+    
+    recovery_codes_encrypted = models.TextField(blank=True, null=True, help_text="AES-256-GCM encrypted recovery codes")
+    recovery_codes_iv = models.CharField(max_length=100, blank=True, null=True, help_text="Initialization vector for recovery codes")
+    
     document = models.FileField(
         upload_to='profile_documents/',
         blank=True,
@@ -199,59 +218,9 @@ class Profile(models.Model):
         validators=[validate_file_size],
         help_text="Upload document (PDF, images, etc.) - Max 10MB"
     )
-    _notes = models.TextField(blank=True, null=True, db_column='notes')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    @property
-    def username(self):
-        """Decrypt and return username"""
-        return decrypt_data(self._username) if self._username else None
-    
-    @username.setter
-    def username(self, value):
-        """Encrypt and store username"""
-        self._username = encrypt_data(value) if value else None
-
-    @property
-    def password(self):
-        """Decrypt and return password"""
-        return decrypt_data(self._password) if self._password else None
-    
-    @password.setter
-    def password(self, value):
-        """Encrypt and store password"""
-        self._password = encrypt_data(value) if value else None
-
-    @property
-    def notes(self):
-        """Decrypt and return notes"""
-        return decrypt_data(self._notes) if self._notes else None
-    
-    @notes.setter
-    def notes(self, value):
-        """Encrypt and store notes"""
-        self._notes = encrypt_data(value) if value else None
-
-    @property
-    def email(self):
-        """Decrypt and return email"""
-        return decrypt_data(self._email) if self._email else None
-    
-    @email.setter
-    def email(self, value):
-        """Encrypt and store email"""
-        self._email = encrypt_data(value) if value else None
-
-    @property
-    def recovery_codes(self):
-        """Decrypt and return recovery codes"""
-        return decrypt_data(self._recovery_codes) if self._recovery_codes else None
-    
-    @recovery_codes.setter
-    def recovery_codes(self, value):
-        """Encrypt and store recovery codes"""
-        self._recovery_codes = encrypt_data(value) if value else None
 
     def __str__(self):
         return f"{self.title or 'Untitled'} - {self.organization.name}"
