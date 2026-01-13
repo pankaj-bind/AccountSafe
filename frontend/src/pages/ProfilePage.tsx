@@ -446,10 +446,10 @@ const ProfilePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-sm text-zinc-400">Loading profile...</p>
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Loading profile...</p>
         </div>
       </div>
     );
@@ -471,9 +471,9 @@ const ProfilePage: React.FC = () => {
             <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl border border-blue-500/20">
               <UserIcon />
             </div>
-            <h1 className="text-2xl font-bold text-white">Profile Settings</h1>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Profile Settings</h1>
           </div>
-          <p className="text-sm text-zinc-400 ml-[52px]">Manage your account information and preferences</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 ml-[52px]">Manage your account information and preferences</p>
         </div>
 
         {/* Feedback Messages */}
@@ -521,15 +521,15 @@ const ProfilePage: React.FC = () => {
               
               {/* Profile Info */}
               <div className="text-center sm:text-left flex-1">
-                <h2 className="text-xl font-semibold text-white">
+                <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
                   {profile?.display_name || "User"}
                 </h2>
-                <p className="text-sm text-zinc-400 mt-0.5">@{profile?.username}</p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">@{profile?.username}</p>
                 {profile?.email && (
-                  <p className="text-sm text-zinc-500 mt-1">{profile.email}</p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">{profile.email}</p>
                 )}
                 <div className="mt-3">
-                  <label className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 bg-blue-500/10 rounded-lg hover:bg-blue-500/20 transition-colors cursor-pointer border border-blue-500/30">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 rounded-lg hover:bg-blue-500/20 transition-colors cursor-pointer border border-blue-500/30">
                     <CameraIcon />
                     Upload new photo
                     <input
@@ -546,7 +546,7 @@ const ProfilePage: React.FC = () => {
 
           {/* Account Information */}
           <div className="as-card p-6">
-            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-zinc-500"><UserIcon /></span>
               Account Information
             </h3>
@@ -626,7 +626,7 @@ const ProfilePage: React.FC = () => {
 
           {/* Update Password */}
           <div className="as-card p-6">
-            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-zinc-500"><LockIcon /></span>
               Update Password
             </h3>
@@ -732,7 +732,7 @@ const ProfilePage: React.FC = () => {
 
           {/* Personal Information */}
           <div className="as-card p-6">
-            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-zinc-500">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
@@ -743,7 +743,7 @@ const ProfilePage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* First Name */}
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">First Name</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">First Name</label>
                 <input
                   type="text"
                   name="first_name"
@@ -756,7 +756,7 @@ const ProfilePage: React.FC = () => {
 
               {/* Last Name */}
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Last Name</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Last Name</label>
                 <input
                   type="text"
                   name="last_name"
@@ -769,7 +769,7 @@ const ProfilePage: React.FC = () => {
 
               {/* Gender */}
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Gender</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Gender</label>
                 <div className="relative">
                   <select
                     name="gender"
@@ -795,14 +795,14 @@ const ProfilePage: React.FC = () => {
 
           {/* Contact & Company Information */}
           <div className="as-card p-6">
-            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-zinc-500"><BuildingIcon /></span>
               Contact & Company
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Phone */}
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone Number</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Phone Number</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                     <PhoneIcon />
@@ -820,7 +820,7 @@ const ProfilePage: React.FC = () => {
 
               {/* Company */}
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Company Name</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Company Name</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                     <BuildingIcon />
@@ -871,15 +871,15 @@ const ProfilePage: React.FC = () => {
 
         {/* Security PIN Section */}
         <div className="as-card p-6 mt-6">
-          <h3 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
-            <span className="text-purple-400">
+          <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
+            <span className="text-purple-500 dark:text-purple-400">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </span>
             Security PIN
           </h3>
-          <p className="text-sm text-zinc-400 mb-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
             {hasPin 
               ? "Your 4-digit PIN is set. You can reset it below if needed."
               : "Set up a 4-digit PIN to secure access to your organizations."}
@@ -904,7 +904,7 @@ const ProfilePage: React.FC = () => {
             </svg>
             Danger Zone
           </h3>
-          <p className="text-sm text-zinc-400 mb-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
             Once you delete your account, there is no going back. Please be certain.
           </p>
           <button
@@ -923,65 +923,60 @@ const ProfilePage: React.FC = () => {
       {/* Delete Account Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="as-modal max-w-md w-full">
-            <h3 className="text-lg font-semibold text-red-400 mb-2 flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-              </svg>
-              Delete Account
-            </h3>
-            <p className="text-sm text-zinc-400 mb-4">
-              This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
-            </p>
-            
-            {deleteError && (
-              <div className="as-alert-danger mb-4">
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="as-modal max-w-md w-full rounded-2xl overflow-hidden shadow-xl">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-5 flex items-center gap-3">
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {deleteError}
-              </div>
-            )}
+              </span>
+              <h3 className="text-lg font-semibold text-white">Delete Account</h3>
+            </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                Enter your password to confirm
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
-                  <LockIcon />
+            {/* Content */}
+            <div className="px-6 py-6 bg-white dark:bg-zinc-950">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-5">
+                This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+              </p>
+              {deleteError && (
+                <div className="as-alert-danger mb-4">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {deleteError}
                 </div>
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={(e) => {
-                    setDeletePassword(e.target.value);
-                    setDeleteError(null);
-                  }}
-                  className="as-input pl-10"
-                  placeholder="Enter your password"
-                  autoFocus
-                />
+              )}
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Enter your password to confirm
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500">
+                    <LockIcon />
+                  </div>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => {
+                      setDeletePassword(e.target.value);
+                      setDeleteError(null);
+                    }}
+                    className="as-input pl-10"
+                    placeholder="Enter your password"
+                    autoFocus
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeletePassword("");
-                  setDeleteError(null);
-                }}
-                className="as-btn-secondary"
-              >
-                Cancel
-              </button>
+            {/* Actions */}
+            <div className="px-6 py-4 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 rounded-b-2xl">
               <button
                 type="button"
                 onClick={handleDeleteAccount}
                 disabled={isDeletingAccount || !deletePassword}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mb-3 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isDeletingAccount ? (
                   <>
@@ -997,6 +992,17 @@ const ProfilePage: React.FC = () => {
                   </>
                 )}
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletePassword("");
+                  setDeleteError(null);
+                }}
+                className="w-full as-btn-secondary"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -1005,28 +1011,26 @@ const ProfilePage: React.FC = () => {
       {/* PIN Reset Modal */}
       {showPinResetModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="as-modal max-w-md w-full overflow-hidden">
+          <div className="as-modal max-w-md w-full rounded-2xl overflow-hidden shadow-xl">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-purple-500 -m-6 mb-6 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">{hasPin ? 'Reset' : 'Set Up'} Security PIN</h3>
-                  <p className="text-purple-100 text-sm">
-                    {pinResetStep === 'request' && 'Verify your email to continue'}
-                    {pinResetStep === 'verify' && 'Enter the OTP sent to your email'}
-                    {pinResetStep === 'newpin' && 'Enter your new 4-digit PIN'}
-                  </p>
-                </div>
+            <div className="bg-gradient-to-r from-purple-600 to-purple-500 px-6 py-5 flex items-center gap-3">
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </span>
+              <div>
+                <h3 className="text-lg font-semibold text-white leading-tight">{hasPin ? 'Reset' : 'Set Up'} Security PIN</h3>
+                <p className="text-xs text-white/80 mt-0.5">
+                  {pinResetStep === 'request' && 'Verify your email to continue'}
+                  {pinResetStep === 'verify' && 'Enter the OTP sent to your email'}
+                  {pinResetStep === 'newpin' && 'Enter your new 4-digit PIN'}
+                </p>
               </div>
             </div>
 
             {/* Content */}
-            <div>
+            <div className="px-6 py-6 bg-white dark:bg-zinc-950">
               {pinResetError && (
                 <div className="as-alert-danger mb-4">
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1048,8 +1052,8 @@ const ProfilePage: React.FC = () => {
               {/* Step 1: Request OTP */}
               {pinResetStep === 'request' && (
                 <div>
-                  <p className="text-zinc-400 mb-4 text-center">
-                    We'll send a verification code to your email: <strong className="text-white">{formData.email}</strong>
+                  <p className="text-zinc-600 dark:text-zinc-400 mb-4 text-center">
+                    We'll send a verification code to your email: <strong className="text-zinc-900 dark:text-white">{formData.email}</strong>
                   </p>
                   <button
                     onClick={handleRequestPinResetOtp}
