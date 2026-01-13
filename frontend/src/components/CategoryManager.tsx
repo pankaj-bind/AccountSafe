@@ -124,15 +124,17 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onEdit, onCli
   return (
     <div
       onClick={onClick}
-      onMouseEnter={() => setShowMenu(true)}
-      onMouseLeave={() => setShowMenu(false)}
       className="group relative bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-800 rounded-lg sm:rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-300 hover:border-zinc-400 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-lg hover:shadow-zinc-300/50 dark:hover:shadow-zinc-950/50 hover:scale-[1.02]"
     >
       {/* Kebab Menu */}
-      <div className={`absolute top-2 right-2 transition-opacity duration-200 ${showMenu ? 'opacity-100' : 'opacity-0'}`}>
+      <div 
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        onMouseEnter={() => setShowMenu(true)}
+        onMouseLeave={() => setShowMenu(false)}
+      >
         <div className="relative">
           <button
-            onClick={(e) => { e.stopPropagation(); }}
+            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
             className="w-6 h-6 sm:w-7 sm:h-7 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-full flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
           >
             <DotsVerticalIcon className="w-4 h-4" />
@@ -142,14 +144,14 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onEdit, onCli
           {showMenu && (
             <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden z-10 animate-fadeIn">
               <button
-                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
               >
                 <PencilIcon className="w-4 h-4 text-blue-500" />
                 Edit
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                onClick={(e) => { e.stopPropagation(); onDelete(); setShowMenu(false); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
               >
                 <TrashIcon className="w-4 h-4" />

@@ -234,21 +234,21 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   const hasCredentials = profile.username || profile.password || profile.email;
   
   return (
-    <div className="as-card p-0 overflow-hidden group hover:border-zinc-700 transition-all">
+    <div className="as-card p-0 overflow-hidden group hover:border-zinc-400 dark:hover:border-zinc-700 transition-all">
       {/* Card Header */}
-      <div className="px-5 py-4 border-b border-zinc-800/50 bg-zinc-900/30">
+      <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-2 bg-blue-500/10 rounded-lg flex-shrink-0">
               <KeyIcon className="w-5 h-5 text-blue-400" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-white truncate">
+              <h3 className="font-semibold text-zinc-900 dark:text-white truncate">
                 {profile.title || 'Untitled Profile'}
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
-                <ClockIcon className="w-3 h-3 text-zinc-600" />
-                <span className="text-xs text-zinc-500">
+                <ClockIcon className="w-3 h-3 text-zinc-400 dark:text-zinc-600" />
+                <span className="text-xs text-zinc-500 dark:text-zinc-500">
                   {new Date(profile.created_at).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
@@ -263,14 +263,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={onEdit}
-              className="p-2 text-zinc-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+              className="p-2 text-zinc-400 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
               title="Edit"
             >
               <PencilIcon />
             </button>
             <button
               onClick={onDelete}
-              className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+              className="p-2 text-zinc-400 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
               title="Delete"
             >
               <TrashIcon />
@@ -383,8 +383,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               <span className="text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
               <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Notes</span>
             </div>
-            <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3">
-              <p className={`text-sm text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
+            <div className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-3">
+              <p className={`text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
                 {profile.notes}
               </p>
               {profile.notes.length > 150 && (
