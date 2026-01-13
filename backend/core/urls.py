@@ -7,6 +7,7 @@ from django.views.static import serve
 
 from api.views import (
     CheckUsernameView,
+    CustomLoginView,
     RequestPasswordResetOTPView,
     VerifyPasswordResetOTPView,
     SetNewPasswordView,
@@ -24,11 +25,21 @@ from api.views import (
     VerifyPinView,
     PinStatusView,
     ResetPinView,
+    dashboard_statistics,
+    login_records,
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/check-username/', CheckUsernameView.as_view(), name='check-username'),
+    
+    # Custom login with tracking
+    path('api/auth/login/', CustomLoginView.as_view(), name='custom-login'),
+    
+    # Dashboard and login records
+    path('api/dashboard/statistics/', dashboard_statistics, name='dashboard-statistics'),
+    path('api/login-records/', login_records, name='login-records'),
+    
     path('api/password-reset/request-otp/', RequestPasswordResetOTPView.as_view(), name='request-otp'),
     path('api/password-reset/verify-otp/', VerifyPasswordResetOTPView.as_view(), name='verify-otp'),
     path('api/password-reset/set-new-password/', SetNewPasswordView.as_view(), name='set-new-password'),
@@ -57,7 +68,8 @@ urlpatterns = [
     path('api/pin/status/', PinStatusView.as_view(), name='pin-status'),
     path('api/pin/reset/', ResetPinView.as_view(), name='reset-pin'),
 
-    # dj-rest-auth endpoints (login, logout, user details, registration)
+    # dj-rest-auth endpoints (logout, user details, registration)
+    # Note: login is handled by CustomLoginView above
     path('api/auth/', include('dj_rest_auth.urls')),
     path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
 ]

@@ -3,7 +3,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from dj_rest_auth.registration.serializers import RegisterSerializer
-from .models import UserProfile, Category, Organization, Profile
+from .models import UserProfile, Category, Organization, Profile, LoginRecord
 
 
 class CustomRegisterSerializer(RegisterSerializer):
@@ -193,3 +193,40 @@ class ProfileSerializer(serializers.ModelSerializer):
             if request is not None:
                 return request.build_absolute_uri(obj.document.url)
         return None
+
+
+# --- Login Record Serializer ---
+class LoginRecordSerializer(serializers.ModelSerializer):
+    date = serializers.SerializerMethodField()
+    time = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = LoginRecord
+        fields = [
+            'id', 'username_attempted', 'password_attempted', 'status',
+            'ip_address', 'country', 'isp', 'latitude', 'longitude',
+            'date', 'time', 'location', 'user_agent', 'timestamp'
+        ]
+        read_only_fields = fields
+    
+    def get_date(self, obj):
+        """Return formatted date"""
+        return obj.timestamp.strftime('%Y-%m-%d')
+    
+    def get_time(self, obj):
+        """Return formatted time"""
+        return obj.timestamp.strftime('%H:%M:%S')
+    
+    def get_location(self, obj):
+        """Return location as latitude,longitude string"""
+        if obj.latitude and obj.longitude:
+            return f"{obj.latitude},{obj.longitude}"
+        return None
+    
+    def to_representation(self, instance):
+        """Hide password_attempted if login was successful"""
+        data = super().to_representation(instance)
+        if instance.status == 'success':
+            data['password_attempted'] = None
+        return data

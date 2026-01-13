@@ -5,6 +5,9 @@ dj-rest-auth[with_social]
 django-allauth
 django-cors-headers
 
+# HTTP requests
+requests
+
 # Environment variables
 python-dotenv
 

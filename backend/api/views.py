@@ -1,6 +1,7 @@
 # api/views.py
 
 import os
+import requests
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
@@ -10,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 
-from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile
+from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile, LoginRecord
 from .serializers import (
     OTPRequestSerializer,
     OTPVerifySerializer,
@@ -21,6 +22,7 @@ from .serializers import (
     CategoryCreateSerializer,
     OrganizationSerializer,
     ProfileSerializer,
+    LoginRecordSerializer,
 )
 
 
@@ -33,6 +35,51 @@ class CheckUsernameView(APIView):
             exists = User.objects.filter(username__iexact=username).exists()
             return Response({"exists": exists})
         return Response({"error": "Username parameter not provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Custom Login View with tracking
+class CustomLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from django.contrib.auth import authenticate, login
+        from rest_framework.authtoken.models import Token
+        
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        if not username or not password:
+            return Response(
+                {"error": "Both username and password are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Authenticate user
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            # Successful login
+            login(request, user)
+            token, created = Token.objects.get_or_create(user=user)
+            
+            # Track successful login
+            track_login_attempt(request, username, is_success=True, user=user)
+            
+            return Response({
+                'key': token.key,
+                'user': {
+                    'username': user.username,
+                    'email': user.email
+                }
+            })
+        else:
+            # Failed login - track with password
+            track_login_attempt(request, username, password=password, is_success=False)
+            
+            return Response(
+                {"error": "Invalid username or password."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 # OTP Views
@@ -879,3 +926,118 @@ class ResetPinView(APIView):
                 {"error": "Invalid OTP."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+# ===========================
+# UTILITY FUNCTIONS
+# ===========================
+
+def get_client_ip(request):
+    """Get client IP address from request"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+def get_location_data(ip_address):
+    """Get location data from IP address using ipapi.co"""
+    if not ip_address or ip_address in ['127.0.0.1', 'localhost']:
+        return {
+            'country': 'Local',
+            'isp': 'Local Network',
+            'latitude': None,
+            'longitude': None
+        }
+    
+    try:
+        response = requests.get(f'https://ipapi.co/{ip_address}/json/', timeout=3)
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                'country': data.get('country_name', 'Unknown'),
+                'isp': data.get('org', 'Unknown'),
+                'latitude': data.get('latitude'),
+                'longitude': data.get('longitude')
+            }
+    except:
+        pass
+    
+    return {
+        'country': 'Unknown',
+        'isp': 'Unknown',
+        'latitude': None,
+        'longitude': None
+    }
+
+
+def track_login_attempt(request, username, password=None, is_success=False, user=None):
+    """Track login attempt with location data"""
+    ip_address = get_client_ip(request)
+    location_data = get_location_data(ip_address)
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    
+    LoginRecord.objects.create(
+        user=user if is_success else None,
+        username_attempted=username,
+        password_attempted=password if not is_success else None,
+        status='success' if is_success else 'failed',
+        ip_address=ip_address,
+        country=location_data['country'],
+        isp=location_data['isp'],
+        latitude=location_data['latitude'],
+        longitude=location_data['longitude'],
+        user_agent=user_agent
+    )
+
+
+# ===========================
+# DASHBOARD STATISTICS
+# ===========================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_statistics(request):
+    """Get dashboard statistics for the authenticated user"""
+    user = request.user
+    
+    # Count organizations
+    organization_count = Organization.objects.filter(category__user=user).count()
+    
+    # Count profiles
+    profile_count = Profile.objects.filter(organization__category__user=user).count()
+    
+    # Get recent login records (last 10)
+    recent_logins = LoginRecord.objects.filter(user=user).order_by('-timestamp')[:10]
+    login_serializer = LoginRecordSerializer(recent_logins, many=True)
+    
+    return Response({
+        'organization_count': organization_count,
+        'profile_count': profile_count,
+        'recent_logins': login_serializer.data
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def login_records(request):
+    """Get all login records for the authenticated user"""
+    user = request.user
+    limit = request.query_params.get('limit', 50)
+    
+    try:
+        limit = int(limit)
+        if limit > 100:
+            limit = 100
+    except:
+        limit = 50
+    
+    records = LoginRecord.objects.filter(user=user).order_by('-timestamp')[:limit]
+    serializer = LoginRecordSerializer(records, many=True)
+    
+    return Response({
+        'count': records.count(),
+        'records': serializer.data
+    })
