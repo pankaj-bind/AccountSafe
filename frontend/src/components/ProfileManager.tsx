@@ -334,11 +334,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   {profile.username && (
                     <div className="mb-2 sm:mb-3">
                       <label className="block text-xs font-semibold win-text-tertiary mb-1">Username</label>
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <p className="flex-1 text-xs sm:text-sm win-text-primary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle break-all">{profile.username}</p>
+                      <div className="flex items-stretch gap-1.5 sm:gap-2">
+                        <p className="flex-1 text-xs sm:text-sm win-text-primary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle break-all min-h-[34px] sm:min-h-[38px] flex items-center">{profile.username}</p>
                         <button
                           onClick={() => copyToClipboard(profile.username!, `username-${profile.id}`)}
-                          className={`p-1.5 sm:p-2 rounded transition-colors flex-shrink-0 ${
+                          className={`w-[34px] h-[34px] sm:w-[38px] sm:h-[38px] rounded transition-colors flex-shrink-0 flex items-center justify-center ${
                             copiedField === `username-${profile.id}` 
                               ? 'bg-green-100 text-green-600' 
                               : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
@@ -362,8 +362,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   {profile.password && (
                     <div className="mb-2 sm:mb-3">
                       <label className="block text-xs font-semibold win-text-tertiary mb-1">Password</label>
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle">
+                      <div className="flex items-stretch gap-1.5 sm:gap-2">
+                        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 win-bg-subtle px-2 sm:px-3 rounded border border-win-border-subtle min-h-[34px] sm:min-h-[38px]">
                           <p className="flex-1 text-xs sm:text-sm win-text-primary font-mono break-all">
                             {showPassword[profile.id] ? profile.password : '••••••••'}
                           </p>
@@ -386,7 +386,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                         </div>
                         <button
                           onClick={() => copyToClipboard(profile.password!, `password-${profile.id}`)}
-                          className={`p-1.5 sm:p-2 rounded transition-colors flex-shrink-0 ${
+                          className={`w-[34px] h-[34px] sm:w-[38px] sm:h-[38px] rounded transition-colors flex-shrink-0 flex items-center justify-center ${
                             copiedField === `password-${profile.id}` 
                               ? 'bg-green-100 text-green-600' 
                               : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
@@ -410,11 +410,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   {profile.email && (
                     <div className="mb-2 sm:mb-3">
                       <label className="block text-xs font-semibold win-text-tertiary mb-1">Email</label>
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <p className="flex-1 text-xs sm:text-sm win-text-primary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle break-all">{profile.email}</p>
+                      <div className="flex items-stretch gap-1.5 sm:gap-2">
+                        <p className="flex-1 text-xs sm:text-sm win-text-primary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle break-all min-h-[34px] sm:min-h-[38px] flex items-center">{profile.email}</p>
                         <button
                           onClick={() => copyToClipboard(profile.email!, `email-${profile.id}`)}
-                          className={`p-1.5 sm:p-2 rounded transition-colors flex-shrink-0 ${
+                          className={`w-[34px] h-[34px] sm:w-[38px] sm:h-[38px] rounded transition-colors flex-shrink-0 flex items-center justify-center ${
                             copiedField === `email-${profile.id}` 
                               ? 'bg-green-100 text-green-600' 
                               : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
