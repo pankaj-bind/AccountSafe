@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// Client-Side Encryption Utilities (Zero-Knowledge Architecture)
+// Client-Side Encryption Utilities 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 
 // Algorithm: AES-256-GCM with PBKDF2 key derivation
@@ -8,7 +8,7 @@
 // - Random salt per user
 // - Random IV per encryption operation
 //
-// Security Model: Zero-Knowledge
+// Security Model:
 // - Server never sees plaintext credentials
 // - Server never sees master password
 // - Encryption/decryption happens entirely in browser
