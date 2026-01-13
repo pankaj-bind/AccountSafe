@@ -1119,6 +1119,8 @@ def send_login_notification_email(record, user):
         """
         
         # Plain text version
+        security_notice = "⚠️ SECURITY NOTICE: This login attempt failed. If this wasn't you, your account may be under attack. Please change your password immediately."
+        
         text_content = f"""
         AccountSafe - {alert_level}
         
@@ -1134,7 +1136,7 @@ def send_login_notification_email(record, user):
         ISP: {record.isp or 'Unknown'}
         Coordinates: {location}
         
-        {'⚠️ SECURITY NOTICE: This login attempt failed. If this wasn\'t you, your account may be under attack. Please change your password immediately.' if record.status == 'failed' else ''}
+        {security_notice if record.status == 'failed' else ''}
         
         If this wasn't you, please secure your account immediately.
         You can view all login activity in your AccountSafe dashboard.
