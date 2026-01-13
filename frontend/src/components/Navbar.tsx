@@ -49,7 +49,7 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className="win-navbar">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link to="/" onClick={closeMenus} className="flex items-center flex-shrink-0 group">

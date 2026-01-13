@@ -158,7 +158,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     setNewProfile({
       title: profile.title || '',
       username: profile.username || '',
-      password: '',
+      password: profile.password || '',
       email: profile.email || '',
       recovery_codes: profile.recovery_codes || '',
       notes: profile.notes || '',
@@ -550,11 +550,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                     value={newProfile.password}
                     onChange={(e) => setNewProfile({ ...newProfile, password: e.target.value })}
                     placeholder="Enter password"
-                    className="win-input text-sm sm:text-base"
+                    className="win-input text-sm sm:text-base font-mono"
                   />
-                  {editingProfile && !newProfile.password && (
-                    <p className="text-xs win-text-tertiary mt-2">Leave blank to keep current password</p>
-                  )}
                 </div>
 
                 <div className="mb-4 sm:mb-5">
