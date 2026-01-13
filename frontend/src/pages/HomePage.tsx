@@ -24,7 +24,7 @@ const HomePage: React.FC = () => {
               Welcome to <span className="text-blue-500 dark:text-blue-400">AccountSafe</span>
             </h1>
             <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-10 max-w-xl mx-auto">
-              Protected by AES-256-GCM authenticated encryption with PBKDF2 key derivation. Zero-knowledge architecture ensures only you can access your credentials.
+              Protected by AES-256-GCM authenticated encryption with PBKDF2 key derivation. Our managed security architecture ensures your data is encrypted securely at rest
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
