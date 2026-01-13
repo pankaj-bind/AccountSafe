@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/apiClient';
 import { getPinStatus } from '../services/pinService';
 import PinVerificationModal from './PinVerificationModal';
+import { VaultGridSkeleton, EmptyState } from './Skeleton';
+import { formatCredentialCount } from '../utils/formatters';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -185,13 +188,33 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onEdit, onCli
         {org.name}
       </h4>
 
-      {/* Profile count */}
-      <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-        <KeyIcon className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
-        <span className="text-xs text-zinc-500 dark:text-zinc-500">
-          {org.profile_count} {org.profile_count === 1 ? 'credential' : 'credentials'}
-        </span>
-      </div>
+      {/* Profile count with better empty state handling */}
+      {(() => {
+        const credInfo = formatCredentialCount(org.profile_count);
+        return (
+          <div className="flex items-center justify-center gap-1 sm:gap-1.5">
+            {credInfo.isEmpty ? (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800/50"
+              >
+                <svg className="w-3 h-3 text-zinc-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500 italic">Add first</span>
+              </motion.div>
+            ) : (
+              <>
+                <KeyIcon className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
+                <span className="text-xs text-zinc-500 dark:text-zinc-500">
+                  {credInfo.text}
+                </span>
+              </>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 };
@@ -624,38 +647,29 @@ const CategoryManager: React.FC = () => {
         )}
 
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
-        {/* Loading State */}
+        {/* Loading State - MAANG-grade skeleton loader */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-16 sm:py-20 md:py-24">
-            <div className="relative">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-3 sm:border-4 border-zinc-300 dark:border-zinc-700 rounded-full"></div>
-              <div className="absolute top-0 left-0 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-3 sm:border-4 border-transparent border-t-blue-500 rounded-full animate-spin"></div>
-            </div>
-            <p className="mt-4 sm:mt-5 md:mt-6 text-sm sm:text-base text-zinc-600 dark:text-zinc-400">Loading your vault...</p>
-          </div>
-        )}
+        {loading && <VaultGridSkeleton count={8} />}
 
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
-        {/* Empty State */}
+        {/* Empty State - MAANG-grade with animation */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {!loading && categories.length === 0 && (
-          <div className="as-card p-6 sm:p-8 md:p-12 text-center">
-            <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-5 md:mb-6">
-              <FolderIcon className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 text-zinc-400 dark:text-zinc-600" />
-            </div>
-            <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white mb-2">Your vault is empty</h3>
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mb-4 sm:mb-5 md:mb-6 max-w-md mx-auto">
-              Create your first category to start organizing your credentials securely.
-            </p>
-            <button
-              onClick={() => { setShowCategoryModal(true); setError(null); }}
-              className="as-btn-primary inline-flex items-center gap-2 text-sm sm:text-base"
-            >
-              <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-              Create First Category
-            </button>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="as-card p-6 sm:p-8 md:p-12"
+          >
+            <EmptyState
+              icon={<FolderIcon className="w-8 h-8 text-zinc-400 dark:text-zinc-500" />}
+              title="Your vault is empty"
+              description="Start organizing your credentials securely. Create categories for different types of accounts like Social Media, Finance, or Work."
+              action={{
+                label: "Create First Category",
+                onClick: () => { setShowCategoryModal(true); setError(null); }
+              }}
+            />
+          </motion.div>
         )}
 
         {/* ═══════════════════════════════════════════════════════════════════════════ */}

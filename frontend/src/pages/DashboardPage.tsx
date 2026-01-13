@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useProfile } from '../contexts/ProfileContext';
 import apiClient from '../api/apiClient';
+import { formatLoginDateTime, formatNullableValue } from '../utils/formatters';
+import { DashboardSkeleton } from '../components/Skeleton';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -201,11 +204,20 @@ const StatCard: React.FC<StatCardProps> = ({ icon, value, label, color, href }) 
 // Login Record Row Component
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const LoginRecordRow: React.FC<{ record: LoginRecord; isLast: boolean }> = ({ record, isLast }) => {
+const LoginRecordRow: React.FC<{ record: LoginRecord; isLast: boolean; index: number }> = ({ record, isLast, index }) => {
   const isSuccess = record.status === 'success';
+  const dateTime = formatLoginDateTime(record.date, record.time);
+  const country = formatNullableValue(record.country, { type: 'location' });
+  const isp = formatNullableValue(record.isp, { type: 'isp' });
+  const ip = formatNullableValue(record.ip_address, { type: 'ip' });
 
   return (
-    <tr className={`group transition-colors duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/50`}>
+    <motion.tr 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.2 }}
+      className={`group transition-colors duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/50`}
+    >
       <td className="py-3 sm:py-4 px-3 sm:px-4">
         <div className="flex items-center gap-2">
           {isSuccess ? (
@@ -222,22 +234,46 @@ const LoginRecordRow: React.FC<{ record: LoginRecord; isLast: boolean }> = ({ re
         </div>
       </td>
       <td className="py-3 sm:py-4 px-3 sm:px-4">
-        <div className="text-xs sm:text-sm text-zinc-900 dark:text-zinc-200">{record.date}</div>
-        <div className="text-xs text-zinc-500 dark:text-zinc-500">{record.time}</div>
+        <div className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200" title={dateTime.fullDate}>
+          {dateTime.relative}
+        </div>
+        <div className="text-xs text-zinc-500 dark:text-zinc-500">{dateTime.formatted}</div>
       </td>
       <td className="py-3 sm:py-4 px-3 sm:px-4">
-        <code className="text-xs sm:text-sm font-mono text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
-          {record.ip_address || 'N/A'}
+        <code className={`text-xs sm:text-sm font-mono px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ${
+          ip.isUnknown 
+            ? 'text-zinc-400 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 italic' 
+            : 'text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800'
+        }`}>
+          {ip.display}
         </code>
       </td>
       <td className="py-3 sm:py-4 px-3 sm:px-4">
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <GlobeIcon className="w-3 sm:w-4 h-3 sm:h-4 text-zinc-400 dark:text-zinc-500" />
-          <span className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">{record.country || 'Unknown'}</span>
+          {country.isUnknown ? (
+            <svg className="w-3 sm:w-4 h-3 sm:h-4 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+            </svg>
+          ) : (
+            <GlobeIcon className="w-3 sm:w-4 h-3 sm:h-4 text-zinc-400 dark:text-zinc-500" />
+          )}
+          <span className={`text-xs sm:text-sm ${
+            country.isUnknown 
+              ? 'text-zinc-400 dark:text-zinc-500 italic' 
+              : 'text-zinc-700 dark:text-zinc-300'
+          }`}>
+            {country.display}
+          </span>
         </div>
       </td>
       <td className="py-3 sm:py-4 px-3 sm:px-4">
-        <span className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">{record.isp || 'N/A'}</span>
+        <span className={`text-xs sm:text-sm ${
+          isp.isUnknown 
+            ? 'text-zinc-400 dark:text-zinc-500 italic' 
+            : 'text-zinc-600 dark:text-zinc-400'
+        }`}>
+          {isp.display}
+        </span>
       </td>
       <td className="py-3 sm:py-4 px-3 sm:px-4">
         {record.latitude != null && record.longitude != null ? (
@@ -245,15 +281,20 @@ const LoginRecordRow: React.FC<{ record: LoginRecord; isLast: boolean }> = ({ re
             href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-mono text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:underline transition-colors"
+            className="text-xs font-mono text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:underline transition-colors flex items-center gap-1"
+            aria-label={`View location on map: ${record.latitude}, ${record.longitude}`}
           >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
             {Number(record.latitude).toFixed(2)}°, {Number(record.longitude).toFixed(2)}°
           </a>
         ) : (
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">—</span>
+          <span className="text-xs text-zinc-300 dark:text-zinc-600 italic">Coordinates unavailable</span>
         )}
       </td>
-    </tr>
+    </motion.tr>
   );
 };
 
@@ -329,16 +370,9 @@ const DashboardPage: React.FC = () => {
   const displayRecords = showAllRecords ? allRecords : (stats?.recent_logins || []);
   const failedLoginCount = stats?.recent_logins?.filter(l => l.status === 'failed').length || 0;
 
-  // Loading state
+  // Loading state - use skeleton loader for MAANG-grade UX
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-zinc-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -435,13 +469,16 @@ const DashboardPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {displayRecords.map((record, index) => (
-                      <LoginRecordRow
-                        key={record.id}
-                        record={record}
-                        isLast={index === displayRecords.length - 1}
-                      />
-                    ))}
+                    <AnimatePresence>
+                      {displayRecords.map((record, index) => (
+                        <LoginRecordRow
+                          key={record.id}
+                          record={record}
+                          isLast={index === displayRecords.length - 1}
+                          index={index}
+                        />
+                      ))}
+                    </AnimatePresence>
                   </tbody>
                 </table>
               </div>

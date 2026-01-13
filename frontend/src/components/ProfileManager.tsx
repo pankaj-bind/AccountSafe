@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import apiClient from '../api/apiClient';
-import { generatePassword, getPasswordStrength, PasswordOptions } from '../utils/passwordGenerator';
+import { generatePassword, getPasswordStrength } from '../utils/passwordGenerator';
+import { maskSensitiveData } from '../utils/formatters';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icon Components
@@ -152,6 +154,9 @@ interface CredentialFieldProps {
   showPassword?: boolean;
   onTogglePassword?: () => void;
   mono?: boolean;
+  isSensitive?: boolean;
+  showSensitive?: boolean;
+  onToggleSensitive?: () => void;
 }
 
 const CredentialField: React.FC<CredentialFieldProps> = ({
@@ -163,42 +168,67 @@ const CredentialField: React.FC<CredentialFieldProps> = ({
   isPassword = false,
   showPassword = false,
   onTogglePassword,
-  mono = false
-}) => (
-  <div className="group/field">
-    <div className="flex items-center gap-2 mb-1.5">
-      <span className="text-zinc-400 dark:text-zinc-500">{icon}</span>
-      <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{label}</span>
-    </div>
-    <div className="flex items-center gap-2">
-      <div className={`flex-1 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[42px] ${mono ? 'font-mono' : ''}`}>
-        <span className="flex-1 text-sm text-zinc-700 dark:text-zinc-200 break-all">
-          {isPassword && !showPassword ? '••••••••••••' : value}
-        </span>
-        {isPassword && onTogglePassword && (
-          <button
-            onClick={onTogglePassword}
-            className="p-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-            title={showPassword ? 'Hide' : 'Show'}
-          >
-            {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-          </button>
+  mono = false,
+  isSensitive = false,
+  showSensitive = true,
+  onToggleSensitive
+}) => {
+  // Determine what to display
+  const getDisplayValue = () => {
+    if (isPassword && !showPassword) return '••••••••••••';
+    if (isSensitive && !showSensitive) return maskSensitiveData(value, { type: 'username' });
+    return value;
+  };
+
+  return (
+    <motion.div 
+      className="group/field"
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-zinc-400 dark:text-zinc-500">{icon}</span>
+        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{label}</span>
+        {isSensitive && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            Sensitive
+          </span>
         )}
       </div>
-      <button
-        onClick={onCopy}
-        className={`p-2.5 rounded-lg transition-all ${
-          isCopied
-            ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30'
-            : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700'
-        }`}
-        title={isCopied ? 'Copied!' : 'Copy'}
-      >
-        {isCopied ? <CheckIcon /> : <CopyIcon />}
-      </button>
-    </div>
-  </div>
-);
+      <div className="flex items-center gap-2">
+        <div className={`flex-1 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[42px] ${mono ? 'font-mono' : ''}`}>
+          <span className={`flex-1 text-sm text-zinc-700 dark:text-zinc-200 break-all transition-all ${(isPassword && !showPassword) || (isSensitive && !showSensitive) ? 'tracking-wider' : ''}`}>
+            {getDisplayValue()}
+          </span>
+          {(isPassword || isSensitive) && (onTogglePassword || onToggleSensitive) && (
+            <button
+              onClick={isPassword ? onTogglePassword : onToggleSensitive}
+              className="p-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+              title={(isPassword ? showPassword : showSensitive) ? 'Hide' : 'Show'}
+              aria-label={(isPassword ? showPassword : showSensitive) ? 'Hide value' : 'Show value'}
+            >
+              {(isPassword ? showPassword : showSensitive) ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+          )}
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={onCopy}
+          className={`p-2.5 rounded-lg transition-all ${
+            isCopied
+              ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30'
+              : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700'
+          }`}
+          title={isCopied ? 'Copied!' : 'Copy'}
+          aria-label={isCopied ? 'Copied to clipboard' : 'Copy to clipboard'}
+        >
+          {isCopied ? <CheckIcon /> : <CopyIcon />}
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Profile Card Component
