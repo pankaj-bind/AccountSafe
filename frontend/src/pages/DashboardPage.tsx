@@ -42,6 +42,12 @@ const DashboardPage: React.FC = () => {
       setStats(response.data);
     } catch (error) {
       console.error('Failed to fetch dashboard stats:', error);
+      // Set default empty stats to prevent crash
+      setStats({
+        organization_count: 0,
+        profile_count: 0,
+        recent_logins: []
+      });
     } finally {
       setLoading(false);
     }
@@ -113,7 +119,7 @@ const DashboardPage: React.FC = () => {
                 </svg>
               </div>
             </div>
-            <p className="text-2xl font-bold text-win-text-primary mb-1">{stats?.recent_logins.length || 0}</p>
+            <p className="text-2xl font-bold text-win-text-primary mb-1">{stats?.recent_logins?.length || 0}</p>
             <p className="text-sm text-win-text-tertiary">Recent Logins</p>
           </div>
 
@@ -187,14 +193,14 @@ const DashboardPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 text-sm text-win-text-secondary font-mono">{record.ip_address || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm text-win-text-secondary">
-                        {record.latitude && record.longitude ? (
+                        {record.latitude != null && record.longitude != null ? (
                           <a 
                             href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-win-accent hover:underline text-xs font-mono"
                           >
-                            {record.latitude.toFixed(4)}, {record.longitude.toFixed(4)}
+                            {Number(record.latitude).toFixed(4)}, {Number(record.longitude).toFixed(4)}
                           </a>
                         ) : (
                           <span className="text-win-text-tertiary">N/A</span>
