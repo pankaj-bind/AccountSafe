@@ -1,6 +1,6 @@
 // src/pages/ForgotPasswordPage.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { requestPasswordResetOTP, verifyPasswordResetOTP, setNewPasswordWithOTP } from '../services/authService';
 
@@ -35,6 +35,18 @@ const XIcon = () => (
   </svg>
 );
 
+const ClockIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const RefreshIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+  </svg>
+);
+
 type Step = 'email' | 'otp' | 'password' | 'success';
 
 const ForgotPasswordPage: React.FC = () => {
@@ -44,12 +56,54 @@ const ForgotPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   
+  // Timer states
+  const [otpExpiryTime, setOtpExpiryTime] = useState<number>(300); // 5 minutes in seconds
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
+  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
+  
   const navigate = useNavigate();
+
+  // Format time as MM:SS
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // OTP expiry countdown timer
+  useEffect(() => {
+    if (step !== 'otp' || otpExpiryTime <= 0) return;
+    
+    const timer = setInterval(() => {
+      setOtpExpiryTime((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setError('Verification code has expired. Please request a new one.');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [step, otpExpiryTime]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   // Live password validation
   useEffect(() => {
@@ -66,28 +120,94 @@ const ForgotPasswordPage: React.FC = () => {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
     setIsLoading(true);
     try {
-      await requestPasswordResetOTP(email);
-      setMessage('An OTP has been sent to your email.');
+      const response = await requestPasswordResetOTP(email);
+      setMessage('A verification code has been sent to your email.');
+      setOtpExpiryTime(response.expires_in || 300);
+      setResendCooldown(60); // 60 second cooldown for resend
+      setRemainingAttempts(null);
       setStep('otp');
     } catch (err: any) {
-      setError(err.response?.data?.email?.[0] || 'Failed to send OTP. Please check the email address.');
+      const errorData = err.response?.data;
+      if (err.response?.status === 429) {
+        // Rate limited
+        setError(errorData?.error || 'Please wait before requesting another code.');
+        setResendCooldown(errorData?.retry_after || 60);
+      } else if (err.response?.status === 404) {
+        setError(errorData?.error || 'No account found with this email address.');
+      } else {
+        setError(errorData?.error || errorData?.email?.[0] || 'Failed to send verification code. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleResendOTP = useCallback(async () => {
+    if (resendCooldown > 0 || isResending) return;
+    
+    setError(null);
+    setMessage(null);
+    setIsResending(true);
+    
+    try {
+      const response = await requestPasswordResetOTP(email);
+      setMessage('A new verification code has been sent to your email.');
+      setOtpExpiryTime(response.expires_in || 300);
+      setResendCooldown(60);
+      setOtp(''); // Clear old OTP
+      setRemainingAttempts(null);
+    } catch (err: any) {
+      const errorData = err.response?.data;
+      if (err.response?.status === 429) {
+        setError(errorData?.error || 'Please wait before requesting another code.');
+        setResendCooldown(errorData?.retry_after || 60);
+      } else {
+        setError(errorData?.error || 'Failed to resend code. Please try again.');
+      }
+    } finally {
+      setIsResending(false);
+    }
+  }, [email, resendCooldown, isResending]);
+
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
     setIsLoading(true);
     try {
-      await verifyPasswordResetOTP(email, otp);
-      setMessage('OTP verified. You can now set a new password.');
+      const response = await verifyPasswordResetOTP(email, otp);
+      setMessage('Code verified! You can now set a new password.');
       setStep('password');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Invalid or expired OTP.');
+      const errorData = err.response?.data;
+      
+      // Update remaining attempts if provided
+      if (errorData?.remaining_attempts !== undefined) {
+        setRemainingAttempts(errorData.remaining_attempts);
+      }
+      
+      // Handle specific error codes
+      switch (errorData?.code) {
+        case 'OTP_EXPIRED':
+          setError('Verification code has expired. Please request a new one.');
+          setOtpExpiryTime(0);
+          break;
+        case 'MAX_ATTEMPTS_EXCEEDED':
+          setError('Too many failed attempts. Please request a new verification code.');
+          setOtpExpiryTime(0);
+          break;
+        case 'OTP_NOT_FOUND':
+          setError('No verification code found. Please request a new one.');
+          break;
+        case 'OTP_ALREADY_USED':
+          setError('This code has already been used. Please request a new one.');
+          break;
+        default:
+          setError(errorData?.error || 'Invalid verification code. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -96,6 +216,8 @@ const ForgotPasswordPage: React.FC = () => {
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
+    
     if (password !== password2) {
       setError('Passwords do not match.');
       return;
@@ -111,7 +233,19 @@ const ForgotPasswordPage: React.FC = () => {
       setStep('success');
       setTimeout(() => navigate('/login'), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.response?.data?.password?.[0] || 'Failed to reset password.');
+      const errorData = err.response?.data;
+      
+      // Handle specific error codes
+      switch (errorData?.code) {
+        case 'OTP_EXPIRED':
+          setError('Session expired. Please start the password reset process again.');
+          break;
+        case 'MAX_ATTEMPTS_EXCEEDED':
+          setError('Too many failed attempts. Please start over.');
+          break;
+        default:
+          setError(errorData?.error || errorData?.password?.[0] || 'Failed to reset password. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -245,6 +379,20 @@ const ForgotPasswordPage: React.FC = () => {
           {/* OTP Step */}
           {step === 'otp' && (
             <form onSubmit={handleOtpSubmit} className="space-y-4">
+              {/* OTP Expiry Timer */}
+              <div className={`flex items-center justify-center gap-2 p-2 rounded-lg ${
+                otpExpiryTime > 60 ? 'bg-blue-500/10 text-blue-400' : 
+                otpExpiryTime > 0 ? 'bg-yellow-500/10 text-yellow-400' : 'bg-red-500/10 text-red-400'
+              }`}>
+                <ClockIcon />
+                <span className="text-sm font-medium">
+                  {otpExpiryTime > 0 
+                    ? `Code expires in ${formatTime(otpExpiryTime)}`
+                    : 'Code expired - request a new one'
+                  }
+                </span>
+              </div>
+              
               <div>
                 <label htmlFor="otp" className="block text-xs font-medium text-win-text-secondary mb-1.5">Verification Code</label>
                 <div className="relative">
@@ -255,16 +403,27 @@ const ForgotPasswordPage: React.FC = () => {
                     type="text" 
                     id="otp" 
                     value={otp} 
-                    onChange={(e) => setOtp(e.target.value)} 
-                    className="win-input pl-10 tracking-[0.5em] font-mono text-center" 
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} 
+                    className="win-input pl-10 tracking-[0.5em] font-mono text-center text-lg" 
                     maxLength={6} 
                     placeholder="000000"
                     required 
+                    disabled={otpExpiryTime === 0}
                   />
                 </div>
-                <p className="text-xs text-win-text-tertiary mt-1.5">Code sent to {email}</p>
+                <div className="flex items-center justify-between mt-1.5">
+                  <p className="text-xs text-win-text-tertiary">Code sent to {email}</p>
+                  {remainingAttempts !== null && remainingAttempts > 0 && (
+                    <p className="text-xs text-yellow-400">{remainingAttempts} attempt(s) left</p>
+                  )}
+                </div>
               </div>
-              <button type="submit" disabled={isLoading} className="w-full win-btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
+              
+              <button 
+                type="submit" 
+                disabled={isLoading || otpExpiryTime === 0 || otp.length !== 6} 
+                className="w-full win-btn-primary flex items-center justify-center gap-2 disabled:opacity-50"
+              >
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
@@ -272,6 +431,29 @@ const ForgotPasswordPage: React.FC = () => {
                   </>
                 ) : 'Verify Code'}
               </button>
+              
+              {/* Resend OTP Button */}
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  disabled={resendCooldown > 0 || isResending}
+                  className={`inline-flex items-center gap-1.5 text-sm transition-colors ${
+                    resendCooldown > 0 || isResending
+                      ? 'text-win-text-tertiary cursor-not-allowed'
+                      : 'text-win-accent hover:text-win-accent-light'
+                  }`}
+                >
+                  <RefreshIcon />
+                  {isResending ? (
+                    'Sending...'
+                  ) : resendCooldown > 0 ? (
+                    `Resend code in ${resendCooldown}s`
+                  ) : (
+                    "Didn't receive the code? Resend"
+                  )}
+                </button>
+              </div>
             </form>
           )}
 

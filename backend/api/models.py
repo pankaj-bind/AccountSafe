@@ -27,13 +27,60 @@ class PasswordResetOTP(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     otp = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
+    attempts = models.IntegerField(default=0)  # Track verification attempts
+    max_attempts = models.IntegerField(default=5)  # Maximum allowed attempts
+    is_used = models.BooleanField(default=False)  # Track if OTP was already used
 
     def is_valid(self):
+        """Check if OTP is still valid (not expired, not used, attempts not exceeded)"""
+        if self.is_used:
+            return False
+        if self.attempts >= self.max_attempts:
+            return False
         return timezone.now() < self.created_at + timedelta(minutes=5)
+    
+    def is_expired(self):
+        """Check if OTP has expired"""
+        return timezone.now() >= self.created_at + timedelta(minutes=5)
+    
+    def increment_attempts(self):
+        """Increment the attempt counter"""
+        self.attempts += 1
+        self.save()
+    
+    def mark_as_used(self):
+        """Mark the OTP as used"""
+        self.is_used = True
+        self.save()
+    
+    def get_remaining_time(self):
+        """Get remaining time in seconds before OTP expires"""
+        expiry_time = self.created_at + timedelta(minutes=5)
+        remaining = expiry_time - timezone.now()
+        return max(0, int(remaining.total_seconds()))
 
     @staticmethod
     def generate_otp():
-        return str(random.randint(100000, 999999))
+        """Generate a cryptographically secure 6-digit OTP"""
+        import secrets
+        return str(secrets.randbelow(900000) + 100000)
+    
+    @staticmethod
+    def can_request_new_otp(user, cooldown_seconds=60):
+        """Check if user can request a new OTP (rate limiting)"""
+        recent_otp = PasswordResetOTP.objects.filter(user=user).order_by('-created_at').first()
+        if not recent_otp:
+            return True, 0
+        
+        time_since_last = timezone.now() - recent_otp.created_at
+        if time_since_last.total_seconds() < cooldown_seconds:
+            remaining = cooldown_seconds - int(time_since_last.total_seconds())
+            return False, remaining
+        return True, 0
+    
+    class Meta:
+        verbose_name = "Password Reset OTP"
+        verbose_name_plural = "Password Reset OTPs"
 
 
 # --- User Profile Model ---

@@ -49,13 +49,29 @@ class RequestPasswordResetOTPView(APIView):
             if not user:
                 return Response({"error": "No user found with this email address."}, status=status.HTTP_404_NOT_FOUND)
             
+            # Rate limiting - check if user can request a new OTP
+            can_request, remaining_seconds = PasswordResetOTP.can_request_new_otp(user, cooldown_seconds=60)
+            if not can_request:
+                return Response({
+                    "error": f"Please wait {remaining_seconds} seconds before requesting a new OTP.",
+                    "retry_after": remaining_seconds
+                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            
+            # Delete old OTPs for this user
             PasswordResetOTP.objects.filter(user=user).delete()
+            
+            # Generate new OTP
             otp_code = PasswordResetOTP.generate_otp()
-            PasswordResetOTP.objects.create(user=user, otp=otp_code)
+            otp_instance = PasswordResetOTP.objects.create(user=user, otp=otp_code)
+            
+            # Get user's display name
+            display_name = user.first_name or user.username
             
             # Send email using Django's SMTP backend
             try:
                 from django.core.mail import EmailMultiAlternatives
+                import logging
+                logger = logging.getLogger(__name__)
                 
                 html_content = f'''
                 <!DOCTYPE html>
@@ -64,57 +80,66 @@ class RequestPasswordResetOTPView(APIView):
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 </head>
-                <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Segoe UI', Arial, sans-serif;">
+                <body style="margin: 0; padding: 0; background-color: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif;">
                     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                         <!-- Header -->
                         <div style="text-align: center; padding: 30px 0;">
-                            <h1 style="color: #0078d4; margin: 0; font-size: 32px; font-weight: 600;">Auth Template</h1>
-                            <p style="color: #666; margin: 10px 0 0 0; font-size: 14px;">Authentication System</p>
+                            <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 15px 25px; border-radius: 12px; margin-bottom: 15px;">
+                                <span style="color: #ffffff; font-size: 28px; font-weight: 700;">AccountSafe</span>
+                            </div>
+                            <p style="color: #a1a1aa; margin: 10px 0 0 0; font-size: 14px;">Secure Password Manager</p>
                         </div>
                         
                         <!-- Main Content -->
-                        <div style="background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                            <h2 style="color: #333; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">Password Reset Request</h2>
+                        <div style="background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%); border: 1px solid #27272a; border-radius: 16px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                            <h2 style="color: #ffffff; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">Password Reset Request</h2>
                             
-                            <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
-                                Hello,
+                            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Hello <strong style="color: #ffffff;">{display_name}</strong>,
                             </p>
                             
-                            <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 0 0 25px 0;">
-                                We received a request to reset your password. Please use the verification code below to complete the process:
+                            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6; margin: 0 0 25px 0;">
+                                We received a request to reset your AccountSafe password. Use the verification code below to complete the process:
                             </p>
                             
                             <!-- OTP Box -->
-                            <div style="background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%); border-radius: 10px; padding: 30px; text-align: center; margin: 30px 0;">
-                                <p style="color: #ffffff; font-size: 14px; margin: 0 0 15px 0; opacity: 0.9;">Your Verification Code</p>
-                                <div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 20px; display: inline-block;">
-                                    <span style="color: #ffffff; font-size: 36px; font-weight: bold; letter-spacing: 10px; font-family: 'Courier New', monospace;">
+                            <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+                                <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
+                                <div style="background: rgba(0,0,0,0.2); border-radius: 10px; padding: 20px 30px; display: inline-block;">
+                                    <span style="color: #ffffff; font-size: 42px; font-weight: bold; letter-spacing: 12px; font-family: 'Courier New', monospace;">
                                         {otp_code}
                                     </span>
                                 </div>
                             </div>
                             
                             <!-- Instructions -->
-                            <div style="background: #f8f9fa; border-left: 4px solid #0078d4; padding: 20px; border-radius: 5px; margin: 25px 0;">
-                                <p style="margin: 0; color: #555; font-size: 14px; line-height: 1.6;">
-                                    <strong>⏱️ Time Limit:</strong> This code will expire in <strong>5 minutes</strong><br>
-                                    <strong>🔒 Security:</strong> Never share this code with anyone<br>
-                                    <strong>❓ Didn't request this?</strong> Ignore this email - your account is safe
+                            <div style="background: #18181b; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                                <p style="margin: 0; color: #d4d4d8; font-size: 14px; line-height: 1.8;">
+                                    <span style="color: #fbbf24;"></span> <strong style="color: #ffffff;">Expires in:</strong> 5 minutes<br>
+                                    <span style="color: #22c55e;"></span> <strong style="color: #ffffff;">Security:</strong> Never share this code with anyone<br>
+                                    <span style="color: #ef4444;"></span> <strong style="color: #ffffff;">Attempts:</strong> Maximum 5 verification attempts allowed
                                 </p>
                             </div>
                             
-                            <p style="color: #666; font-size: 14px; line-height: 1.6; margin: 25px 0 0 0;">
-                                If you didn't request a password reset, please ignore this email or contact our support team if you have concerns.
+                            <p style="color: #71717a; font-size: 14px; line-height: 1.6; margin: 25px 0 0 0;">
+                                If you didn't request a password reset, please ignore this email. Your account is safe and no changes have been made.
+                            </p>
+                        </div>
+                        
+                        <!-- Security Notice -->
+                        <div style="background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 15px 20px; margin-top: 20px; text-align: center;">
+                            <p style="color: #71717a; font-size: 12px; margin: 0;">
+                                🛡️ This email was sent from AccountSafe's secure servers. We will never ask for your password via email.
                             </p>
                         </div>
                         
                         <!-- Footer -->
                         <div style="text-align: center; padding: 30px 20px;">
-                            <p style="color: #999; font-size: 12px; margin: 0 0 5px 0;">
-                                This is an automated message from Auth Template
+                            <p style="color: #52525b; font-size: 12px; margin: 0 0 5px 0;">
+                                This is an automated message from AccountSafe
                             </p>
-                            <p style="color: #999; font-size: 11px; margin: 0;">
-                                © 2026 Auth Template. All rights reserved.
+                            <p style="color: #3f3f46; font-size: 11px; margin: 0;">
+                                © 2026 AccountSafe. All rights reserved.
                             </p>
                         </div>
                     </div>
@@ -122,37 +147,79 @@ class RequestPasswordResetOTPView(APIView):
                 </html>
                 '''
                 
+                # Plain text version for email clients that don't support HTML
+                plain_text = f"""AccountSafe - Password Reset
+
+Hello {display_name},
+
+We received a request to reset your AccountSafe password.
+
+Your verification code is: {otp_code}
+
+This code will expire in 5 minutes.
+Maximum 5 verification attempts are allowed.
+
+If you didn't request this, please ignore this email.
+
+---
+AccountSafe - Secure Password Manager
+"""
+                
                 # Print OTP to console for development/testing
                 print(f"\n{'='*60}")
-                print(f"PASSWORD RESET OTP")
+                print(f"📧 PASSWORD RESET OTP")
                 print(f"{'='*60}")
                 print(f"Email: {email}")
+                print(f"User: {display_name}")
                 print(f"OTP Code: {otp_code}")
                 print(f"Valid for: 5 minutes")
+                print(f"Max attempts: 5")
                 print(f"{'='*60}\n")
                 
                 email_message = EmailMultiAlternatives(
-                    subject="Auth Template - Password Reset OTP",
-                    body=f"Your OTP for password reset is: {otp_code}. It is valid for 5 minutes.",
+                    subject="AccountSafe - Password Reset Code",
+                    body=plain_text,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[email],
                 )
                 email_message.attach_alternative(html_content, "text/html")
-                email_message.send(fail_silently=True)
                 
-                return Response({"message": "An OTP has been sent to your email."})
+                # Send email and track result
+                email_sent = email_message.send(fail_silently=False)
+                
+                if email_sent:
+                    logger.info(f"OTP email sent successfully to {email}")
+                    return Response({
+                        "message": "A verification code has been sent to your email.",
+                        "expires_in": 300  # 5 minutes in seconds
+                    })
+                else:
+                    logger.warning(f"Email send returned 0 for {email}")
+                    return Response({
+                        "message": "A verification code has been sent to your email.",
+                        "expires_in": 300
+                    })
                     
             except Exception as e:
-                print(f"Email Error: {str(e)}")
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Email Error for {email}: {str(e)}")
+                
                 # Even if email fails, print OTP to console for testing
                 print(f"\n{'='*60}")
-                print(f"PASSWORD RESET OTP (Email failed, but OTP is valid)")
+                print(f"⚠️ PASSWORD RESET OTP (Email failed, but OTP is valid)")
                 print(f"{'='*60}")
                 print(f"Email: {email}")
                 print(f"OTP Code: {otp_code}")
                 print(f"Valid for: 5 minutes")
+                print(f"Error: {str(e)}")
                 print(f"{'='*60}\n")
-                return Response({"message": "An OTP has been sent to your email."})
+                
+                # Still return success to not reveal email configuration issues
+                return Response({
+                    "message": "A verification code has been sent to your email.",
+                    "expires_in": 300
+                })
                 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -165,16 +232,69 @@ class VerifyPasswordResetOTPView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data["email"]
             otp_code = serializer.validated_data["otp"]
+            
             try:
                 user = User.objects.get(email__iexact=email)
-                otp_instance = PasswordResetOTP.objects.get(user=user, otp=otp_code)
-                if otp_instance.is_valid():
-                    return Response({"message": "OTP verified successfully."})
-                else:
+            except User.DoesNotExist:
+                return Response({"error": "Invalid email address."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                otp_instance = PasswordResetOTP.objects.get(user=user)
+            except PasswordResetOTP.DoesNotExist:
+                return Response({
+                    "error": "No OTP found. Please request a new verification code.",
+                    "code": "OTP_NOT_FOUND"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if OTP has expired
+            if otp_instance.is_expired():
+                otp_instance.delete()
+                return Response({
+                    "error": "Verification code has expired. Please request a new one.",
+                    "code": "OTP_EXPIRED"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if max attempts exceeded
+            if otp_instance.attempts >= otp_instance.max_attempts:
+                otp_instance.delete()
+                return Response({
+                    "error": "Too many failed attempts. Please request a new verification code.",
+                    "code": "MAX_ATTEMPTS_EXCEEDED"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if OTP was already used
+            if otp_instance.is_used:
+                otp_instance.delete()
+                return Response({
+                    "error": "This verification code has already been used. Please request a new one.",
+                    "code": "OTP_ALREADY_USED"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Verify the OTP code
+            if otp_instance.otp != otp_code:
+                otp_instance.increment_attempts()
+                remaining_attempts = otp_instance.max_attempts - otp_instance.attempts
+                
+                if remaining_attempts <= 0:
                     otp_instance.delete()
-                    return Response({"error": "OTP has expired."}, status=status.HTTP_400_BAD_REQUEST)
-            except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
-                return Response({"error": "Invalid OTP or email."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        "error": "Too many failed attempts. Please request a new verification code.",
+                        "code": "MAX_ATTEMPTS_EXCEEDED"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                return Response({
+                    "error": f"Invalid verification code. {remaining_attempts} attempt(s) remaining.",
+                    "code": "INVALID_OTP",
+                    "remaining_attempts": remaining_attempts
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # OTP is valid
+            remaining_time = otp_instance.get_remaining_time()
+            return Response({
+                "message": "Verification code verified successfully.",
+                "remaining_time": remaining_time
+            })
+            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -187,23 +307,62 @@ class SetNewPasswordView(APIView):
             email = serializer.validated_data["email"]
             otp_code = serializer.validated_data["otp"]
             password = serializer.validated_data["password"]
+            
             try:
                 user = User.objects.get(email__iexact=email)
-                otp_instance = PasswordResetOTP.objects.get(user=user, otp=otp_code)
-                if otp_instance.is_valid():
-                    user.set_password(password)
-                    user.save()
-                    otp_instance.delete()
-                    return Response(
-                        {"message": "Password has been reset successfully."}
-                    )
-                else:
-                    otp_instance.delete()
-                    return Response({"error": "OTP has expired."}, status=status.HTTP_400_BAD_REQUEST)
-            except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
-                return Response(
-                    {"error": "Invalid OTP or email. Please start over."}, status=status.HTTP_400_BAD_REQUEST
-                )
+            except User.DoesNotExist:
+                return Response({
+                    "error": "Invalid email address.",
+                    "code": "USER_NOT_FOUND"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                otp_instance = PasswordResetOTP.objects.get(user=user)
+            except PasswordResetOTP.DoesNotExist:
+                return Response({
+                    "error": "Session expired. Please start the password reset process again.",
+                    "code": "OTP_NOT_FOUND"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Verify OTP matches
+            if otp_instance.otp != otp_code:
+                return Response({
+                    "error": "Invalid verification code. Please verify your OTP first.",
+                    "code": "INVALID_OTP"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if OTP has expired
+            if otp_instance.is_expired():
+                otp_instance.delete()
+                return Response({
+                    "error": "Session expired. Please start the password reset process again.",
+                    "code": "OTP_EXPIRED"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if max attempts exceeded
+            if otp_instance.attempts >= otp_instance.max_attempts:
+                otp_instance.delete()
+                return Response({
+                    "error": "Too many failed attempts. Please start over.",
+                    "code": "MAX_ATTEMPTS_EXCEEDED"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # All validations passed - reset the password
+            user.set_password(password)
+            user.save()
+            
+            # Delete the OTP after successful password reset
+            otp_instance.delete()
+            
+            # Log the successful password reset
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Password reset successful for user: {user.username} ({email})")
+            
+            return Response({
+                "message": "Your password has been reset successfully. You can now login with your new password."
+            })
+            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
