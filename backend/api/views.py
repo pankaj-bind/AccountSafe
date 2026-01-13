@@ -945,7 +945,7 @@ def get_client_ip(request):
 
 
 def get_location_data(ip_address):
-    """Get location data from IP address using ipapi.co"""
+    """Get location data from IP address using ipinfo.io"""
     if not ip_address or ip_address in ['127.0.0.1', 'localhost']:
         return {
             'country': 'Local',
@@ -955,17 +955,38 @@ def get_location_data(ip_address):
         }
     
     try:
-        response = requests.get(f'https://ipapi.co/{ip_address}/json/', timeout=3)
+        # Use ipinfo.io for better accuracy
+        response = requests.get(f'https://ipinfo.io/{ip_address}/json', timeout=5)
         if response.status_code == 200:
             data = response.json()
+            
+            # Extract latitude and longitude from "loc" field
+            location = data.get('loc', '')
+            latitude, longitude = None, None
+            if location and ',' in location:
+                try:
+                    lat, lon = location.split(',')
+                    latitude = float(lat.strip())
+                    longitude = float(lon.strip())
+                except:
+                    pass
+            
+            # Build location string: City, Region, Country
+            city = data.get('city', '')
+            region = data.get('region', '')
+            country = data.get('country', '')
+            
+            location_parts = [p for p in [city, region, country] if p]
+            location_str = ', '.join(location_parts) if location_parts else 'Unknown'
+            
             return {
-                'country': data.get('country_name', 'Unknown'),
+                'country': location_str,  # Full location string
                 'isp': data.get('org', 'Unknown'),
-                'latitude': data.get('latitude'),
-                'longitude': data.get('longitude')
+                'latitude': latitude,
+                'longitude': longitude
             }
-    except:
-        pass
+    except Exception as e:
+        print(f"Error fetching location data: {e}")
     
     return {
         'country': 'Unknown',

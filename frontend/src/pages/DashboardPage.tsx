@@ -156,7 +156,7 @@ const DashboardPage: React.FC = () => {
                     <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Date & Time</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">IP Address</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Coordinates (Lat, Long)</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Country</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Location</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">ISP</th>
                   </tr>
                 </thead>
