@@ -5,6 +5,10 @@ import apiClient from '../api/apiClient';
 import { getPinStatus } from '../services/pinService';
 import PinVerificationModal from './PinVerificationModal';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Types
+// ═══════════════════════════════════════════════════════════════════════════════
+
 interface Organization {
   id: number;
   name: string;
@@ -19,6 +23,248 @@ interface Category {
   description: string;
   organizations: Organization[];
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Icons
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SearchIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+  </svg>
+);
+
+const PlusIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+  </svg>
+);
+
+const FolderIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+  </svg>
+);
+
+const ShieldLockIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+  </svg>
+);
+
+const TrashIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+  </svg>
+);
+
+const XMarkIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
+const ChevronRightIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+  </svg>
+);
+
+const KeyIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+  </svg>
+);
+
+const LockIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+  </svg>
+);
+
+const ShieldIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+  </svg>
+);
+
+const GlobeIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+  </svg>
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Organization Card Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface OrgCardProps {
+  org: Organization;
+  onDelete: () => void;
+  onClick: () => void;
+}
+
+const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onClick }) => {
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <div
+      onClick={onClick}
+      className="group relative bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg sm:rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-300 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-lg hover:shadow-zinc-200/50 dark:hover:shadow-zinc-950/50 hover:scale-[1.02]"
+    >
+      {/* Delete button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        className="absolute -top-1.5 sm:-top-2 -right-1.5 sm:-right-2 w-6 h-6 sm:w-7 sm:h-7 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-500/20 hover:border-red-300 dark:hover:border-red-500/30 hover:text-red-600 dark:hover:text-red-400"
+      >
+        <XMarkIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+      </button>
+
+      {/* Logo */}
+      <div className="flex items-center justify-center h-12 sm:h-14 mb-2 sm:mb-3">
+        {org.logo_url && !imageError ? (
+          <img
+            src={org.logo_url}
+            alt={org.name}
+            className="max-w-full max-h-full object-contain"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 rounded-lg sm:rounded-xl flex items-center justify-center">
+            <span className="text-lg sm:text-xl font-bold text-blue-400">
+              {org.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Name */}
+      <h4 className="font-medium text-zinc-900 dark:text-zinc-200 text-center text-xs sm:text-sm mb-1 line-clamp-2" title={org.name}>
+        {org.name}
+      </h4>
+
+      {/* Profile count */}
+      <div className="flex items-center justify-center gap-1 sm:gap-1.5">
+        <KeyIcon className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
+        <span className="text-xs text-zinc-500 dark:text-zinc-500">
+          {org.profile_count} {org.profile_count === 1 ? 'credential' : 'credentials'}
+        </span>
+      </div>
+
+      {/* Hover indicator */}
+      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-500 to-blue-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-b-xl" />
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Category Section Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface CategorySectionProps {
+  category: Category;
+  searchQuery: string;
+  onAddOrg: (categoryId: number) => void;
+  onDeleteCategory: (categoryId: number) => void;
+  onDeleteOrg: (orgId: number, categoryId: number) => void;
+  onOrgClick: (org: Organization) => void;
+}
+
+const CategorySection: React.FC<CategorySectionProps> = ({
+  category,
+  searchQuery,
+  onAddOrg,
+  onDeleteCategory,
+  onDeleteOrg,
+  onOrgClick
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const filteredOrgs = category.organizations.filter(org =>
+    !searchQuery || org.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (searchQuery && filteredOrgs.length === 0) return null;
+
+  return (
+    <div className="mb-6 sm:mb-8 md:mb-10 animate-fadeIn">
+      {/* Category Header */}
+      <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-5">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-2 sm:gap-3 group"
+        >
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+            <FolderIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
+          </div>
+          <div className="text-left">
+            <h2 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5 sm:gap-2">
+              {category.name}
+              <ChevronRightIcon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 dark:text-zinc-500 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+            </h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-500">
+              {category.organizations.length} organization{category.organizations.length === 1 ? '' : 's'}
+              {category.description && ` • ${category.description}`}
+            </p>
+          </div>
+        </button>
+
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={() => onAddOrg(category.id)}
+            className="as-btn-secondary as-btn-sm flex items-center gap-1.5 text-xs sm:text-sm"
+          >
+            <PlusIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="hidden sm:inline">Add Organization</span>
+            <span className="sm:hidden">Add</span>
+          </button>
+          <button
+            onClick={() => onDeleteCategory(category.id)}
+            className="as-btn-icon as-btn-ghost text-zinc-500 dark:text-zinc-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+            title="Delete category"
+          >
+            <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Organizations Grid */}
+      {isExpanded && (
+        <>
+          {filteredOrgs.length === 0 ? (
+            <div className="text-center py-8 sm:py-10 md:py-12 bg-zinc-50 dark:bg-zinc-900/30 rounded-lg sm:rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 rounded-lg sm:rounded-xl bg-zinc-200 dark:bg-zinc-800/50 flex items-center justify-center">
+                <ShieldLockIcon className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-400 dark:text-zinc-600" />
+              </div>
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-500 mb-2 sm:mb-3">No organizations in this category</p>
+              <button
+                onClick={() => onAddOrg(category.id)}
+                className="as-btn-primary as-btn-sm text-xs sm:text-sm"
+              >
+                Add First Organization
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+              {filteredOrgs.map((org) => (
+                <OrganizationCard
+                  key={org.id}
+                  org={org}
+                  onDelete={() => onDeleteOrg(org.id, category.id)}
+                  onClick={() => onOrgClick(org)}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Main CategoryManager Component
+// ═══════════════════════════════════════════════════════════════════════════════
 
 const CategoryManager: React.FC = () => {
   const { token } = useAuth();
@@ -57,7 +303,6 @@ const CategoryManager: React.FC = () => {
   };
 
   const handleOrganizationClick = (org: Organization) => {
-    // If user has PIN and hasn't verified yet this session
     if (hasPin && !pinVerified) {
       setPendingOrgId(org.id);
       setPendingOrgName(org.name);
@@ -134,7 +379,7 @@ const CategoryManager: React.FC = () => {
   };
 
   const handleDeleteCategory = async (id: number) => {
-    if (!window.confirm('Delete this category?')) return;
+    if (!window.confirm('Delete this category and all its organizations?')) return;
     
     try {
       await apiClient.delete(`categories/${id}/`);
@@ -145,7 +390,7 @@ const CategoryManager: React.FC = () => {
   };
 
   const handleDeleteOrganization = async (orgId: number, catId: number) => {
-    if (!window.confirm('Delete this organization?')) return;
+    if (!window.confirm('Delete this organization and all its credentials?')) return;
     
     try {
       await apiClient.delete(`organizations/${orgId}/`);
@@ -168,206 +413,281 @@ const CategoryManager: React.FC = () => {
     return nameMatch || orgMatch;
   });
 
+  // Calculate stats
+  const totalOrgs = categories.reduce((sum, cat) => sum + cat.organizations.length, 0);
+  const totalProfiles = categories.reduce((sum, cat) => 
+    sum + cat.organizations.reduce((orgSum, org) => orgSum + org.profile_count, 0), 0
+  );
+
   if (!token) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600">Please log in to manage categories</p>
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+        <div className="as-card p-8 text-center">
+          <LockIcon className="w-12 h-12 text-zinc-500 mx-auto mb-4" />
+          <p className="text-zinc-400">Please log in to access your vault</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full win-bg-solid min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold win-text-primary mb-2 sm:mb-3">Secure Vault</h1>
-          <p className="text-sm sm:text-base win-text-secondary px-2">Organize and manage your credentials securely in one place.</p>
-        </div>
-
-        {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-6 sm:mb-8">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-              <svg className="h-4 w-4 sm:h-5 sm:w-5 win-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search for an organization..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3.5 text-sm sm:text-base border win-border rounded-xl shadow-win-card focus:outline-none focus:ring-2 focus:ring-win-accent focus:border-transparent win-bg-layer win-text-primary placeholder:text-win-text-tertiary"
-            />
-          </div>
-        </div>
-
-        {/* Create Button */}
-        <div className="text-center mb-6 sm:mb-10">
-          <button
-            onClick={() => { setShowCategoryModal(true); setError(null); }}
-            className="win-btn-primary shadow-win-card text-sm sm:text-base px-4 sm:px-6"
-          >
-            + Create New Category
-          </button>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="max-w-2xl mx-auto mb-4 sm:mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 sm:px-4 py-2 sm:py-3 rounded-xl text-sm sm:text-base">
-            <div className="flex justify-between items-center gap-2">
-              <span className="flex-1">{error}</span>
-              <button onClick={() => setError(null)} className="font-bold text-xl hover:opacity-70 flex-shrink-0">&times;</button>
-            </div>
-          </div>
-        )}
-
-        {/* Loading */}
-        {loading && (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-win-accent border-t-transparent"></div>
-            <p className="mt-4 win-text-secondary">Loading...</p>
-          </div>
-        )}
-
-        {/* Empty */}
-        {!loading && categories.length === 0 && (
-          <div className="text-center py-20">
-            <div className="text-7xl mb-4">📁</div>
-            <h3 className="text-xl font-semibold win-text-primary mb-2">No categories yet</h3>
-            <p className="win-text-tertiary">Create your first category to get started!</p>
-          </div>
-        )}
-
-        {/* Categories */}
-        <div className="space-y-8 sm:space-y-12">
-          {filteredCategories.map((category) => (
-            <div key={category.id}>
-              {/* Category Header */}
-              <div className="mb-4 sm:mb-6">
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-0">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6 win-text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                  </svg>
-                  <h2 className="text-xl sm:text-2xl font-bold win-text-primary">{category.name}</h2>
+    <div className="min-h-screen bg-white dark:bg-[#09090b]">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Header Section */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <div className="flex flex-col gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                <div className="p-2 sm:p-2.5 bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-lg sm:rounded-xl border border-blue-500/20">
+                  <ShieldIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                 </div>
-                <div className="flex gap-2 mt-3 sm:mt-4">
-                  <button
-                    onClick={() => { setSelectedCategoryId(category.id); setShowOrgModal(true); setError(null); }}
-                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs sm:text-sm rounded-lg shadow-win-card transition-colors whitespace-nowrap"
-                  >
-                    + Add Organization
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCategory(category.id)}
-                    className="px-3 sm:px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm rounded-lg shadow-win-card transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">Secure Vault</h1>
+                {hasPin && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-xs font-medium text-green-700 dark:text-green-400">
+                    <LockIcon className="w-3 h-3" />
+                    <span className="hidden sm:inline">PIN Protected</span>
+                  </span>
+                )}
               </div>
+              <p className="text-zinc-600 dark:text-zinc-400 text-xs sm:text-sm">
+                Organize and manage your credentials securely
+              </p>
+            </div>
+          </div>
+        </div>
 
-              {/* Organizations Grid */}
-              {category.organizations.length === 0 ? (
-                <div className="text-center py-12 sm:py-16 win-text-tertiary win-bg-subtle rounded-xl border border-win-border-subtle text-sm sm:text-base">
-                  <p>No organizations yet</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
-                  {category.organizations
-                    .filter(org => !searchQuery || org.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                    .map((org) => (
-                      <div
-                        key={org.id}
-                        onClick={() => handleOrganizationClick(org)}
-                        className="win-bg-layer border border-win-border-default rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-win-elevated transition-all duration-200 group relative cursor-pointer hover:scale-105 hover:border-win-accent"
-                      >
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteOrganization(org.id, category.id); }}
-                          className="absolute -top-1.5 sm:-top-2 -right-1.5 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs hover:bg-red-600 shadow-win-card"
-                        >
-                          ✕
-                        </button>
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Stats Bar */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
+          <div className="as-card p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+            <div className="p-2 sm:p-2.5 md:p-3 bg-purple-100 dark:bg-purple-500/10 rounded-lg sm:rounded-xl">
+              <FolderIcon className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="text-center sm:text-left">
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-zinc-900 dark:text-white">{categories.length}</p>
+              <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-500 uppercase tracking-wide">Categories</p>
+            </div>
+          </div>
+          <div className="as-card p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+            <div className="p-2 sm:p-2.5 md:p-3 bg-blue-100 dark:bg-blue-500/10 rounded-lg sm:rounded-xl">
+              <GlobeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="text-center sm:text-left">
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-zinc-900 dark:text-white">{totalOrgs}</p>
+              <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-500 uppercase tracking-wide">Organizations</p>
+            </div>
+          </div>
+          <div className="as-card p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+            <div className="p-2 sm:p-2.5 md:p-3 bg-emerald-100 dark:bg-emerald-500/10 rounded-lg sm:rounded-xl">
+              <KeyIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="text-center sm:text-left">
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-zinc-900 dark:text-white">{totalProfiles}</p>
+              <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-500 uppercase tracking-wide">Credentials</p>
+            </div>
+          </div>
+        </div>
 
-                        <div className="h-12 sm:h-16 md:h-20 flex items-center justify-center mb-2 sm:mb-3 md:mb-4">
-                          {org.logo_url ? (
-                            <img
-                              src={org.logo_url}
-                              alt={org.name}
-                              className="max-w-full max-h-full object-contain"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                const fallback = target.nextElementSibling as HTMLElement;
-                                if (fallback) fallback.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-400 to-blue-600 dark:from-blue-500 dark:to-blue-700 rounded-lg sm:rounded-xl flex items-center justify-center shadow-win-card ${org.logo_url ? 'hidden' : ''}`}>
-                            <span className="text-white font-bold text-base sm:text-xl md:text-2xl">
-                              {org.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-
-                        <h4 className="font-medium win-text-primary text-center text-xs sm:text-sm mb-0.5 sm:mb-1 line-clamp-2" title={org.name}>
-                          {org.name}
-                        </h4>
-                        <p className="text-[10px] sm:text-xs win-text-tertiary text-center">
-                          {org.profile_count} Profile{org.profile_count === 1 ? '' : 's'}
-                        </p>
-                      </div>
-                    ))}
-                </div>
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Search Bar & Actions */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <SearchIcon className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 dark:text-zinc-500" />
+              <input
+                type="text"
+                placeholder="Search categories and organizations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="as-input pl-10 sm:pl-12 pr-10 w-full text-sm sm:text-base bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               )}
             </div>
-          ))}
+
+            {/* New Category Button */}
+            <button
+              onClick={() => { setShowCategoryModal(true); setError(null); }}
+              className={`w-full sm:w-auto as-btn-primary flex items-center justify-center gap-2 group text-sm sm:text-base py-2.5 sm:py-3 whitespace-nowrap ${
+                categories.length === 0 ? 'animate-pulse' : ''
+              }`}
+            >
+              <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:rotate-90" />
+              <span>New Category</span>
+            </button>
+          </div>
         </div>
+
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Error Alert */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {error && (
+          <div className="as-alert-danger mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>{error}</span>
+            </div>
+            <button onClick={() => setError(null)} className="hover:opacity-70 transition-opacity">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Loading State */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-16 sm:py-20 md:py-24">
+            <div className="relative">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-3 sm:border-4 border-zinc-300 dark:border-zinc-700 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-3 sm:border-4 border-transparent border-t-blue-500 rounded-full animate-spin"></div>
+            </div>
+            <p className="mt-4 sm:mt-5 md:mt-6 text-sm sm:text-base text-zinc-600 dark:text-zinc-400">Loading your vault...</p>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Empty State */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {!loading && categories.length === 0 && (
+          <div className="as-card p-6 sm:p-8 md:p-12 text-center">
+            <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-5 md:mb-6">
+              <FolderIcon className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 text-zinc-400 dark:text-zinc-600" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white mb-2">Your vault is empty</h3>
+            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mb-4 sm:mb-5 md:mb-6 max-w-md mx-auto">
+              Create your first category to start organizing your credentials securely.
+            </p>
+            <button
+              onClick={() => { setShowCategoryModal(true); setError(null); }}
+              className="as-btn-primary inline-flex items-center gap-2 text-sm sm:text-base"
+            >
+              <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              Create First Category
+            </button>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Categories Grid */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {!loading && filteredCategories.length > 0 && (
+          <div className="space-y-10">
+            {filteredCategories.map((category) => (
+              <CategorySection
+                key={category.id}
+                category={category}
+                searchQuery={searchQuery}
+                onAddOrg={() => { setSelectedCategoryId(category.id); setShowOrgModal(true); setError(null); }}
+                onDeleteCategory={() => handleDeleteCategory(category.id)}
+                onOrgClick={handleOrganizationClick}
+                onDeleteOrg={(orgId) => handleDeleteOrganization(orgId, category.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* No Results */}
+        {!loading && categories.length > 0 && filteredCategories.length === 0 && (
+          <div className="as-card p-6 sm:p-8 md:p-12 text-center">
+            <SearchIcon className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-medium text-zinc-900 dark:text-white mb-2">No results found</h3>
+            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
+              No categories or organizations match "{searchQuery}"
+            </p>
+          </div>
+        )}
       </div>
 
+      {/* ═══════════════════════════════════════════════════════════════════════════════ */}
       {/* Category Modal */}
+      {/* ═══════════════════════════════════════════════════════════════════════════════ */}
       {showCategoryModal && (
-        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm" onClick={() => setShowCategoryModal(false)}>
-          <div className="win-bg-layer rounded-xl sm:rounded-2xl shadow-win-flyout max-w-lg w-full border border-win-border-default max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-500 dark:to-blue-600 px-4 sm:px-6 py-4 sm:py-5 rounded-t-xl sm:rounded-t-2xl sticky top-0 z-10">
-              <h3 className="text-xl sm:text-2xl font-bold text-white">Create New Category</h3>
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 animate-[fadeIn_0.2s_ease-out]" 
+          onClick={() => setShowCategoryModal(false)}
+        >
+          <div 
+            className="as-modal w-full max-w-md animate-[modalIn_0.3s_ease-out]" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg">
+                  <FolderIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white">Create Category</h3>
+              </div>
+              <button
+                onClick={() => setShowCategoryModal(false)}
+                className="p-1.5 sm:p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <form onSubmit={handleAddCategory} className="p-4 sm:p-6">
-              <div className="mb-4 sm:mb-5">
-                <label className="block win-text-primary text-sm font-semibold mb-2">
-                  Category Name <span className="text-red-500">*</span>
+
+            {/* Modal Body */}
+            <form onSubmit={handleAddCategory} className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Category Name <span className="text-red-500 dark:text-red-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                  placeholder="e.g., Microsoft Windows"
-                  className="win-input text-sm sm:text-base"
+                  placeholder="e.g., Social Media, Finance, Work"
+                  className="as-input w-full text-sm sm:text-base"
                   autoFocus
                   required
                 />
               </div>
-              <div className="mb-5 sm:mb-6">
-                <label className="block win-text-primary text-sm font-semibold mb-2">Description</label>
+              
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Description <span className="text-zinc-500">(optional)</span>
+                </label>
                 <textarea
                   value={newCategory.description}
                   onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
-                  placeholder="Optional description"
-                  className="win-input resize-none text-sm sm:text-base"
+                  placeholder="Brief description of this category..."
+                  className="as-input w-full resize-none text-sm sm:text-base"
                   rows={3}
                 />
               </div>
-              <div className="flex gap-2 sm:gap-3 justify-end">
+
+              {/* Modal Actions */}
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => { setShowCategoryModal(false); setNewCategory({ name: '', description: '' }); }}
-                  className="win-btn-secondary text-sm sm:text-base px-4 sm:px-6"
+                  className="as-btn-secondary w-full sm:flex-1 text-sm sm:text-base"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="win-btn-primary text-sm sm:text-base px-4 sm:px-6">
-                  Create
+                <button type="submit" className="as-btn-primary w-full sm:flex-1 text-sm sm:text-base">
+                  Create Category
                 </button>
               </div>
             </form>
@@ -375,49 +695,80 @@ const CategoryManager: React.FC = () => {
         </div>
       )}
 
+      {/* ═══════════════════════════════════════════════════════════════════════════════ */}
       {/* Organization Modal */}
+      {/* ═══════════════════════════════════════════════════════════════════════════════ */}
       {showOrgModal && (
-        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm" onClick={() => setShowOrgModal(false)}>
-          <div className="win-bg-layer rounded-xl sm:rounded-2xl shadow-win-flyout max-w-lg w-full border border-win-border-default max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-green-600 to-green-700 dark:from-green-500 dark:to-green-600 px-4 sm:px-6 py-4 sm:py-5 rounded-t-xl sm:rounded-t-2xl sticky top-0 z-10">
-              <h3 className="text-xl sm:text-2xl font-bold text-white">Add Organization</h3>
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 animate-[fadeIn_0.2s_ease-out]" 
+          onClick={() => setShowOrgModal(false)}
+        >
+          <div 
+            className="as-modal w-full max-w-md animate-[modalIn_0.3s_ease-out]" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-emerald-500/10 rounded-lg">
+                  <GlobeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white">Add Organization</h3>
+              </div>
+              <button
+                onClick={() => setShowOrgModal(false)}
+                className="p-1.5 sm:p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <form onSubmit={handleAddOrganization} className="p-4 sm:p-6">
-              <div className="mb-4 sm:mb-5">
-                <label className="block win-text-primary text-sm font-semibold mb-2">
-                  Organization Name <span className="text-red-500">*</span>
+
+            {/* Modal Body */}
+            <form onSubmit={handleAddOrganization} className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Organization Name <span className="text-red-500 dark:text-red-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={newOrg.name}
                   onChange={(e) => setNewOrg({ ...newOrg, name: e.target.value })}
-                  placeholder="e.g., Windows 11"
-                  className="win-input text-sm sm:text-base"
+                  placeholder="e.g., Google, GitHub, Netflix"
+                  className="as-input w-full text-sm sm:text-base"
                   autoFocus
                   required
                 />
               </div>
-              <div className="mb-5 sm:mb-6">
-                <label className="block win-text-primary text-sm font-semibold mb-2">Logo URL</label>
+              
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Logo URL <span className="text-zinc-500">(optional)</span>
+                </label>
                 <input
                   type="url"
                   value={newOrg.logo_url}
                   onChange={(e) => setNewOrg({ ...newOrg, logo_url: e.target.value })}
                   placeholder="https://example.com/logo.png"
-                  className="win-input text-sm sm:text-base"
+                  className="as-input w-full text-sm sm:text-base"
                 />
-                <p className="text-xs win-text-tertiary mt-2">Optional: URL to organization logo</p>
+                <p className="text-xs text-zinc-500 mt-2">
+                  Provide a direct link to the organization's logo image
+                </p>
               </div>
-              <div className="flex gap-2 sm:gap-3 justify-end">
+
+              {/* Modal Actions */}
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => { setShowOrgModal(false); setNewOrg({ name: '', logo_url: '' }); setSelectedCategoryId(null); }}
-                  className="win-btn-secondary text-sm sm:text-base px-4 sm:px-6"
+                  className="as-btn-secondary w-full sm:flex-1 text-sm sm:text-base"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="px-4 sm:px-6 py-2.5 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white rounded-lg font-medium transition-colors text-sm sm:text-base">
-                  Add
+                <button type="submit" className="as-btn-primary w-full sm:flex-1 !bg-emerald-600 hover:!bg-emerald-500 text-sm sm:text-base">
+                  Add Organization
                 </button>
               </div>
             </form>
