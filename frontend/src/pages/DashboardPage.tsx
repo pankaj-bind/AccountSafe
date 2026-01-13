@@ -155,10 +155,9 @@ const DashboardPage: React.FC = () => {
                     <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Status</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Date & Time</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">IP Address</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Location</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Coordinates (Lat, Long)</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Country</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">ISP</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Password</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -188,26 +187,21 @@ const DashboardPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 text-sm text-win-text-secondary font-mono">{record.ip_address || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm text-win-text-secondary">
-                        {record.location ? (
+                        {record.latitude && record.longitude ? (
                           <a 
-                            href={`https://www.google.com/maps?q=${record.location}`}
+                            href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-win-accent hover:underline text-xs"
+                            className="text-win-accent hover:underline text-xs font-mono"
                           >
-                            {record.location}
+                            {record.latitude.toFixed(4)}, {record.longitude.toFixed(4)}
                           </a>
-                        ) : 'N/A'}
+                        ) : (
+                          <span className="text-win-text-tertiary">N/A</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-sm text-win-text-secondary">{record.country || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm text-win-text-secondary">{record.isp || 'N/A'}</td>
-                      <td className="py-3 px-4 text-sm text-win-text-secondary font-mono">
-                        {record.password_attempted ? (
-                          <span className="text-red-400">{record.password_attempted}</span>
-                        ) : (
-                          <span className="text-win-text-tertiary">Hidden</span>
-                        )}
-                      </td>
                     </tr>
                   ))}
                 </tbody>

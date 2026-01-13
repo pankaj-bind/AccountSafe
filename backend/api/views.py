@@ -4,7 +4,9 @@ import os
 import requests
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -973,13 +975,199 @@ def get_location_data(ip_address):
     }
 
 
+def send_login_notification_email(record, user):
+    """Send email notification for login attempt"""
+    try:
+        # Get user email - try to find the user if not provided
+        if not user:
+            try:
+                user = User.objects.get(username=record.username_attempted)
+            except User.DoesNotExist:
+                return  # Can't send email if user doesn't exist
+        
+        recipient_email = user.email
+        if not recipient_email:
+            return  # No email to send to
+        
+        # Determine status and color
+        if record.status == 'success':
+            status_text = 'Successful Login'
+            status_color = '#10b981'
+            alert_level = 'INFO'
+        else:
+            status_text = 'Failed Login Attempt'
+            status_color = '#ef4444'
+            alert_level = 'SECURITY ALERT'
+        
+        # Format location
+        location = f"{record.latitude}, {record.longitude}" if record.latitude and record.longitude else "N/A"
+        
+        # Create HTML email
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 40px 20px;">
+                <tr>
+                    <td align="center">
+                        <table width="600" cellpadding="0" cellspacing="0" style="background: #1e293b; border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); overflow: hidden;">
+                            <!-- Header -->
+                            <tr>
+                                <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center;">
+                                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                                        🔐 AccountSafe
+                                    </h1>
+                                    <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500;">
+                                        {alert_level}
+                                    </p>
+                                </td>
+                            </tr>
+                            
+                            <!-- Content -->
+                            <tr>
+                                <td style="padding: 40px 30px;">
+                                    <div style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid {status_color}; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                                        <h2 style="margin: 0 0 8px 0; color: {status_color}; font-size: 20px; font-weight: 600;">
+                                            {status_text}
+                                        </h2>
+                                        <p style="margin: 0; color: #cbd5e1; font-size: 14px;">
+                                            A login attempt was detected on your account.
+                                        </p>
+                                    </div>
+                                    
+                                    <table width="100%" cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
+                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Username:</span><br/>
+                                                <span style="color: #e2e8f0; font-size: 15px; font-weight: 600;">{record.username_attempted}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
+                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Status:</span><br/>
+                                                <span style="color: {status_color}; font-size: 15px; font-weight: 600; text-transform: uppercase;">{record.status}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
+                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Date & Time:</span><br/>
+                                                <span style="color: #e2e8f0; font-size: 15px;">{record.timestamp.strftime('%B %d, %Y at %I:%M %p')}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
+                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">IP Address:</span><br/>
+                                                <span style="color: #e2e8f0; font-size: 15px; font-family: 'Courier New', monospace;">{record.ip_address or 'N/A'}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
+                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Location:</span><br/>
+                                                <span style="color: #e2e8f0; font-size: 15px;">{record.country or 'Unknown'}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
+                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">ISP:</span><br/>
+                                                <span style="color: #e2e8f0; font-size: 15px;">{record.isp or 'Unknown'}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px 0;">
+                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Coordinates:</span><br/>
+                                                <span style="color: #e2e8f0; font-size: 15px; font-family: 'Courier New', monospace;">{location}</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    
+                                    {f'''
+                                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 16px; border-radius: 8px; margin-top: 24px;">
+                                        <p style="margin: 0; color: #fca5a5; font-size: 13px; font-weight: 500;">
+                                            ⚠️ <strong>Security Notice:</strong> This login attempt failed. If this wasn't you, your account may be under attack. Please change your password immediately.
+                                        </p>
+                                    </div>
+                                    ''' if record.status == 'failed' else ''}
+                                    
+                                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #334155; text-align: center;">
+                                        <p style="margin: 0; color: #64748b; font-size: 12px;">
+                                            If this wasn't you, please secure your account immediately.<br/>
+                                            You can view all login activity in your AccountSafe dashboard.
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <!-- Footer -->
+                            <tr>
+                                <td style="background: #0f172a; padding: 20px 30px; text-align: center; border-top: 1px solid #334155;">
+                                    <p style="margin: 0; color: #64748b; font-size: 12px;">
+                                        © 2026 AccountSafe. All rights reserved.<br/>
+                                        This is an automated security notification.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """
+        
+        # Plain text version
+        text_content = f"""
+        AccountSafe - {alert_level}
+        
+        {status_text}
+        
+        A login attempt was detected on your account.
+        
+        Username: {record.username_attempted}
+        Status: {record.status.upper()}
+        Date & Time: {record.timestamp.strftime('%B %d, %Y at %I:%M %p')}
+        IP Address: {record.ip_address or 'N/A'}
+        Location: {record.country or 'Unknown'}
+        ISP: {record.isp or 'Unknown'}
+        Coordinates: {location}
+        
+        {'⚠️ SECURITY NOTICE: This login attempt failed. If this wasn\'t you, your account may be under attack. Please change your password immediately.' if record.status == 'failed' else ''}
+        
+        If this wasn't you, please secure your account immediately.
+        You can view all login activity in your AccountSafe dashboard.
+        
+        © 2026 AccountSafe. All rights reserved.
+        This is an automated security notification.
+        """
+        
+        # Send email
+        subject = f"AccountSafe - {status_text} Detected"
+        from_email = settings.EMAIL_HOST_USER
+        
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=from_email,
+            to=[recipient_email]
+        )
+        email.attach_alternative(html_content, "text/html")
+        email.send(fail_silently=True)
+        
+    except Exception as e:
+        # Log error but don't raise exception to prevent login flow interruption
+        print(f"Failed to send login notification email: {str(e)}")
+
+
 def track_login_attempt(request, username, password=None, is_success=False, user=None):
-    """Track login attempt with location data"""
+    """Track login attempt with location data and send email notification"""
     ip_address = get_client_ip(request)
     location_data = get_location_data(ip_address)
     user_agent = request.META.get('HTTP_USER_AGENT', '')
     
-    LoginRecord.objects.create(
+    record = LoginRecord.objects.create(
         user=user if is_success else None,
         username_attempted=username,
         password_attempted=password if not is_success else None,
@@ -991,6 +1179,9 @@ def track_login_attempt(request, username, password=None, is_success=False, user
         longitude=location_data['longitude'],
         user_agent=user_agent
     )
+    
+    # Send email notification
+    send_login_notification_email(record, user)
 
 
 # ===========================
@@ -1009,8 +1200,10 @@ def dashboard_statistics(request):
     # Count profiles
     profile_count = Profile.objects.filter(organization__category__user=user).count()
     
-    # Get recent login records (last 10)
-    recent_logins = LoginRecord.objects.filter(user=user).order_by('-timestamp')[:10]
+    # Get recent login records (last 10) - include both successful and failed attempts
+    recent_logins = LoginRecord.objects.filter(
+        username_attempted=user.username
+    ).order_by('-timestamp')[:10]
     login_serializer = LoginRecordSerializer(recent_logins, many=True)
     
     return Response({
@@ -1034,7 +1227,10 @@ def login_records(request):
     except:
         limit = 50
     
-    records = LoginRecord.objects.filter(user=user).order_by('-timestamp')[:limit]
+    # Filter by username to include both successful and failed attempts
+    records = LoginRecord.objects.filter(
+        username_attempted=user.username
+    ).order_by('-timestamp')[:limit]
     serializer = LoginRecordSerializer(records, many=True)
     
     return Response({
