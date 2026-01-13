@@ -1,15 +1,15 @@
-# AccountSafe 🔐
+# AccountSafe
 
 A complete authentication system with Django backend and React frontend.
 
 ## Features
 
-- 🔐 User registration and login with token authentication
-- 📧 Password reset via email OTP
-- 👤 User profile management with avatar upload
-- 🎨 Modern UI with Windows 11-inspired design
-- 🌓 Dark/Light theme toggle
-- 📱 Fully responsive design
+- User registration and login with token authentication
+- Password reset via email OTP
+- User profile management with avatar upload
+- Modern UI with Windows 11-inspired design
+- Dark/Light theme toggle
+- Fully responsive design
 
 ## Tech Stack
 
@@ -57,7 +57,7 @@ Frontend: http://localhost:3000
 ### Backend → PythonAnywhere
 ### Frontend → Vercel
 
-📖 **Full deployment guide:** See [DEPLOYMENT.md](DEPLOYMENT.md)
+**Full deployment guide:** See [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## Live Demo
 
