@@ -394,7 +394,7 @@ const DashboardPage: React.FC = () => {
             ═══════════════════════════════════════════════════════════════════════ */}
         <section className="mb-6 sm:mb-8">
           <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white mb-4">Overview</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <StatCard
               icon={<BuildingIcon className="w-5 h-5" />}
               value={stats?.organization_count || 0}
