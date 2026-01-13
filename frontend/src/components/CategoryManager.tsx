@@ -94,6 +94,18 @@ const GlobeIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   </svg>
 );
 
+const DotsVerticalIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+  </svg>
+);
+
+const PencilIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+  </svg>
+);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Organization Card Component
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -101,24 +113,52 @@ const GlobeIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 interface OrgCardProps {
   org: Organization;
   onDelete: () => void;
+  onEdit: () => void;
   onClick: () => void;
 }
 
-const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onClick }) => {
+const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onEdit, onClick }) => {
   const [imageError, setImageError] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   return (
     <div
       onClick={onClick}
+      onMouseEnter={() => setShowMenu(true)}
+      onMouseLeave={() => setShowMenu(false)}
       className="group relative bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-800 rounded-lg sm:rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-300 hover:border-zinc-400 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-lg hover:shadow-zinc-300/50 dark:hover:shadow-zinc-950/50 hover:scale-[1.02]"
     >
-      {/* Delete button */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="absolute -top-1.5 sm:-top-2 -right-1.5 sm:-right-2 w-6 h-6 sm:w-7 sm:h-7 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-500/20 hover:border-red-300 dark:hover:border-red-500/30 hover:text-red-600 dark:hover:text-red-400"
-      >
-        <XMarkIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-      </button>
+      {/* Kebab Menu */}
+      <div className={`absolute top-2 right-2 transition-opacity duration-200 ${showMenu ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="relative">
+          <button
+            onClick={(e) => { e.stopPropagation(); }}
+            className="w-6 h-6 sm:w-7 sm:h-7 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-full flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+          >
+            <DotsVerticalIcon className="w-4 h-4" />
+          </button>
+          
+          {/* Dropdown Menu */}
+          {showMenu && (
+            <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden z-10 animate-fadeIn">
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+              >
+                <PencilIcon className="w-4 h-4 text-blue-500" />
+                Edit
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+              >
+                <TrashIcon className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Logo */}
       <div className="flex items-center justify-center h-12 sm:h-14 mb-2 sm:mb-3">
@@ -162,6 +202,7 @@ interface CategorySectionProps {
   category: Category;
   searchQuery: string;
   onAddOrg: (categoryId: number) => void;
+  onEditOrg: (org: Organization, categoryId: number) => void;
   onDeleteCategory: (categoryId: number) => void;
   onDeleteOrg: (orgId: number, categoryId: number) => void;
   onOrgClick: (org: Organization) => void;
@@ -171,6 +212,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   category,
   searchQuery,
   onAddOrg,
+  onEditOrg,
   onDeleteCategory,
   onDeleteOrg,
   onOrgClick
@@ -248,6 +290,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
                   key={org.id}
                   org={org}
                   onDelete={() => onDeleteOrg(org.id, category.id)}
+                  onEdit={() => onEditOrg(org, category.id)}
                   onClick={() => onOrgClick(org)}
                 />
               ))}
@@ -275,6 +318,7 @@ const CategoryManager: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState({ name: '', description: '' });
   const [newOrg, setNewOrg] = useState({ name: '', logo_url: '' });
+  const [editingOrgId, setEditingOrgId] = useState<number | null>(null);
   
   // PIN verification state
   const [showPinModal, setShowPinModal] = useState(false);
@@ -355,24 +399,53 @@ const CategoryManager: React.FC = () => {
 
     setError(null);
     try {
-      const response = await apiClient.post(
-        `categories/${selectedCategoryId}/organizations/`,
-        { name: newOrg.name, logo_url: newOrg.logo_url || null }
-      );
-      
-      setCategories(categories.map(cat => 
-        cat.id === selectedCategoryId 
-          ? { ...cat, organizations: [...cat.organizations, response.data] }
-          : cat
-      ));
+      if (editingOrgId) {
+        // Update existing organization
+        const response = await apiClient.put(
+          `organizations/${editingOrgId}/`,
+          { name: newOrg.name, logo_url: newOrg.logo_url || null }
+        );
+        
+        setCategories(categories.map(cat => 
+          cat.id === selectedCategoryId 
+            ? { 
+                ...cat, 
+                organizations: cat.organizations.map(org => 
+                  org.id === editingOrgId ? response.data : org
+                ) 
+              }
+            : cat
+        ));
+      } else {
+        // Create new organization
+        const response = await apiClient.post(
+          `categories/${selectedCategoryId}/organizations/`,
+          { name: newOrg.name, logo_url: newOrg.logo_url || null }
+        );
+        
+        setCategories(categories.map(cat => 
+          cat.id === selectedCategoryId 
+            ? { ...cat, organizations: [...cat.organizations, response.data] }
+            : cat
+        ));
+      }
       
       setNewOrg({ name: '', logo_url: '' });
       setShowOrgModal(false);
       setSelectedCategoryId(null);
+      setEditingOrgId(null);
     } catch (err: any) {
       console.error('Error:', err.response || err);
-      setError('Failed to create organization');
+      setError(editingOrgId ? 'Failed to update organization' : 'Failed to create organization');
     }
+  };
+
+  const handleEditOrganization = (org: Organization, categoryId: number) => {
+    setEditingOrgId(org.id);
+    setSelectedCategoryId(categoryId);
+    setNewOrg({ name: org.name, logo_url: org.logo_url || '' });
+    setShowOrgModal(true);
+    setError(null);
   };
 
   const handleDeleteCategory = async (id: number) => {
@@ -593,7 +666,8 @@ const CategoryManager: React.FC = () => {
                 key={category.id}
                 category={category}
                 searchQuery={searchQuery}
-                onAddOrg={() => { setSelectedCategoryId(category.id); setShowOrgModal(true); setError(null); }}
+                onAddOrg={() => { setSelectedCategoryId(category.id); setShowOrgModal(true); setError(null); setEditingOrgId(null); setNewOrg({ name: '', logo_url: '' }); }}
+                onEditOrg={(org) => handleEditOrganization(org, category.id)}
                 onDeleteCategory={() => handleDeleteCategory(category.id)}
                 onOrgClick={handleOrganizationClick}
                 onDeleteOrg={(orgId) => handleDeleteOrganization(orgId, category.id)}
@@ -710,7 +784,9 @@ const CategoryManager: React.FC = () => {
                 <div className="p-1.5 sm:p-2 bg-emerald-500/10 rounded-lg">
                   <GlobeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white">Add Organization</h3>
+                <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white">
+                  {editingOrgId ? 'Edit Organization' : 'Add Organization'}
+                </h3>
               </div>
               <button
                 onClick={() => setShowOrgModal(false)}
@@ -759,13 +835,13 @@ const CategoryManager: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => { setShowOrgModal(false); setNewOrg({ name: '', logo_url: '' }); setSelectedCategoryId(null); }}
+                  onClick={() => { setShowOrgModal(false); setNewOrg({ name: '', logo_url: '' }); setSelectedCategoryId(null); setEditingOrgId(null); }}
                   className="as-btn-secondary w-full sm:flex-1 text-sm sm:text-base"
                 >
                   Cancel
                 </button>
                 <button type="submit" className="as-btn-primary w-full sm:flex-1 !bg-emerald-600 hover:!bg-emerald-500 text-sm sm:text-base">
-                  Add Organization
+                  {editingOrgId ? 'Update Organization' : 'Add Organization'}
                 </button>
               </div>
             </form>
