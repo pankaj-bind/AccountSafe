@@ -60,11 +60,30 @@ class UserProfile(models.Model):
         help_text="Upload your profile picture"
     )
 
+    # Security PIN for organization access
+    security_pin = models.CharField(max_length=4, blank=True, null=True, help_text="4-digit security PIN for accessing organizations")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
+
+    def set_pin(self, pin: str) -> bool:
+        """Set a 4-digit security PIN"""
+        if pin and len(pin) == 4 and pin.isdigit():
+            self.security_pin = pin
+            self.save()
+            return True
+        return False
+
+    def verify_pin(self, pin: str) -> bool:
+        """Verify the security PIN"""
+        return self.security_pin and self.security_pin == pin
+
+    def has_pin(self) -> bool:
+        """Check if PIN is set"""
+        return bool(self.security_pin)
 
     @property
     def full_name(self):

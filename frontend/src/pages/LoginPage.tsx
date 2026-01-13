@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { login } from '../services/authService';
+import { getPinStatus } from '../services/pinService';
 import { useAuth } from '../contexts/AuthContext';
+import PinSetupModal from '../components/PinSetupModal';
 
 // Icons
 const UserIcon = () => (
@@ -29,6 +31,7 @@ const LoginPage: React.FC = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [showPinSetup, setShowPinSetup] = useState(false);
     const navigate = useNavigate();
     const { setToken } = useAuth();
     const location = useLocation();
@@ -41,12 +44,29 @@ const LoginPage: React.FC = () => {
         try {
             const data = await login(username, password);
             setToken(data.key);
-            navigate('/', { replace: true });
+            
+            // Check if user has PIN set
+            try {
+                const pinStatus = await getPinStatus();
+                if (!pinStatus.has_pin) {
+                    setShowPinSetup(true);
+                } else {
+                    navigate('/', { replace: true });
+                }
+            } catch {
+                // If PIN check fails, just navigate to dashboard
+                navigate('/', { replace: true });
+            }
         } catch (err) {
             setError('Failed to log in. Please check your username and password.');
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handlePinSetupSuccess = () => {
+        setShowPinSetup(false);
+        navigate('/', { replace: true });
     };
     
     return (
@@ -156,6 +176,16 @@ const LoginPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* PIN Setup Modal */}
+            <PinSetupModal
+                isOpen={showPinSetup}
+                onClose={() => {
+                    setShowPinSetup(false);
+                    navigate('/', { replace: true });
+                }}
+                onSuccess={handlePinSetupSuccess}
+            />
         </div>
     );
 };

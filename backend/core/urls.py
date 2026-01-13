@@ -20,6 +20,10 @@ from api.views import (
     OrganizationDetailView,
     ProfileListCreateView,
     ProfileDetailView,
+    SetupPinView,
+    VerifyPinView,
+    PinStatusView,
+    ResetPinView,
 )
 
 urlpatterns = [
@@ -46,6 +50,12 @@ urlpatterns = [
     # Profile endpoints
     path('api/organizations/<int:organization_id>/profiles/', ProfileListCreateView.as_view(), name='profile-list-create'),
     path('api/profiles/<int:profile_id>/', ProfileDetailView.as_view(), name='profile-detail'),
+
+    # Security PIN endpoints
+    path('api/pin/setup/', SetupPinView.as_view(), name='setup-pin'),
+    path('api/pin/verify/', VerifyPinView.as_view(), name='verify-pin'),
+    path('api/pin/status/', PinStatusView.as_view(), name='pin-status'),
+    path('api/pin/reset/', ResetPinView.as_view(), name='reset-pin'),
 
     # dj-rest-auth endpoints (login, logout, user details, registration)
     path('api/auth/', include('dj_rest_auth.urls')),

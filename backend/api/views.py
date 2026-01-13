@@ -573,3 +573,150 @@ class ProfileDetailView(APIView):
             {"message": "Profile deleted successfully"},
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+# ===========================
+# SECURITY PIN VIEWS
+# ===========================
+
+class SetupPinView(APIView):
+    """Setup a 4-digit security PIN for the user"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        pin = request.data.get('pin')
+        
+        if not pin:
+            return Response(
+                {"error": "PIN is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not (len(pin) == 4 and pin.isdigit()):
+            return Response(
+                {"error": "PIN must be exactly 4 digits."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user_profile = request.user.userprofile
+        except UserProfile.DoesNotExist:
+            user_profile = UserProfile.objects.create(user=request.user)
+        
+        if user_profile.set_pin(pin):
+            return Response({"message": "PIN set successfully."})
+        else:
+            return Response(
+                {"error": "Failed to set PIN."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class VerifyPinView(APIView):
+    """Verify the user's security PIN"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        pin = request.data.get('pin')
+        
+        if not pin:
+            return Response(
+                {"error": "PIN is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user_profile = request.user.userprofile
+        except UserProfile.DoesNotExist:
+            return Response(
+                {"error": "No PIN has been set."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not user_profile.has_pin():
+            return Response(
+                {"error": "No PIN has been set."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if user_profile.verify_pin(pin):
+            return Response({"message": "PIN verified successfully.", "valid": True})
+        else:
+            return Response(
+                {"error": "Invalid PIN.", "valid": False},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class PinStatusView(APIView):
+    """Check if the user has a PIN set"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            user_profile = request.user.userprofile
+            has_pin = user_profile.has_pin()
+        except UserProfile.DoesNotExist:
+            has_pin = False
+        
+        return Response({"has_pin": has_pin})
+
+
+class ResetPinView(APIView):
+    """Reset security PIN after OTP verification"""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+        new_pin = request.data.get('new_pin')
+        
+        if not all([email, otp, new_pin]):
+            return Response(
+                {"error": "Email, OTP, and new PIN are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not (len(new_pin) == 4 and new_pin.isdigit()):
+            return Response(
+                {"error": "PIN must be exactly 4 digits."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = User.objects.get(email__iexact=email)
+            otp_instance = PasswordResetOTP.objects.get(user=user, otp=otp)
+            
+            if not otp_instance.is_valid():
+                otp_instance.delete()
+                return Response(
+                    {"error": "OTP has expired."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get or create user profile
+            try:
+                user_profile = user.userprofile
+            except UserProfile.DoesNotExist:
+                user_profile = UserProfile.objects.create(user=user)
+            
+            # Set the new PIN
+            if user_profile.set_pin(new_pin):
+                otp_instance.delete()
+                return Response({"message": "PIN reset successfully."})
+            else:
+                return Response(
+                    {"error": "Failed to reset PIN."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except PasswordResetOTP.DoesNotExist:
+            return Response(
+                {"error": "Invalid OTP."},
+                status=status.HTTP_400_BAD_REQUEST
+            )

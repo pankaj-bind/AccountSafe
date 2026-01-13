@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/apiClient';
+import { getPinStatus } from '../services/pinService';
+import PinVerificationModal from './PinVerificationModal';
 
 interface Organization {
   id: number;
@@ -30,12 +32,50 @@ const CategoryManager: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState({ name: '', description: '' });
   const [newOrg, setNewOrg] = useState({ name: '', logo_url: '' });
+  
+  // PIN verification state
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pendingOrgId, setPendingOrgId] = useState<number | null>(null);
+  const [pendingOrgName, setPendingOrgName] = useState<string>('');
+  const [pinVerified, setPinVerified] = useState(false);
+  const [hasPin, setHasPin] = useState(false);
 
   useEffect(() => {
     if (token) {
       fetchCategories();
+      checkPinStatus();
     }
   }, [token]);
+
+  const checkPinStatus = async () => {
+    try {
+      const status = await getPinStatus();
+      setHasPin(status.has_pin);
+    } catch (err) {
+      console.error('Failed to check PIN status');
+    }
+  };
+
+  const handleOrganizationClick = (org: Organization) => {
+    // If user has PIN and hasn't verified yet this session
+    if (hasPin && !pinVerified) {
+      setPendingOrgId(org.id);
+      setPendingOrgName(org.name);
+      setShowPinModal(true);
+    } else {
+      navigate(`/organization/${org.id}`);
+    }
+  };
+
+  const handlePinVerified = () => {
+    setShowPinModal(false);
+    setPinVerified(true);
+    if (pendingOrgId) {
+      navigate(`/organization/${pendingOrgId}`);
+    }
+    setPendingOrgId(null);
+    setPendingOrgName('');
+  };
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -240,7 +280,7 @@ const CategoryManager: React.FC = () => {
                     .map((org) => (
                       <div
                         key={org.id}
-                        onClick={() => navigate(`/organization/${org.id}`)}
+                        onClick={() => handleOrganizationClick(org)}
                         className="win-bg-layer border border-win-border-default rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-win-elevated transition-all duration-200 group relative cursor-pointer hover:scale-105 hover:border-win-accent"
                       >
                         <button
@@ -384,6 +424,18 @@ const CategoryManager: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* PIN Verification Modal */}
+      <PinVerificationModal
+        isOpen={showPinModal}
+        onClose={() => {
+          setShowPinModal(false);
+          setPendingOrgId(null);
+          setPendingOrgName('');
+        }}
+        onSuccess={handlePinVerified}
+        organizationName={pendingOrgName}
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { getUserProfile, updateUserProfile, checkUsername, changePassword, deleteAccount } from "../services/authService";
+import { getUserProfile, updateUserProfile, checkUsername, changePassword, deleteAccount, requestPasswordResetOTP, verifyPasswordResetOTP } from "../services/authService";
+import { getPinStatus, resetPin } from "../services/pinService";
 import { useProfile } from "../contexts/ProfileContext";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -107,6 +108,17 @@ const ProfilePage: React.FC = () => {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // PIN reset states
+  const [showPinResetModal, setShowPinResetModal] = useState(false);
+  const [hasPin, setHasPin] = useState(false);
+  const [pinResetStep, setPinResetStep] = useState<'request' | 'verify' | 'newpin'>('request');
+  const [pinResetOtp, setPinResetOtp] = useState('');
+  const [newPin, setNewPin] = useState(['', '', '', '']);
+  const [confirmNewPin, setConfirmNewPin] = useState(['', '', '', '']);
+  const [isPinResetting, setIsPinResetting] = useState(false);
+  const [pinResetError, setPinResetError] = useState<string | null>(null);
+  const [pinResetSuccess, setPinResetSuccess] = useState<string | null>(null);
+
   const { logout: authLogout } = useAuth();
   const navigate = useNavigate();
 
@@ -126,6 +138,14 @@ const ProfilePage: React.FC = () => {
       });
       setGlobalProfilePicture(profileData.profile_picture_url);
       setGlobalDisplayName(profileData.display_name || profileData.username || 'User');
+      
+      // Check PIN status
+      try {
+        const pinStatus = await getPinStatus();
+        setHasPin(pinStatus.has_pin);
+      } catch {
+        // Ignore PIN status errors
+      }
     } catch (err: any) {
       console.error("Profile fetch error:", err);
       if (err.response?.status === 404) {
@@ -141,6 +161,91 @@ const ProfilePage: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // PIN Reset handlers
+  const handleRequestPinResetOtp = async () => {
+    if (!formData.email) {
+      setPinResetError("Email is required");
+      return;
+    }
+
+    setIsPinResetting(true);
+    setPinResetError(null);
+
+    try {
+      await requestPasswordResetOTP(formData.email);
+      setPinResetStep('verify');
+    } catch (err: any) {
+      setPinResetError(err.response?.data?.error || "Failed to send OTP");
+    } finally {
+      setIsPinResetting(false);
+    }
+  };
+
+  const handleVerifyPinResetOtp = async () => {
+    if (!pinResetOtp || pinResetOtp.length !== 6) {
+      setPinResetError("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    setIsPinResetting(true);
+    setPinResetError(null);
+
+    try {
+      await verifyPasswordResetOTP(formData.email, pinResetOtp);
+      setPinResetStep('newpin');
+    } catch (err: any) {
+      setPinResetError(err.response?.data?.error || "Invalid OTP");
+    } finally {
+      setIsPinResetting(false);
+    }
+  };
+
+  const handleSetNewPin = async () => {
+    const pinValue = newPin.join('');
+    const confirmValue = confirmNewPin.join('');
+
+    if (pinValue.length !== 4) {
+      setPinResetError("Please enter a 4-digit PIN");
+      return;
+    }
+
+    if (pinValue !== confirmValue) {
+      setPinResetError("PINs do not match");
+      return;
+    }
+
+    setIsPinResetting(true);
+    setPinResetError(null);
+
+    try {
+      await resetPin(formData.email, pinResetOtp, pinValue);
+      setPinResetSuccess("PIN reset successfully!");
+      setHasPin(true);
+      setTimeout(() => {
+        setShowPinResetModal(false);
+        setPinResetStep('request');
+        setPinResetOtp('');
+        setNewPin(['', '', '', '']);
+        setConfirmNewPin(['', '', '', '']);
+        setPinResetSuccess(null);
+      }, 2000);
+    } catch (err: any) {
+      setPinResetError(err.response?.data?.error || "Failed to reset PIN");
+    } finally {
+      setIsPinResetting(false);
+    }
+  };
+
+  const closePinResetModal = () => {
+    setShowPinResetModal(false);
+    setPinResetStep('request');
+    setPinResetOtp('');
+    setNewPin(['', '', '', '']);
+    setConfirmNewPin(['', '', '', '']);
+    setPinResetError(null);
+    setPinResetSuccess(null);
+  };
 
   // Username availability check with debounce
   useEffect(() => {
@@ -757,6 +862,31 @@ const ProfilePage: React.FC = () => {
           </div>
         </form>
 
+        {/* Security PIN Section */}
+        <div className="win-card p-6 mt-6">
+          <h3 className="text-base font-semibold text-win-text-primary mb-2 flex items-center gap-2">
+            <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Security PIN
+          </h3>
+          <p className="text-sm text-win-text-tertiary mb-4">
+            {hasPin 
+              ? "Your 4-digit PIN is set. You can reset it below if needed."
+              : "Set up a 4-digit PIN to secure access to your organizations."}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowPinResetModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-win hover:bg-purple-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {hasPin ? 'Reset PIN' : 'Set Up PIN'}
+          </button>
+        </div>
+
         {/* Danger Zone - Delete Account */}
         <div className="win-card p-6 border-red-500/30 mt-6">
           <h3 className="text-base font-semibold text-red-400 mb-2 flex items-center gap-2">
@@ -857,6 +987,178 @@ const ProfilePage: React.FC = () => {
                     Delete Account
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PIN Reset Modal */}
+      {showPinResetModal && (
+        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="win-bg-layer rounded-2xl shadow-win-flyout max-w-md w-full border border-win-border-default overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-purple-700 dark:from-purple-500 dark:to-purple-600 px-6 py-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">{hasPin ? 'Reset' : 'Set Up'} Security PIN</h3>
+                  <p className="text-purple-100 text-sm">
+                    {pinResetStep === 'request' && 'Verify your email to continue'}
+                    {pinResetStep === 'verify' && 'Enter the OTP sent to your email'}
+                    {pinResetStep === 'newpin' && 'Enter your new 4-digit PIN'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {pinResetError && (
+                <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {pinResetError}
+                </div>
+              )}
+
+              {pinResetSuccess && (
+                <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-500 text-sm flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  {pinResetSuccess}
+                </div>
+              )}
+
+              {/* Step 1: Request OTP */}
+              {pinResetStep === 'request' && (
+                <div>
+                  <p className="text-win-text-secondary mb-4 text-center">
+                    We'll send a verification code to your email: <strong>{formData.email}</strong>
+                  </p>
+                  <button
+                    onClick={handleRequestPinResetOtp}
+                    disabled={isPinResetting}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isPinResetting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Sending OTP...
+                      </>
+                    ) : 'Send OTP'}
+                  </button>
+                </div>
+              )}
+
+              {/* Step 2: Verify OTP */}
+              {pinResetStep === 'verify' && (
+                <div>
+                  <p className="text-win-text-secondary mb-4 text-center">
+                    Enter the 6-digit code sent to your email
+                  </p>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={pinResetOtp}
+                    onChange={(e) => setPinResetOtp(e.target.value.replace(/\D/g, ''))}
+                    className="win-input text-center text-xl tracking-widest mb-4"
+                    placeholder="000000"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleVerifyPinResetOtp}
+                    disabled={isPinResetting || pinResetOtp.length !== 6}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isPinResetting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Verifying...
+                      </>
+                    ) : 'Verify OTP'}
+                  </button>
+                </div>
+              )}
+
+              {/* Step 3: Set New PIN */}
+              {pinResetStep === 'newpin' && (
+                <div>
+                  <p className="text-win-text-secondary mb-4 text-center">Enter your new PIN</p>
+                  <div className="flex justify-center gap-3 mb-4">
+                    {newPin.map((digit, index) => (
+                      <input
+                        key={`new-${index}`}
+                        type="password"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          const updated = [...newPin];
+                          updated[index] = val.slice(-1);
+                          setNewPin(updated);
+                          if (val && index < 3) {
+                            const next = document.getElementById(`new-pin-${index + 1}`);
+                            next?.focus();
+                          }
+                        }}
+                        id={`new-pin-${index}`}
+                        className="w-12 h-12 text-center text-xl font-bold win-input rounded-lg"
+                        inputMode="numeric"
+                      />
+                    ))}
+                  </div>
+                  <p className="text-win-text-secondary mb-4 text-center">Confirm your new PIN</p>
+                  <div className="flex justify-center gap-3 mb-4">
+                    {confirmNewPin.map((digit, index) => (
+                      <input
+                        key={`confirm-${index}`}
+                        type="password"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          const updated = [...confirmNewPin];
+                          updated[index] = val.slice(-1);
+                          setConfirmNewPin(updated);
+                          if (val && index < 3) {
+                            const next = document.getElementById(`confirm-pin-${index + 1}`);
+                            next?.focus();
+                          }
+                        }}
+                        id={`confirm-pin-${index}`}
+                        className="w-12 h-12 text-center text-xl font-bold win-input rounded-lg"
+                        inputMode="numeric"
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleSetNewPin}
+                    disabled={isPinResetting || newPin.join('').length !== 4 || confirmNewPin.join('').length !== 4}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isPinResetting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Setting PIN...
+                      </>
+                    ) : 'Set New PIN'}
+                  </button>
+                </div>
+              )}
+
+              {/* Cancel Button */}
+              <button
+                onClick={closePinResetModal}
+                className="w-full mt-3 win-btn-secondary py-2.5"
+              >
+                Cancel
               </button>
             </div>
           </div>

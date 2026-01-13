@@ -1,0 +1,186 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { verifyPin } from '../services/pinService';
+
+interface PinVerificationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  organizationName?: string;
+}
+
+const PinVerificationModal: React.FC<PinVerificationModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSuccess,
+  organizationName 
+}) => {
+  const [pin, setPin] = useState(['', '', '', '']);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPin(['', '', '', '']);
+      setError(null);
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const handlePinChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+
+    const newPin = [...pin];
+    newPin[index] = value.slice(-1);
+    setPin(newPin);
+
+    // Auto-focus next input
+    if (value && index < 3) {
+      inputRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-submit when all digits are entered
+    if (value && index === 3) {
+      const fullPin = [...newPin.slice(0, 3), value.slice(-1)].join('');
+      if (fullPin.length === 4) {
+        handleVerify(fullPin);
+      }
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace') {
+      if (!pin[index] && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+      }
+    }
+    if (e.key === 'Enter') {
+      const fullPin = pin.join('');
+      if (fullPin.length === 4) {
+        handleVerify(fullPin);
+      }
+    }
+  };
+
+  const handleVerify = async (pinValue?: string) => {
+    const pinToVerify = pinValue || pin.join('');
+    
+    if (pinToVerify.length !== 4) {
+      setError('Please enter a 4-digit PIN');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await verifyPin(pinToVerify);
+      onSuccess();
+    } catch (err: any) {
+      setAttempts(prev => prev + 1);
+      setError(err.response?.data?.error || 'Invalid PIN');
+      setPin(['', '', '', '']);
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="win-bg-layer rounded-2xl shadow-win-flyout max-w-md w-full border border-win-border-default overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-600 to-purple-700 dark:from-purple-500 dark:to-purple-600 px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">Enter PIN</h3>
+              <p className="text-purple-100 text-sm">
+                {organizationName ? `Opening ${organizationName}` : 'Verify your identity'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {error}
+              {attempts >= 3 && (
+                <span className="ml-1">({attempts} attempts)</span>
+              )}
+            </div>
+          )}
+
+          <p className="text-center win-text-secondary mb-6">
+            Enter your 4-digit security PIN
+          </p>
+
+          {/* PIN Input */}
+          <div className="flex justify-center gap-3 mb-6">
+            {pin.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => {
+                  inputRefs.current[index] = el;
+                }}
+                type="password"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handlePinChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                className="w-14 h-14 text-center text-2xl font-bold win-input rounded-xl focus:ring-2 focus:ring-purple-500"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                disabled={isLoading}
+              />
+            ))}
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 win-btn-secondary py-2.5"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => handleVerify()}
+              disabled={isLoading || pin.join('').length !== 4}
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Verifying...
+                </span>
+              ) : 'Verify'}
+            </button>
+          </div>
+
+          <p className="text-center text-xs win-text-tertiary mt-4">
+            Forgot your PIN? Reset it from your Profile page
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PinVerificationModal;

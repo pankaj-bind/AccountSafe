@@ -41,8 +41,14 @@ def delete_old_document_on_update(sender, instance, **kwargs):
     # Check if document field has changed
     if old_profile.document and old_profile.document != instance.document:
         # Delete the old file
-        if os.path.isfile(old_profile.document.path):
-            os.remove(old_profile.document.path)
+        try:
+            if os.path.isfile(old_profile.document.path):
+                os.remove(old_profile.document.path)
+        except Exception as e:
+            # Log the error but continue with the update
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error deleting old file {old_profile.document.path}: {e}")
 
 
 @receiver(pre_delete, sender=Profile)
@@ -51,5 +57,11 @@ def delete_profile_document(sender, instance, **kwargs):
     Automatically delete the document file when a Profile is deleted.
     """
     if instance.document:
-        if os.path.isfile(instance.document.path):
-            os.remove(instance.document.path)
+        try:
+            if os.path.isfile(instance.document.path):
+                os.remove(instance.document.path)
+        except Exception as e:
+            # Log the error but don't prevent deletion
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error deleting file {instance.document.path}: {e}")
