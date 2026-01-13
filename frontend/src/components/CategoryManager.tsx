@@ -110,7 +110,7 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onClick }) =>
   return (
     <div
       onClick={onClick}
-      className="group relative bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg sm:rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-300 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-lg hover:shadow-zinc-200/50 dark:hover:shadow-zinc-950/50 hover:scale-[1.02]"
+      className="group relative bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-800 rounded-lg sm:rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-300 hover:border-zinc-400 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-lg hover:shadow-zinc-300/50 dark:hover:shadow-zinc-950/50 hover:scale-[1.02]"
     >
       {/* Delete button */}
       <button
@@ -150,9 +150,6 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onClick }) =>
           {org.profile_count} {org.profile_count === 1 ? 'credential' : 'credentials'}
         </span>
       </div>
-
-      {/* Hover indicator */}
-      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-500 to-blue-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-b-xl" />
     </div>
   );
 };
@@ -232,7 +229,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
       {isExpanded && (
         <>
           {filteredOrgs.length === 0 ? (
-            <div className="text-center py-8 sm:py-10 md:py-12 bg-zinc-50 dark:bg-zinc-900/30 rounded-lg sm:rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+            <div className="text-center py-8 sm:py-10 md:py-12 bg-zinc-50 dark:bg-zinc-900/30 rounded-lg sm:rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800">
               <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 rounded-lg sm:rounded-xl bg-zinc-200 dark:bg-zinc-800/50 flex items-center justify-center">
                 <ShieldLockIcon className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-400 dark:text-zinc-600" />
               </div>
@@ -463,7 +460,7 @@ const CategoryManager: React.FC = () => {
         {/* Stats Bar */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
-          <div className="as-card p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+          <div className="rounded-xl p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 shadow-sm">
             <div className="p-2 sm:p-2.5 md:p-3 bg-purple-100 dark:bg-purple-500/10 rounded-lg sm:rounded-xl">
               <FolderIcon className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
             </div>
@@ -472,7 +469,7 @@ const CategoryManager: React.FC = () => {
               <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-500 uppercase tracking-wide">Categories</p>
             </div>
           </div>
-          <div className="as-card p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+          <div className="rounded-xl p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 shadow-sm">
             <div className="p-2 sm:p-2.5 md:p-3 bg-blue-100 dark:bg-blue-500/10 rounded-lg sm:rounded-xl">
               <GlobeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
             </div>
@@ -481,7 +478,7 @@ const CategoryManager: React.FC = () => {
               <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-500 uppercase tracking-wide">Organizations</p>
             </div>
           </div>
-          <div className="as-card p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+          <div className="rounded-xl p-2 sm:p-3 md:p-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 shadow-sm">
             <div className="p-2 sm:p-2.5 md:p-3 bg-emerald-100 dark:bg-emerald-500/10 rounded-lg sm:rounded-xl">
               <KeyIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
@@ -499,13 +496,13 @@ const CategoryManager: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             {/* Search Input */}
             <div className="relative flex-1">
-              <SearchIcon className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 dark:text-zinc-500" />
+              <SearchIcon className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-zinc-500 dark:text-zinc-500" />
               <input
                 type="text"
                 placeholder="Search categories and organizations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="as-input pl-10 sm:pl-12 pr-10 w-full text-sm sm:text-base bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100"
+                className="w-full pl-10 sm:pl-12 pr-10 py-3 text-sm sm:text-base bg-white dark:bg-zinc-900/80 border-2 border-zinc-300 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
               />
               {searchQuery && (
                 <button
@@ -630,7 +627,7 @@ const CategoryManager: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-zinc-300 dark:border-zinc-800">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg">
                   <FolderIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
@@ -708,7 +705,7 @@ const CategoryManager: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-zinc-300 dark:border-zinc-800">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-emerald-500/10 rounded-lg">
                   <GlobeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />

@@ -267,8 +267,8 @@ const ForgotPasswordPage: React.FC = () => {
                     key={req.text} 
                     className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                         req.valid 
-                            ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-                            : 'bg-win-bg-subtle text-win-text-tertiary border border-win-border-subtle'
+                            ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' 
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-500 border border-zinc-300 dark:border-zinc-700'
                     }`}
                 >
                     {req.valid ? <CheckIcon /> : <XIcon />}
@@ -286,17 +286,17 @@ const ForgotPasswordPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-win-bg-solid flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white dark:bg-[#09090b] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="win-card p-8">
+        <div className="as-card p-8">
           {/* Header */}
           <div className="text-center mb-6">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-win-accent/10 flex items-center justify-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
               <KeyIcon />
             </div>
-            <h1 className="text-xl font-semibold text-win-text-primary">Reset Password</h1>
-            <p className="text-sm text-win-text-tertiary mt-1">
+            <h1 className="text-xl font-bold text-zinc-900 dark:text-white">Reset Password</h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
               {step === 'email' && 'Enter your email to receive a reset code'}
               {step === 'otp' && 'Enter the 6-digit code sent to your email'}
               {step === 'password' && 'Create your new password'}
@@ -310,12 +310,12 @@ const ForgotPasswordPage: React.FC = () => {
               {stepIndicators.map((s, i) => (
                 <React.Fragment key={s.step}>
                   <div className={`flex items-center gap-1.5 ${
-                    step === s.step ? 'text-win-accent' : 
-                    stepIndicators.findIndex(x => x.step === step) > i ? 'text-green-400' : 'text-win-text-tertiary'
+                    step === s.step ? 'text-blue-500 dark:text-blue-400' : 
+                    stepIndicators.findIndex(x => x.step === step) > i ? 'text-green-600 dark:text-green-400' : 'text-zinc-400 dark:text-zinc-500'
                   }`}>
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                      step === s.step ? 'bg-win-accent text-black' : 
-                      stepIndicators.findIndex(x => x.step === step) > i ? 'bg-green-500/20 text-green-400' : 'bg-win-bg-subtle'
+                      step === s.step ? 'bg-blue-500 text-white' : 
+                      stepIndicators.findIndex(x => x.step === step) > i ? 'bg-green-500/20 text-green-600 dark:text-green-400' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400'
                     }`}>
                       {stepIndicators.findIndex(x => x.step === step) > i ? <CheckIcon /> : i + 1}
                     </div>
@@ -323,7 +323,7 @@ const ForgotPasswordPage: React.FC = () => {
                   </div>
                   {i < stepIndicators.length - 1 && (
                     <div className={`w-8 h-0.5 ${
-                      stepIndicators.findIndex(x => x.step === step) > i ? 'bg-green-400' : 'bg-win-border-subtle'
+                      stepIndicators.findIndex(x => x.step === step) > i ? 'bg-green-500 dark:bg-green-400' : 'bg-zinc-300 dark:bg-zinc-700'
                     }`} />
                   )}
                 </React.Fragment>
@@ -333,13 +333,13 @@ const ForgotPasswordPage: React.FC = () => {
 
           {/* Feedback Messages */}
           {message && (
-            <div className="mb-4 p-3 rounded-win bg-green-500/10 border border-green-500/20 text-green-400 text-sm flex items-center gap-2">
+            <div className="as-alert-success mb-4">
               <CheckIcon />
               {message}
             </div>
           )}
           {error && (
-            <div className="mb-4 p-3 rounded-win bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
+            <div className="as-alert-danger mb-4">
               <XIcon />
               {error}
             </div>
@@ -349,9 +349,9 @@ const ForgotPasswordPage: React.FC = () => {
           {step === 'email' && (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-xs font-medium text-win-text-secondary mb-1.5">Email Address</label>
+                <label htmlFor="email" className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Email Address</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 dark:text-zinc-500">
                     <EmailIcon />
                   </div>
                   <input 
@@ -359,16 +359,16 @@ const ForgotPasswordPage: React.FC = () => {
                     id="email" 
                     value={email} 
                     onChange={(e) => setEmail(e.target.value)} 
-                    className="win-input pl-10" 
+                    className="as-input pl-10" 
                     placeholder="Enter your email"
                     required 
                   />
                 </div>
               </div>
-              <button type="submit" disabled={isLoading} className="w-full win-btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
+              <button type="submit" disabled={isLoading} className="w-full as-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50">
                 {isLoading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     Sending...
                   </>
                 ) : 'Send Reset Code'}
@@ -394,9 +394,9 @@ const ForgotPasswordPage: React.FC = () => {
               </div>
               
               <div>
-                <label htmlFor="otp" className="block text-xs font-medium text-win-text-secondary mb-1.5">Verification Code</label>
+                <label htmlFor="otp" className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Verification Code</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 dark:text-zinc-500">
                     <KeyIcon />
                   </div>
                   <input 
@@ -404,7 +404,7 @@ const ForgotPasswordPage: React.FC = () => {
                     id="otp" 
                     value={otp} 
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} 
-                    className="win-input pl-10 tracking-[0.5em] font-mono text-center text-lg" 
+                    className="as-input pl-10 tracking-[0.5em] font-mono text-center text-lg" 
                     maxLength={6} 
                     placeholder="000000"
                     required 
@@ -412,7 +412,7 @@ const ForgotPasswordPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex items-center justify-between mt-1.5">
-                  <p className="text-xs text-win-text-tertiary">Code sent to {email}</p>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-500">Code sent to {email}</p>
                   {remainingAttempts !== null && remainingAttempts > 0 && (
                     <p className="text-xs text-yellow-400">{remainingAttempts} attempt(s) left</p>
                   )}
@@ -422,11 +422,11 @@ const ForgotPasswordPage: React.FC = () => {
               <button 
                 type="submit" 
                 disabled={isLoading || otpExpiryTime === 0 || otp.length !== 6} 
-                className="w-full win-btn-primary flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full as-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     Verifying...
                   </>
                 ) : 'Verify Code'}
@@ -440,8 +440,8 @@ const ForgotPasswordPage: React.FC = () => {
                   disabled={resendCooldown > 0 || isResending}
                   className={`inline-flex items-center gap-1.5 text-sm transition-colors ${
                     resendCooldown > 0 || isResending
-                      ? 'text-win-text-tertiary cursor-not-allowed'
-                      : 'text-win-accent hover:text-win-accent-light'
+                      ? 'text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
+                      : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
                   }`}
                 >
                   <RefreshIcon />
@@ -461,9 +461,9 @@ const ForgotPasswordPage: React.FC = () => {
           {step === 'password' && (
             <form onSubmit={handlePasswordSubmit} noValidate className="space-y-4">
               <div>
-                <label htmlFor="password" className="block text-xs font-medium text-win-text-secondary mb-1.5">New Password</label>
+                <label htmlFor="password" className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">New Password</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 dark:text-zinc-500">
                     <LockIcon />
                   </div>
                   <input 
@@ -471,7 +471,7 @@ const ForgotPasswordPage: React.FC = () => {
                     id="password" 
                     value={password} 
                     onChange={(e) => setPassword(e.target.value)} 
-                    className="win-input pl-10" 
+                    className="as-input pl-10" 
                     placeholder="Create new password"
                     required 
                   />
@@ -479,9 +479,9 @@ const ForgotPasswordPage: React.FC = () => {
                 {renderPasswordFeedback()}
               </div>
               <div>
-                <label htmlFor="password2" className="block text-xs font-medium text-win-text-secondary mb-1.5">Confirm Password</label>
+                <label htmlFor="password2" className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Confirm Password</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 dark:text-zinc-500">
                     <LockIcon />
                   </div>
                   <input 
@@ -489,16 +489,16 @@ const ForgotPasswordPage: React.FC = () => {
                     id="password2" 
                     value={password2} 
                     onChange={(e) => setPassword2(e.target.value)} 
-                    className="win-input pl-10" 
+                    className="as-input pl-10" 
                     placeholder="Confirm new password"
                     required 
                   />
                 </div>
               </div>
-              <button type="submit" disabled={isLoading || passwordErrors.length > 0} className="w-full win-btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
+              <button type="submit" disabled={isLoading || passwordErrors.length > 0} className="w-full as-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50">
                 {isLoading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     Resetting...
                   </>
                 ) : 'Reset Password'}
@@ -514,13 +514,13 @@ const ForgotPasswordPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p className="text-sm text-win-text-secondary mb-4">Redirecting to login...</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">Redirecting to login...</p>
             </div>
           )}
 
           {/* Footer */}
-          <div className="mt-6 pt-4 border-t border-win-border-subtle text-center">
-            <Link to="/login" className="text-sm text-win-accent hover:text-win-accent-light transition-colors">
+          <div className="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800 text-center">
+            <Link to="/login" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
               ← Back to Login
             </Link>
           </div>

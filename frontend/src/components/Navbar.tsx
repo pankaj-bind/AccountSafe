@@ -1,18 +1,55 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useProfile } from '../contexts/ProfileContext';
 
-// SVG Icons for the theme toggle button (Windows 11 style)
+// Modern SVG Icons
 const SunIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
   </svg>
 );
+
 const MoonIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+  </svg>
+);
+
+const ShieldIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+  </svg>
+);
+
+const DashboardIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+  </svg>
+);
+
+const UserIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+  </svg>
+);
+
+const VaultIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+  </svg>
+);
+
+const LogoutIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+  </svg>
+);
+
+const ChevronDownIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
   </svg>
 );
 
@@ -21,6 +58,7 @@ const Navbar: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { profilePicture, displayName } = useProfile();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -37,6 +75,8 @@ const Navbar: React.FC = () => {
     setIsUserDropdownOpen(false);
   };
 
+  const isActiveRoute = (path: string) => location.pathname === path;
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
@@ -48,80 +88,144 @@ const Navbar: React.FC = () => {
   }, [userDropdownRef]);
 
   return (
-    <nav className="win-navbar">
+    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" onClick={closeMenus} className="flex items-center flex-shrink-0 group">
-            <img
-              src={process.env.REACT_APP_LOGO_URL || '/account-safe-logo.png'}
-              alt="logo"
-              className="h-10 w-10"
-            />
-            <span className="ml-2 text-lg font-semibold text-win-text-primary">{process.env.REACT_APP_PROJECT_NAME || 'AccountSafe'}</span>
+          <Link to="/" onClick={closeMenus} className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-shadow">
+                <ShieldIcon />
+              </div>
+              {/* Security indicator dot */}
+              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#0a0a0b]"></div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-base font-bold text-zinc-900 dark:text-white tracking-tight">{process.env.REACT_APP_PROJECT_NAME || 'AccountSafe'}</span>
+              <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-500 tracking-wider uppercase">Secure Vault</span>
+            </div>
           </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-1">
-            <div className="flex items-center">
-              <Link to="/" className="px-3 py-1.5 rounded-win text-sm font-medium text-win-text-secondary hover:bg-win-bg-hover transition-colors duration-150">Home</Link>
-              {token && <Link to="/dashboard" className="px-3 py-1.5 rounded-win text-sm font-medium text-win-text-secondary hover:bg-win-bg-hover transition-colors duration-150">Dashboard</Link>}
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-1">
+            {/* Nav Links */}
+            <div className="flex items-center bg-zinc-100 dark:bg-zinc-900/50 rounded-lg p-1 mr-4">
+              <Link 
+                to="/" 
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  isActiveRoute('/') 
+                    ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' 
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50'
+                }`}
+              >
+                Home
+              </Link>
+              {token && (
+                <>
+                  <Link 
+                    to="/dashboard" 
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      isActiveRoute('/dashboard') 
+                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' 
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link 
+                    to="/organizations" 
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
+                      isActiveRoute('/organizations') 
+                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' 
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50'
+                    }`}
+                  >
+                    <VaultIcon />
+                    Vault
+                  </Link>
+                </>
+              )}
             </div>
             
-            <div className="flex items-center ml-4 space-x-1">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              {/* Theme Toggle */}
               <button 
                 onClick={toggleTheme} 
-                className="p-2 rounded-win text-win-text-tertiary hover:bg-win-bg-hover transition-colors duration-150"
+                className="p-2.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
                 title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               >
                 {theme === 'light' ? <MoonIcon /> : <SunIcon />}
               </button>
-              
+
               {token ? (
-                <div className="relative ml-2" ref={userDropdownRef}>
+                /* User Menu */
+                <div className="relative" ref={userDropdownRef}>
                   <button 
                     onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} 
-                    className="flex items-center rounded-full focus:outline-none focus:ring-2 focus:ring-win-accent focus:ring-offset-2"
+                    className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-zinc-200 dark:bg-zinc-800/50 hover:bg-zinc-300 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700/50 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all"
                   >
                     <img 
-                      className="h-8 w-8 rounded-full border-2 border-transparent hover:border-win-accent transition-colors duration-150" 
-                      src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=128&background=60cdff&color=fff`} 
+                      className="h-7 w-7 rounded-full ring-2 ring-zinc-300 dark:ring-zinc-700" 
+                      src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=128&background=3b82f6&color=fff`} 
                       alt="User profile" 
                     />
+                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-300 max-w-[100px] truncate">{displayName || 'User'}</span>
+                    <ChevronDownIcon />
                   </button>
+                  
+                  {/* Dropdown Menu */}
                   {isUserDropdownOpen && (
-                    <div className="origin-top-right absolute right-0 mt-3 w-56 rounded-xl shadow-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-fadeIn">
-                      <div className="px-5 py-4 bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Your Account</p>
+                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl shadow-zinc-900/20 dark:shadow-black/50 overflow-hidden animate-fadeIn">
+                      {/* User Info Header */}
+                      <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            className="h-10 w-10 rounded-full ring-2 ring-blue-500/50" 
+                            src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=128&background=3b82f6&color=fff`} 
+                            alt="" 
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">{displayName || 'User'}</p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-500">Manage your account</p>
+                          </div>
+                        </div>
                       </div>
+                      
+                      {/* Menu Items */}
                       <div className="py-2">
                         <Link 
                           to="/dashboard" 
                           onClick={() => setIsUserDropdownOpen(false)} 
-                          className="flex items-center px-5 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors duration-150"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         >
-                          <svg className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                          </svg>
+                          <DashboardIcon />
                           Dashboard
+                        </Link>
+                        <Link 
+                          to="/organizations" 
+                          onClick={() => setIsUserDropdownOpen(false)} 
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <VaultIcon />
+                          Secure Vault
                         </Link>
                         <Link 
                           to="/profile" 
                           onClick={() => setIsUserDropdownOpen(false)} 
-                          className="flex items-center px-5 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors duration-150"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         >
-                          <svg className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          Profile
+                          <UserIcon />
+                          Profile Settings
                         </Link>
+                        
+                        <div className="my-2 border-t border-zinc-200 dark:border-zinc-800"></div>
+                        
                         <button 
                           onClick={handleLogout} 
-                          className="flex items-center w-full px-5 py-3 text-sm text-red-600 dark:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors duration-150"
+                          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                         >
-                          <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                          </svg>
+                          <LogoutIcon />
                           Sign out
                         </button>
                       </div>
@@ -129,21 +233,46 @@ const Navbar: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <div className="flex items-center space-x-2 ml-2">
-                  <Link to="/login" className="px-3 py-1.5 rounded-win text-sm font-medium text-win-text-secondary hover:bg-win-bg-hover transition-colors duration-150">Log in</Link>
-                  <Link to="/register" className="win-btn-primary px-4 py-1.5 rounded-win text-sm font-medium">Sign up</Link>
+                /* Auth Buttons */
+                <div className="flex items-center gap-2">
+                  <Link 
+                    to="/login" 
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                  >
+                    Log in
+                  </Link>
+                  <Link 
+                    to="/register" 
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
+                  >
+                    Get Started
+                  </Link>
                 </div>
               )}
             </div>
           </div>
           
-          {/* Mobile Menu Button & Theme Toggle */}
-          <div className="md:hidden flex items-center">
-            <button onClick={toggleTheme} className="p-2 rounded-win text-win-text-tertiary hover:bg-win-bg-hover mr-1 transition-colors duration-150">
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center gap-2">
+            <button 
+              onClick={toggleTheme} 
+              className="p-2 rounded-lg text-zinc-400 hover:text-white dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+            >
               {theme === 'light' ? <MoonIcon /> : <SunIcon />}
             </button>
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="inline-flex items-center justify-center p-2 rounded-win text-win-text-secondary hover:bg-win-bg-hover transition-colors duration-150">
-              {isMobileMenuOpen ? ( <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg> ) : ( <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg> )}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+              className="p-2 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+            >
+              {isMobileMenuOpen ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+              )}
             </button>
           </div>
         </div>
@@ -151,32 +280,98 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu Panel */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-win-border-default bg-win-bg-layer backdrop-blur-win">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-win-text-secondary hover:bg-win-bg-hover block px-3 py-2 rounded-win text-sm font-medium transition-colors duration-150">Home</Link>
-            {token && <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-win-text-secondary hover:bg-win-bg-hover block px-3 py-2 rounded-win text-sm font-medium transition-colors duration-150">Dashboard</Link>}
+        <div className="md:hidden bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-zinc-200 dark:border-zinc-800 animate-fadeIn">
+          {/* Navigation Links */}
+          <div className="px-4 py-3 space-y-1">
+            <Link 
+              to="/" 
+              onClick={closeMenus} 
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                isActiveRoute('/') ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+              </svg>
+              Home
+            </Link>
+            {token && (
+              <>
+                <Link 
+                  to="/dashboard" 
+                  onClick={closeMenus} 
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                    isActiveRoute('/dashboard') ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <DashboardIcon />
+                  Dashboard
+                </Link>
+                <Link 
+                  to="/organizations" 
+                  onClick={closeMenus} 
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                    isActiveRoute('/organizations') ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <VaultIcon />
+                  Secure Vault
+                </Link>
+              </>
+            )}
           </div>
-          <div className="pt-4 pb-3 border-t border-win-border-default">
+          
+          {/* User Section */}
+          <div className="px-4 py-4 border-t border-zinc-200 dark:border-zinc-800">
             {token ? (
               <>
-                <div className="flex items-center px-5">
-                  <div className="flex-shrink-0">
-                    <img className="h-10 w-10 rounded-full" src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=128&background=60cdff&color=fff`} alt="" />
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-sm font-medium text-win-text-primary">Your Account</div>
+                {/* User Info */}
+                <div className="flex items-center gap-3 px-4 py-3 mb-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg">
+                  <img 
+                    className="h-10 w-10 rounded-full ring-2 ring-zinc-300 dark:ring-zinc-700" 
+                    src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=128&background=3b82f6&color=fff`} 
+                    alt="" 
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">{displayName || 'User'}</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-500">Account Settings</p>
                   </div>
                 </div>
-                <div className="mt-3 px-2 space-y-1">
-                  <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-win text-sm font-medium text-win-text-secondary hover:bg-win-bg-hover transition-colors duration-150">Dashboard</Link>
-                  <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-win text-sm font-medium text-win-text-secondary hover:bg-win-bg-hover transition-colors duration-150">Profile</Link>
-                  <button onClick={handleLogout} className="w-full text-left block px-3 py-2 rounded-win text-sm font-medium text-red-500 hover:bg-win-bg-hover transition-colors duration-150">Sign out</button>
+                
+                <div className="space-y-1">
+                  <Link 
+                    to="/profile" 
+                    onClick={closeMenus} 
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 transition-all"
+                  >
+                    <UserIcon />
+                    Profile Settings
+                  </Link>
+                  <button 
+                    onClick={handleLogout} 
+                    className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                  >
+                    <LogoutIcon />
+                    Sign out
+                  </button>
                 </div>
               </>
             ) : (
-              <div className="px-5 space-y-3">
-                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="block w-full text-center win-btn-primary py-2 rounded-win text-sm font-medium">Log in</Link>
-                <Link to="/register" onClick={() => setIsMobileMenuOpen(false)} className="block w-full text-center text-win-accent border border-win-accent px-4 py-2 rounded-win text-sm font-medium hover:bg-win-bg-hover transition-colors duration-150">Sign up</Link>
+              <div className="space-y-3">
+                <Link 
+                  to="/login" 
+                  onClick={closeMenus} 
+                  className="block w-full px-4 py-3 rounded-lg text-sm font-medium text-center text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all"
+                >
+                  Log in
+                </Link>
+                <Link 
+                  to="/register" 
+                  onClick={closeMenus} 
+                  className="block w-full px-4 py-3 rounded-lg text-sm font-medium text-center text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25"
+                >
+                  Get Started Free
+                </Link>
               </div>
             )}
           </div>

@@ -90,10 +90,10 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="win-bg-layer rounded-2xl shadow-win-flyout max-w-md w-full border border-win-border-default overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="as-modal max-w-md w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-purple-700 dark:from-purple-500 dark:to-purple-600 px-6 py-5">
+        <div className="bg-gradient-to-r from-purple-600 to-purple-500 -m-6 mb-6 px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -110,9 +110,9 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div>
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-2">
+            <div className="as-alert-danger mb-4">
               <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -123,7 +123,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
             </div>
           )}
 
-          <p className="text-center win-text-secondary mb-6">
+          <p className="text-center text-zinc-400 mb-6">
             Enter your 4-digit security PIN
           </p>
 
@@ -140,7 +140,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
                 value={digit}
                 onChange={(e) => handlePinChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-14 h-14 text-center text-2xl font-bold win-input rounded-xl focus:ring-2 focus:ring-purple-500"
+                className="w-14 h-14 text-center text-2xl font-bold as-input rounded-xl focus:ring-2 focus:ring-purple-500"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 disabled={isLoading}
@@ -152,7 +152,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 win-btn-secondary py-2.5"
+              className="flex-1 as-btn-secondary"
               disabled={isLoading}
             >
               Cancel
@@ -160,7 +160,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
             <button
               onClick={() => handleVerify()}
               disabled={isLoading || pin.join('').length !== 4}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -174,7 +174,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
             </button>
           </div>
 
-          <p className="text-center text-xs win-text-tertiary mt-4">
+          <p className="text-center text-xs text-zinc-500 mt-4">
             Forgot your PIN? Reset it from your Profile page
           </p>
         </div>

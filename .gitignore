@@ -39,3 +39,4 @@ db.sqlite3
 
 # Test folder - local testing only
 /tests/
+.vercel

@@ -31,7 +31,7 @@ const App: React.FC = () => {
         <AuthProvider>
           <ProfileProvider>
             <ProfileUpdater />
-            <div className="bg-win-bg-solid text-win-text-primary min-h-screen transition-colors duration-200 font-segoe">
+            <div className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-200 font-sans">
               <Navbar />
               <main>
                 <Routes>

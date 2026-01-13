@@ -2,63 +2,159 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Windows 11 Fluent Design System Styles */
+/* ═══════════════════════════════════════════════════════════════════════════
+   AccountSafe Design System — MAANG-Grade Enterprise Security UI
+   Version 2.0 — Dark Theme Optimized
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Font imports for Segoe UI Variable (Windows 11 system font) */
-@font-face {
-  font-family: 'Segoe UI Variable';
-  src: local('Segoe UI Variable Display'), local('Segoe UI Variable Text'), local('Segoe UI');
-  font-weight: 100 900;
-  font-style: normal;
-}
+/* Font imports — Inter for modern SaaS aesthetic */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* Base styles */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Design Tokens
+   ───────────────────────────────────────────────────────────────────────────── */
 :root {
-  /* Windows 11 Light Mode tokens */
-  --win-bg-solid: #f3f3f3;
-  --win-bg-layer: #ffffff;
-  --win-bg-subtle: #f9f9f9;
-  --win-bg-hover: #f5f5f5;
-  --win-text-primary: #1a1a1a;
-  --win-text-secondary: #5c5c5c;
-  --win-text-tertiary: #8a8a8a;
-  --win-border-default: #e0e0e0;
-  --win-border-subtle: #ebebeb;
-  --win-accent: #0078d4;
-  --win-accent-hover: #106ebe;
-  --win-accent-light: #60cdff;
-  --win-radius: 8px;
-  --win-radius-lg: 12px;
+  /* Background Layers (Light Mode - kept for compatibility) */
+  --as-bg-base: #fafafa;
+  --as-bg-surface: #ffffff;
+  --as-bg-elevated: #ffffff;
+  --as-bg-subtle: #f4f4f5;
+  --as-bg-muted: #e4e4e7;
+  
+  /* Text Colors */
+  --as-text-primary: #18181b;
+  --as-text-secondary: #52525b;
+  --as-text-muted: #a1a1aa;
+  
+  /* Border Colors */
+  --as-border-default: #d4d4d8;
+  --as-border-subtle: #e4e4e7;
+  --as-border-strong: #a1a1aa;
+  
+  /* Accent (Security Blue) */
+  --as-accent-50: #eff6ff;
+  --as-accent-100: #dbeafe;
+  --as-accent-200: #bfdbfe;
+  --as-accent-400: #60a5fa;
+  --as-accent-500: #3b82f6;
+  --as-accent-600: #2563eb;
+  
+  /* Semantic Colors */
+  --as-success-50: #f0fdf4;
+  --as-success-400: #4ade80;
+  --as-success-500: #22c55e;
+  --as-success-600: #16a34a;
+  
+  --as-warning-50: #fffbeb;
+  --as-warning-400: #fbbf24;
+  --as-warning-500: #f59e0b;
+  
+  --as-danger-50: #fef2f2;
+  --as-danger-400: #f87171;
+  --as-danger-500: #ef4444;
+  --as-danger-600: #dc2626;
+  
+  --as-info-400: #22d3ee;
+  --as-info-500: #06b6d4;
+  
+  /* Spacing Scale */
+  --as-space-1: 4px;
+  --as-space-2: 8px;
+  --as-space-3: 12px;
+  --as-space-4: 16px;
+  --as-space-5: 20px;
+  --as-space-6: 24px;
+  --as-space-8: 32px;
+  --as-space-10: 40px;
+  --as-space-12: 48px;
+  
+  /* Border Radius */
+  --as-radius-sm: 6px;
+  --as-radius-md: 8px;
+  --as-radius-lg: 12px;
+  --as-radius-xl: 16px;
+  --as-radius-full: 9999px;
+  
+  /* Shadows */
+  --as-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --as-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --as-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --as-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  
+  /* Legacy compatibility */
+  --win-bg-solid: var(--as-bg-base);
+  --win-bg-layer: var(--as-bg-surface);
+  --win-bg-subtle: var(--as-bg-subtle);
+  --win-bg-hover: var(--as-bg-muted);
+  --win-text-primary: var(--as-text-primary);
+  --win-text-secondary: var(--as-text-secondary);
+  --win-text-tertiary: var(--as-text-muted);
+  --win-border-default: var(--as-border-default);
+  --win-border-subtle: var(--as-border-subtle);
+  --win-accent: var(--as-accent-500);
+  --win-accent-hover: var(--as-accent-600);
+  --win-accent-light: var(--as-accent-400);
+  --win-radius: var(--as-radius-md);
+  --win-radius-lg: var(--as-radius-lg);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Dark Mode — Primary Theme for Security Applications
+   ───────────────────────────────────────────────────────────────────────────── */
 .dark {
-  /* Windows 11 Dark Mode tokens */
-  --win-bg-solid: #202020;
-  --win-bg-layer: #2d2d2d;
-  --win-bg-subtle: #383838;
-  --win-bg-hover: #3d3d3d;
-  --win-text-primary: #ffffff;
-  --win-text-secondary: #c5c5c5;
-  --win-text-tertiary: #9a9a9a;
-  --win-border-default: #454545;
-  --win-border-subtle: #3a3a3a;
-  --win-accent: #60cdff;
-  --win-accent-hover: #98d9ff;
-  --win-accent-light: #60cdff;
+  /* Background Layers — Deep, sophisticated blacks */
+  --as-bg-base: #09090b;
+  --as-bg-surface: #18181b;
+  --as-bg-elevated: #27272a;
+  --as-bg-subtle: #3f3f46;
+  --as-bg-muted: #52525b;
+  
+  /* Text Colors — High contrast for readability */
+  --as-text-primary: #fafafa;
+  --as-text-secondary: #a1a1aa;
+  --as-text-muted: #71717a;
+  
+  /* Border Colors — Subtle definition */
+  --as-border-default: #27272a;
+  --as-border-subtle: #3f3f46;
+  --as-border-strong: #52525b;
+  
+  /* Dark mode shadows with glow effects */
+  --as-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --as-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --as-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --as-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+  --as-shadow-glow-accent: 0 0 20px -5px rgb(59 130 246 / 0.5);
+  --as-shadow-glow-success: 0 0 20px -5px rgb(34 197 94 / 0.4);
+  --as-shadow-glow-danger: 0 0 20px -5px rgb(239 68 68 / 0.4);
+  
+  /* Legacy compatibility */
+  --win-bg-solid: var(--as-bg-base);
+  --win-bg-layer: var(--as-bg-surface);
+  --win-bg-subtle: var(--as-bg-elevated);
+  --win-bg-hover: var(--as-bg-subtle);
+  --win-text-primary: var(--as-text-primary);
+  --win-text-secondary: var(--as-text-secondary);
+  --win-text-tertiary: var(--as-text-muted);
+  --win-border-default: var(--as-border-default);
+  --win-border-subtle: var(--as-border-subtle);
+  --win-accent: var(--as-accent-400);
+  --win-accent-hover: var(--as-accent-500);
+  --win-accent-light: var(--as-accent-400);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Base Styles
+   ───────────────────────────────────────────────────────────────────────────── */
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #888888 transparent;
-}
-
-.dark * {
-  scrollbar-color: #5a5a5a transparent;
+  scrollbar-color: var(--as-bg-subtle) transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 *::-webkit-scrollbar-track {
@@ -66,291 +162,680 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #888888;
-  border-radius: 10px;
+  background-color: var(--as-bg-subtle);
+  border-radius: var(--as-radius-full);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
-.dark *::-webkit-scrollbar-thumb {
-  background-color: #5a5a5a;
-}
-
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #666666;
-}
-
-.dark *::-webkit-scrollbar-thumb:hover {
-  background-color: #787878;
+  background-color: var(--as-bg-muted);
 }
 
 body {
-  font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 14px;
-  line-height: 1.5;
-  background-color: var(--win-bg-solid);
-  color: var(--win-text-primary);
+  line-height: 1.6;
+  background-color: var(--as-bg-base);
+  color: var(--as-text-primary);
   transition: background-color 0.2s ease, color 0.2s ease;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* Acrylic effect */
-.acrylic {
-  backdrop-filter: blur(30px) saturate(125%);
-  -webkit-backdrop-filter: blur(30px) saturate(125%);
+/* Monospace font for sensitive data */
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 }
 
-.acrylic {
-  background-color: rgba(255, 255, 255, 0.75);
-}
-
-.dark .acrylic {
-  background-color: rgba(32, 32, 32, 0.85);
-}
-
-/* Windows 11 component styles */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Component Layer
+   ───────────────────────────────────────────────────────────────────────────── */
 @layer components {
-  /* Card */
-  .win-card {
-    @apply rounded-xl p-6 transition-all duration-200;
-    background-color: var(--win-bg-layer);
-    border: 1px solid var(--win-border-default);
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Cards — Primary content containers
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-card {
+    @apply rounded-xl transition-all duration-200;
+    background-color: var(--as-bg-surface);
+    border: 1px solid var(--as-border-default);
+    box-shadow: var(--as-shadow-sm);
   }
   
-  .win-card-static {
-    @apply win-card;
+  .as-card-interactive {
+    @apply as-card cursor-pointer;
+  }
+  
+  .as-card-interactive:hover {
+    border-color: var(--as-border-strong);
+    box-shadow: var(--as-shadow-md);
+    transform: translateY(-2px);
+  }
+  
+  .as-card-elevated {
+    @apply as-card;
+    background-color: var(--as-bg-elevated);
+    box-shadow: var(--as-shadow-lg);
+  }
+  
+  .as-card-glow {
+    @apply as-card;
+    box-shadow: var(--as-shadow-glow-accent);
+    border-color: var(--as-accent-500);
+  }
+  
+  /* Legacy compatibility */
+  .win-card {
+    @apply as-card p-6;
   }
   
   .win-card:not(.win-card-static):hover {
-    border-color: var(--win-border-subtle);
+    border-color: var(--as-border-strong);
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12), 0 0 2px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--as-shadow-lg);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Buttons — Action hierarchy
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-150;
+    border-radius: var(--as-radius-md);
+    font-size: 14px;
+    line-height: 1;
+    padding: 10px 16px;
+    cursor: pointer;
   }
   
-  /* Primary Button */
+  .as-btn:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  
+  .as-btn-primary {
+    @apply as-btn;
+    background: linear-gradient(135deg, var(--as-accent-500) 0%, var(--as-accent-600) 100%);
+    color: white;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.1);
+  }
+  
+  .as-btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--as-accent-400) 0%, var(--as-accent-500) 100%);
+    box-shadow: var(--as-shadow-md), var(--as-shadow-glow-accent);
+  }
+  
+  .as-btn-secondary {
+    @apply as-btn;
+    background-color: var(--as-bg-elevated);
+    color: var(--as-text-primary);
+    border: 1px solid var(--as-border-default);
+  }
+  
+  .as-btn-secondary:hover:not(:disabled) {
+    background-color: var(--as-bg-subtle);
+    border-color: var(--as-border-strong);
+  }
+  
+  .as-btn-ghost {
+    @apply as-btn;
+    background: transparent;
+    color: var(--as-text-secondary);
+  }
+  
+  .as-btn-ghost:hover:not(:disabled) {
+    background-color: var(--as-bg-subtle);
+    color: var(--as-text-primary);
+  }
+  
+  .as-btn-danger {
+    @apply as-btn;
+    background-color: rgb(239 68 68 / 0.1);
+    color: var(--as-danger-400);
+    border: 1px solid rgb(239 68 68 / 0.2);
+  }
+  
+  .as-btn-danger:hover:not(:disabled) {
+    background-color: rgb(239 68 68 / 0.2);
+    border-color: rgb(239 68 68 / 0.3);
+    box-shadow: var(--as-shadow-glow-danger);
+  }
+  
+  .as-btn-success {
+    @apply as-btn;
+    background-color: rgb(34 197 94 / 0.1);
+    color: var(--as-success-400);
+    border: 1px solid rgb(34 197 94 / 0.2);
+  }
+  
+  .as-btn-success:hover:not(:disabled) {
+    background-color: rgb(34 197 94 / 0.2);
+    box-shadow: var(--as-shadow-glow-success);
+  }
+  
+  .as-btn-icon {
+    @apply as-btn p-2;
+    min-width: 36px;
+    min-height: 36px;
+  }
+  
+  /* Size variants */
+  .as-btn-sm {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .as-btn-lg {
+    font-size: 16px;
+    padding: 12px 24px;
+  }
+  
+  /* Legacy compatibility */
   .win-btn-primary {
-    @apply px-4 py-2.5 rounded-lg font-medium transition-all duration-150;
-    font-size: 14px;
-    background-color: var(--win-accent);
-    color: #ffffff;
+    @apply as-btn-primary;
   }
   
-  .win-btn-primary:hover:not(:disabled) {
-    background-color: var(--win-accent-hover);
-  }
-  
-  .dark .win-btn-primary {
-    color: #000000;
-  }
-  
-  /* Secondary Button */
   .win-btn-secondary {
-    @apply px-4 py-2.5 rounded-lg font-medium transition-all duration-150;
+    @apply as-btn-secondary;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Inputs — Form controls
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-input {
+    @apply w-full transition-all duration-150;
     font-size: 14px;
-    background-color: var(--win-bg-subtle);
-    color: var(--win-text-primary);
-    border: 1px solid var(--win-border-default);
+    padding: 10px 14px;
+    border-radius: var(--as-radius-md);
+    background-color: var(--as-bg-base);
+    border: 1px solid var(--as-border-default);
+    color: var(--as-text-primary);
   }
   
-  .win-btn-secondary:hover:not(:disabled) {
-    background-color: var(--win-bg-hover);
-  }
-  
-  /* Input */
-  .win-input {
-    @apply w-full px-4 py-2.5 rounded-lg transition-all duration-150;
-    font-size: 14px;
-    background-color: var(--win-bg-layer);
-    border: 1px solid var(--win-border-default);
-    color: var(--win-text-primary);
-  }
-  
-  .win-input:focus {
+  .as-input:focus {
     @apply outline-none;
-    border-color: var(--win-accent);
-    box-shadow: 0 0 0 1px var(--win-accent);
+    border-color: var(--as-accent-500);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.15);
   }
   
-  .win-input::placeholder {
-    color: var(--win-text-tertiary);
+  .as-input::placeholder {
+    color: var(--as-text-muted);
   }
   
-  /* Select */
+  .as-input-error {
+    border-color: var(--as-danger-500);
+  }
+  
+  .as-input-error:focus {
+    box-shadow: 0 0 0 3px rgb(239 68 68 / 0.15);
+  }
+  
+  .win-input {
+    @apply as-input;
+  }
+  
   .win-select {
-    @apply win-input appearance-none cursor-pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239a9a9a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    @apply as-input appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2371717a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 16px;
     padding-right: 40px;
   }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Badges — Status indicators
+     ═══════════════════════════════════════════════════════════════════════════ */
   
-  /* Navbar */
-  .win-navbar {
+  .as-badge {
+    @apply inline-flex items-center gap-1.5 font-medium;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: var(--as-radius-full);
+    line-height: 1;
+  }
+  
+  .as-badge-success {
+    @apply as-badge;
+    background-color: rgb(34 197 94 / 0.15);
+    color: var(--as-success-400);
+    border: 1px solid rgb(34 197 94 / 0.2);
+  }
+  
+  .as-badge-danger {
+    @apply as-badge;
+    background-color: rgb(239 68 68 / 0.15);
+    color: var(--as-danger-400);
+    border: 1px solid rgb(239 68 68 / 0.2);
+  }
+  
+  .as-badge-warning {
+    @apply as-badge;
+    background-color: rgb(245 158 11 / 0.15);
+    color: var(--as-warning-400);
+    border: 1px solid rgb(245 158 11 / 0.2);
+  }
+  
+  .as-badge-info {
+    @apply as-badge;
+    background-color: rgb(59 130 246 / 0.15);
+    color: var(--as-accent-400);
+    border: 1px solid rgb(59 130 246 / 0.2);
+  }
+  
+  .as-badge-neutral {
+    @apply as-badge;
+    background-color: var(--as-bg-subtle);
+    color: var(--as-text-secondary);
+    border: 1px solid var(--as-border-default);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Security Score Widget
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-security-ring {
+    @apply relative inline-flex items-center justify-center;
+  }
+  
+  .as-security-ring svg {
+    transform: rotate(-90deg);
+  }
+  
+  .as-security-ring .ring-bg {
+    stroke: var(--as-bg-subtle);
+  }
+  
+  .as-security-ring .ring-progress {
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease-in-out;
+  }
+  
+  .as-security-ring.score-excellent .ring-progress { stroke: var(--as-success-400); }
+  .as-security-ring.score-good .ring-progress { stroke: var(--as-accent-400); }
+  .as-security-ring.score-fair .ring-progress { stroke: var(--as-warning-400); }
+  .as-security-ring.score-poor .ring-progress { stroke: var(--as-danger-400); }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Stats Card
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-stat-card {
+    @apply as-card p-5 relative overflow-hidden;
+  }
+  
+  .as-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--stat-color, var(--as-accent-500)) 0%, transparent 100%);
+    opacity: 0.5;
+  }
+  
+  .as-stat-card .stat-icon {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center;
+    background-color: rgb(var(--stat-color-rgb, 59 130 246) / 0.1);
+  }
+  
+  .as-stat-card .stat-value {
+    @apply text-2xl font-bold;
+    color: var(--as-text-primary);
+  }
+  
+  .as-stat-card .stat-label {
+    @apply text-sm;
+    color: var(--as-text-muted);
+  }
+  
+  .as-stat-card .stat-trend {
+    @apply text-xs font-medium flex items-center gap-1;
+  }
+  
+  .as-stat-card .stat-trend.positive { color: var(--as-success-400); }
+  .as-stat-card .stat-trend.negative { color: var(--as-danger-400); }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Navigation
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-navbar {
     @apply sticky top-0 z-50;
-    backdrop-filter: blur(30px) saturate(125%);
-    -webkit-backdrop-filter: blur(30px) saturate(125%);
-    background-color: rgba(255, 255, 255, 0.75);
-    border-bottom: 1px solid var(--win-border-subtle);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background-color: rgb(255 255 255 / 0.8);
+    border-bottom: 1px solid var(--as-border-default);
   }
   
-  .dark .win-navbar {
-    background-color: rgba(32, 32, 32, 0.75);
+  .dark .as-navbar {
+    background-color: rgb(9 9 11 / 0.8);
   }
   
-  /* Section Header */
-  .win-section-header {
-    @apply text-sm font-semibold mb-4;
-    color: var(--win-text-primary);
-  }
-  
-  /* Text utilities using CSS variables */
-  .win-text-primary {
-    color: var(--win-text-primary);
-  }
-  
-  .win-text-secondary {
-    color: var(--win-text-secondary);
-  }
-  
-  .win-text-tertiary {
-    color: var(--win-text-tertiary);
-  }
-  
-  .win-text-accent {
-    color: var(--win-accent);
-  }
-  
-  /* Background utilities */
-  .win-bg-solid {
-    background-color: var(--win-bg-solid);
-  }
-  
-  .win-bg-layer {
-    background-color: var(--win-bg-layer);
-  }
-  
-  .win-bg-subtle {
-    background-color: var(--win-bg-subtle);
-  }
-  
-  .win-bg-hover {
-    background-color: var(--win-bg-hover);
-  }
-  
-  /* Border utilities */
-  .win-border {
-    border-color: var(--win-border-default);
-  }
-  
-  .win-border-subtle {
-    border-color: var(--win-border-subtle);
-  }
-  
-  /* Typography */
-  .win-title {
-    @apply font-semibold;
-    font-size: 28px;
-    line-height: 36px;
-    color: var(--win-text-primary);
-  }
-  
-  .win-subtitle {
-    @apply font-semibold;
-    font-size: 20px;
-    line-height: 28px;
-    color: var(--win-text-primary);
-  }
-  
-  .win-body {
-    font-size: 14px;
-    line-height: 20px;
-    color: var(--win-text-secondary);
-  }
-  
-  .win-caption {
-    font-size: 12px;
-    line-height: 16px;
-    color: var(--win-text-tertiary);
-  }
-  
-  /* Divider */
-  .win-divider {
-    @apply my-4;
-    border-top: 1px solid var(--win-border-subtle);
-  }
-  
-  /* Badge */
-  .win-badge {
-    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
-  }
-  
-  .win-badge-accent {
-    background-color: rgba(0, 120, 212, 0.1);
-    color: var(--win-accent);
-  }
-  
-  .dark .win-badge-accent {
-    background-color: rgba(96, 205, 255, 0.15);
+  .win-navbar {
+    @apply as-navbar;
   }
 
-  /* Link */
-  .win-link {
-    color: var(--win-accent);
-    @apply transition-colors;
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Tables — Data display
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-table {
+    @apply w-full;
   }
   
-  .win-link:hover {
-    color: var(--win-accent-hover);
-    @apply underline;
+  .as-table thead {
+    background-color: var(--as-bg-elevated);
   }
   
-  /* Mobile utilities */
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  .as-table th {
+    @apply text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider;
+    color: var(--as-text-muted);
+    border-bottom: 1px solid var(--as-border-default);
   }
   
-  /* Touch target size for mobile */
-  @media (hover: none) and (pointer: coarse) {
-    button, a {
-      min-height: 44px;
-      min-width: 44px;
-    }
+  .as-table td {
+    @apply py-4 px-4;
+    border-bottom: 1px solid var(--as-border-default);
   }
+  
+  .as-table tbody tr {
+    @apply transition-colors duration-150;
+  }
+  
+  .as-table tbody tr:hover {
+    background-color: var(--as-bg-elevated);
+  }
+  
+  .as-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Credential Field — Copy-enabled fields
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-credential-field {
+    @apply flex items-center gap-2 p-3 rounded-lg;
+    background-color: var(--as-bg-base);
+    border: 1px solid var(--as-border-default);
+  }
+  
+  .as-credential-field .field-value {
+    @apply flex-1 font-mono text-sm truncate;
+    color: var(--as-text-primary);
+  }
+  
+  .as-credential-field .field-value.masked {
+    letter-spacing: 2px;
+  }
+  
+  .as-credential-field .field-actions {
+    @apply flex items-center gap-1;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Empty State
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-empty-state {
+    @apply text-center py-16 px-4;
+  }
+  
+  .as-empty-state .empty-icon {
+    @apply w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center;
+    background-color: var(--as-bg-elevated);
+  }
+  
+  .as-empty-state .empty-title {
+    @apply text-lg font-semibold mb-2;
+    color: var(--as-text-primary);
+  }
+  
+  .as-empty-state .empty-description {
+    @apply text-sm max-w-sm mx-auto;
+    color: var(--as-text-muted);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Section Headers
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-section-header {
+    @apply flex items-center justify-between mb-6;
+  }
+  
+  .as-section-title {
+    @apply text-lg font-semibold;
+    color: var(--as-text-primary);
+  }
+  
+  .as-section-subtitle {
+    @apply text-sm mt-1;
+    color: var(--as-text-muted);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Page Header
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-page-header {
+    @apply mb-8;
+  }
+  
+  .as-page-title {
+    @apply text-3xl font-bold tracking-tight;
+    color: var(--as-text-primary);
+  }
+  
+  .as-page-subtitle {
+    @apply text-base mt-2;
+    color: var(--as-text-secondary);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Alerts & Feedback
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-alert {
+    @apply flex items-start gap-3 p-4 rounded-lg;
+    border: 1px solid transparent;
+  }
+  
+  .as-alert-success {
+    @apply as-alert;
+    background-color: rgb(34 197 94 / 0.1);
+    border-color: rgb(34 197 94 / 0.2);
+    color: var(--as-success-400);
+  }
+  
+  .as-alert-danger {
+    @apply as-alert;
+    background-color: rgb(239 68 68 / 0.1);
+    border-color: rgb(239 68 68 / 0.2);
+    color: var(--as-danger-400);
+  }
+  
+  .as-alert-warning {
+    @apply as-alert;
+    background-color: rgb(245 158 11 / 0.1);
+    border-color: rgb(245 158 11 / 0.2);
+    color: var(--as-warning-400);
+  }
+  
+  .as-alert-info {
+    @apply as-alert;
+    background-color: rgb(59 130 246 / 0.1);
+    border-color: rgb(59 130 246 / 0.2);
+    color: var(--as-accent-400);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Modal / Dialog
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+    background-color: rgb(0 0 0 / 0.7);
+    backdrop-filter: blur(4px);
+  }
+  
+  .as-modal {
+    @apply w-full max-h-[90vh] overflow-y-auto;
+    max-width: 480px;
+    background-color: var(--as-bg-surface);
+    border: 1px solid var(--as-border-default);
+    border-radius: var(--as-radius-xl);
+    box-shadow: var(--as-shadow-xl);
+    animation: modalIn 0.2s ease-out;
+  }
+  
+  .as-modal-header {
+    @apply flex items-center justify-between p-6 pb-0;
+  }
+  
+  .as-modal-title {
+    @apply text-xl font-semibold;
+    color: var(--as-text-primary);
+  }
+  
+  .as-modal-body {
+    @apply p-6;
+  }
+  
+  .as-modal-footer {
+    @apply flex items-center justify-end gap-3 p-6 pt-0;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Progress Ring
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .as-progress-ring {
+    @apply relative inline-flex items-center justify-center;
+  }
+  
+  .as-progress-ring svg {
+    transform: rotate(-90deg);
+  }
+  
+  .as-progress-ring-bg {
+    stroke: var(--as-bg-subtle);
+  }
+  
+  .as-progress-ring-fill {
+    stroke: var(--as-accent-500);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s ease-in-out;
+  }
+
+  /* Legacy text utilities */
+  .win-text-primary { color: var(--as-text-primary); }
+  .win-text-secondary { color: var(--as-text-secondary); }
+  .win-text-tertiary { color: var(--as-text-muted); }
+  .win-text-accent { color: var(--as-accent-500); }
+  .win-bg-solid { background-color: var(--as-bg-base); }
+  .win-bg-layer { background-color: var(--as-bg-surface); }
+  .win-bg-subtle { background-color: var(--as-bg-subtle); }
+  .win-bg-hover { background-color: var(--as-bg-elevated); }
+  .win-border { border-color: var(--as-border-default); }
+  .win-border-subtle { border-color: var(--as-border-subtle); }
+  .win-divider { @apply my-4; border-top: 1px solid var(--as-border-subtle); }
+  .win-section-header { @apply text-sm font-semibold mb-4; color: var(--as-text-primary); }
+  .win-title { @apply font-semibold; font-size: 28px; line-height: 36px; color: var(--as-text-primary); }
+  .win-subtitle { @apply font-semibold; font-size: 20px; line-height: 28px; color: var(--as-text-primary); }
+  .win-body { font-size: 14px; line-height: 20px; color: var(--as-text-secondary); }
+  .win-caption { font-size: 12px; line-height: 16px; color: var(--as-text-muted); }
+  .win-link { color: var(--as-accent-500); @apply transition-colors; }
+  .win-link:hover { color: var(--as-accent-400); @apply underline; }
+  .win-badge { @apply as-badge; }
+  .win-badge-accent { @apply as-badge-info; }
 }
 
-/* Responsive text utilities */
-@media (max-width: 640px) {
-  body {
-    font-size: 13px;
-  }
-}
+/* ─────────────────────────────────────────────────────────────────────────────
+   Animations
+   ───────────────────────────────────────────────────────────────────────────── */
 
-/* Dropdown animations */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(34 197 94 / 0.4); }
+  50% { box-shadow: 0 0 0 8px rgb(34 197 94 / 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fadeIn { animation: fadeIn 0.2s ease-out; }
+.animate-slideUp { animation: slideUp 0.3s ease-out; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--as-bg-surface) 25%, var(--as-bg-elevated) 50%, var(--as-bg-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Utility Classes
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Touch targets for mobile */
+@media (hover: none) and (pointer: coarse) {
+  button, a, .as-btn {
+    min-height: 44px;
+    min-width: 44px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+}
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--as-accent-500);
+  outline-offset: 2px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.2s ease-out;
-}
-
-/* Dark mode gray scale */
-.dark .dark\:bg-gray-750 {
-  background-color: #2d3748;
-}
-
-.dark .dark\:hover\:bg-gray-750:hover {
-  background-color: #2d3748;
-}
+/* Dark mode gray scale compatibility */
+.dark .dark\:bg-gray-750 { background-color: var(--as-bg-elevated); }
+.dark .dark\:hover\:bg-gray-750:hover { background-color: var(--as-bg-subtle); }

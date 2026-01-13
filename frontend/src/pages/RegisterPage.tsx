@@ -7,29 +7,29 @@ import { useAuth } from '../contexts/AuthContext';
 
 // Icons
 const UserIcon = () => (
-    <svg className="w-5 h-5 text-win-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
 );
 
 const EmailIcon = () => (
-    <svg className="w-5 h-5 text-win-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
     </svg>
 );
 
 const LockIcon = () => (
-    <svg className="w-5 h-5 text-win-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
     </svg>
 );
 
 const ShieldIcon = () => (
-    <img
-        src={process.env.REACT_APP_LOGO_URL || '/account-safe-logo.png'}
-        alt="logo"
-        className="w-20 h-20"
-    />
+    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+        <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+        </svg>
+    </div>
 );
 
 const CheckIcon = () => <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>;
@@ -125,7 +125,7 @@ const RegisterPage: React.FC = () => {
         if (!username) return null;
         if (isCheckingUsername) {
             return (
-                <p className="text-xs text-win-text-tertiary mt-1.5 flex items-center">
+                <p className="text-xs text-zinc-500 mt-1.5 flex items-center">
                     <svg className="animate-spin h-3 w-3 mr-1.5" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -157,7 +157,7 @@ const RegisterPage: React.FC = () => {
                         className={`inline-flex items-center text-xs px-2 py-1 rounded-full ${
                             req.valid 
                                 ? 'bg-green-500/10 text-green-400 border border-green-500/30' 
-                                : 'bg-win-bg-subtle text-win-text-tertiary border border-win-border-default'
+                                : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
                         }`}
                     >
                         {req.valid ? <CheckIcon /> : <XIcon />}
@@ -169,28 +169,28 @@ const RegisterPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-win-bg-solid">
+        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-white dark:bg-[#09090b]">
             <div className="w-full max-w-md">
                 {/* Logo and Title */}
                 <div className="text-center mb-8">
-                    <div className="flex justify-center mb-4">
+                    <div className="flex justify-center mb-5">
                         <ShieldIcon />
                     </div>
-                    <h1 className="text-2xl font-semibold text-win-text-primary">Create an account</h1>
-                    <p className="mt-2 text-sm text-win-text-secondary">Join to get started</p>
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Create an account</h1>
+                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Start securing your credentials today</p>
                 </div>
 
                 {/* Card */}
-                <div className="win-card p-8">
+                <div className="as-card p-8">
                     {success && (
-                        <div className="mb-6 p-3 rounded-win bg-green-500/10 border border-green-500/30 text-green-500 text-sm flex items-center">
+                        <div className="as-alert-success mb-6">
                             <CheckIcon />
                             <span className="ml-2">{success}</span>
                         </div>
                     )}
                     
                     {error && (
-                        <div className="mb-6 p-3 rounded-win bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center">
+                        <div className="as-alert-danger mb-6">
                             <XIcon />
                             <span className="ml-2">{error}</span>
                         </div>
@@ -198,7 +198,7 @@ const RegisterPage: React.FC = () => {
 
                     <form onSubmit={handleSubmit} noValidate className="space-y-4">
                         <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-win-text-secondary mb-2">Username</label>
+                            <label htmlFor="username" className="block text-sm font-medium text-zinc-300 mb-2">Username</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <UserIcon />
@@ -208,7 +208,7 @@ const RegisterPage: React.FC = () => {
                                     id="username"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="win-input pl-10"
+                                    className="as-input pl-10"
                                     placeholder="Choose a username"
                                     required
                                 />
@@ -217,7 +217,7 @@ const RegisterPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-win-text-secondary mb-2">Email</label>
+                            <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <EmailIcon />
@@ -227,7 +227,7 @@ const RegisterPage: React.FC = () => {
                                     id="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="win-input pl-10"
+                                    className="as-input pl-10"
                                     placeholder="Enter your email"
                                     required
                                 />
@@ -235,7 +235,7 @@ const RegisterPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-win-text-secondary mb-2">Password</label>
+                            <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <LockIcon />
@@ -245,7 +245,7 @@ const RegisterPage: React.FC = () => {
                                     id="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="win-input pl-10"
+                                    className="as-input pl-10"
                                     placeholder="Create a password"
                                     required
                                 />
@@ -254,7 +254,7 @@ const RegisterPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label htmlFor="password2" className="block text-sm font-medium text-win-text-secondary mb-2">Confirm Password</label>
+                            <label htmlFor="password2" className="block text-sm font-medium text-zinc-300 mb-2">Confirm Password</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <LockIcon />
@@ -264,7 +264,7 @@ const RegisterPage: React.FC = () => {
                                     id="password2"
                                     value={password2}
                                     onChange={(e) => setPassword2(e.target.value)}
-                                    className="win-input pl-10"
+                                    className="as-input pl-10"
                                     placeholder="Confirm your password"
                                     required
                                 />
@@ -277,7 +277,7 @@ const RegisterPage: React.FC = () => {
                         <button 
                             type="submit" 
                             disabled={isLoading}
-                            className="w-full win-btn-primary py-2.5 mt-2 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full as-btn-primary py-3 mt-2 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
                                 <>
@@ -293,15 +293,20 @@ const RegisterPage: React.FC = () => {
                         </button>
                     </form>
 
-                    <div className="mt-6 pt-6 border-t border-win-border-default text-center">
-                        <p className="text-sm text-win-text-secondary">
+                    <div className="mt-6 pt-6 border-t border-zinc-800 text-center">
+                        <p className="text-sm text-zinc-400">
                             Already have an account?{' '}
-                            <Link to="/login" className="text-win-accent hover:underline font-medium transition-colors">
+                            <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
                                 Sign in
                             </Link>
                         </p>
                     </div>
                 </div>
+                
+                {/* Footer */}
+                <p className="mt-6 text-center text-xs text-zinc-600">
+                    Protected by end-to-end encryption
+                </p>
             </div>
         </div>
     );

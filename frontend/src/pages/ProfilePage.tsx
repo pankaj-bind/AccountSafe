@@ -413,7 +413,7 @@ const ProfilePage: React.FC = () => {
     
     if (isCheckingUsername) {
       return (
-        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-win-text-tertiary">
+        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-zinc-500">
           <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -446,10 +446,10 @@ const ProfilePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-win-bg-solid flex items-center justify-center">
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-2 border-win-accent border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-sm text-win-text-secondary">Loading profile...</p>
+          <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-sm text-zinc-400">Loading profile...</p>
         </div>
       </div>
     );
@@ -463,26 +463,31 @@ const ProfilePage: React.FC = () => {
     )}&size=120&background=60cdff&color=fff`;
 
   return (
-    <div className="min-h-screen bg-win-bg-solid">
+    <div className="min-h-screen bg-[var(--as-bg-base)]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-win-text-primary">Profile Settings</h1>
-          <p className="text-sm text-win-text-secondary mt-1">Manage your account information and preferences</p>
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl border border-blue-500/20">
+              <UserIcon />
+            </div>
+            <h1 className="text-2xl font-bold text-white">Profile Settings</h1>
+          </div>
+          <p className="text-sm text-zinc-400 ml-[52px]">Manage your account information and preferences</p>
         </div>
 
         {/* Feedback Messages */}
         {error && (
-          <div className="mb-4 p-3 rounded-win bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="as-alert-danger mb-6 flex items-center gap-3">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {error}
           </div>
         )}
         {success && (
-          <div className="mb-4 p-3 rounded-win bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2">
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="as-alert-success mb-6 flex items-center gap-3">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             {success}
@@ -491,14 +496,14 @@ const ProfilePage: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Profile Header Card */}
-          <div className="win-card p-6">
+          <div className="as-card p-6">
             <div className="flex flex-col sm:flex-row items-center gap-6">
               {/* Profile Picture */}
               <div className="relative group">
                 <img
                   src={currentProfileImage}
                   alt="Profile"
-                  className="h-24 w-24 object-cover rounded-full ring-4 ring-win-border-subtle"
+                  className="h-24 w-24 object-cover rounded-full ring-4 ring-zinc-700"
                 />
                 <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                   <div className="text-white flex flex-col items-center">
@@ -516,15 +521,15 @@ const ProfilePage: React.FC = () => {
               
               {/* Profile Info */}
               <div className="text-center sm:text-left flex-1">
-                <h2 className="text-xl font-semibold text-win-text-primary">
+                <h2 className="text-xl font-semibold text-white">
                   {profile?.display_name || "User"}
                 </h2>
-                <p className="text-sm text-win-text-secondary mt-0.5">@{profile?.username}</p>
+                <p className="text-sm text-zinc-400 mt-0.5">@{profile?.username}</p>
                 {profile?.email && (
-                  <p className="text-sm text-win-text-tertiary mt-1">{profile.email}</p>
+                  <p className="text-sm text-zinc-500 mt-1">{profile.email}</p>
                 )}
                 <div className="mt-3">
-                  <label className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-win-accent bg-win-accent/10 rounded-win hover:bg-win-accent/20 transition-colors cursor-pointer border border-win-accent/30">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 bg-blue-500/10 rounded-lg hover:bg-blue-500/20 transition-colors cursor-pointer border border-blue-500/30">
                     <CameraIcon />
                     Upload new photo
                     <input
@@ -540,19 +545,19 @@ const ProfilePage: React.FC = () => {
           </div>
 
           {/* Account Information */}
-          <div className="win-card p-6">
-            <h3 className="text-base font-semibold text-win-text-primary mb-4 flex items-center gap-2">
-              <UserIcon />
+          <div className="as-card p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <span className="text-zinc-500"><UserIcon /></span>
               Account Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Username */}
               <div>
-                <label className="block text-sm font-medium text-win-text-secondary mb-1.5">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Username <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                     <UserIcon />
                   </div>
                   <input
@@ -562,10 +567,10 @@ const ProfilePage: React.FC = () => {
                     onChange={handleInputChange}
                     required
                     minLength={3}
-                    className={`win-input pl-10 py-2.5 ${
+                    className={`as-input pl-10 ${
                       formData.username !== originalUsername
                         ? isUsernameAvailable === true
-                          ? "border-green-500/50 focus:border-green-500"
+                          ? "border-emerald-500/50 focus:border-emerald-500"
                           : isUsernameAvailable === false
                           ? "border-red-500/50 focus:border-red-500"
                           : ""
@@ -577,7 +582,7 @@ const ProfilePage: React.FC = () => {
                   {formData.username && formData.username !== originalUsername && !isCheckingUsername && (
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                       {isUsernameAvailable === true && (
-                        <span className="text-green-400"><CheckIcon /></span>
+                        <span className="text-emerald-400"><CheckIcon /></span>
                       )}
                       {isUsernameAvailable === false && (
                         <span className="text-red-400"><XIcon /></span>
@@ -586,7 +591,7 @@ const ProfilePage: React.FC = () => {
                   )}
                   {isCheckingUsername && (
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <svg className="animate-spin h-4 w-4 text-win-text-tertiary" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-4 w-4 text-zinc-500" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -598,11 +603,11 @@ const ProfilePage: React.FC = () => {
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-win-text-secondary mb-1.5">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Email <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                     <EmailIcon />
                   </div>
                   <input
@@ -611,7 +616,7 @@ const ProfilePage: React.FC = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="win-input pl-10 py-2.5"
+                    className="as-input pl-10"
                     placeholder="Enter email"
                   />
                 </div>
@@ -620,15 +625,15 @@ const ProfilePage: React.FC = () => {
           </div>
 
           {/* Update Password */}
-          <div className="win-card p-6">
-            <h3 className="text-base font-semibold text-win-text-primary mb-4 flex items-center gap-2">
-              <LockIcon />
+          <div className="as-card p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <span className="text-zinc-500"><LockIcon /></span>
               Update Password
             </h3>
             
             {/* Password Feedback Messages */}
             {passwordError && (
-              <div className="mb-4 p-3 rounded-win bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+              <div className="as-alert-danger mb-4 flex items-center gap-3">
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -636,7 +641,7 @@ const ProfilePage: React.FC = () => {
               </div>
             )}
             {passwordSuccess && (
-              <div className="mb-4 p-3 rounded-win bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center gap-2">
+              <div className="as-alert-success mb-4 flex items-center gap-3">
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
@@ -647,11 +652,11 @@ const ProfilePage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Current Password */}
               <div>
-                <label className="block text-sm font-medium text-win-text-secondary mb-1.5">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Current Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                     <LockIcon />
                   </div>
                   <input
@@ -662,7 +667,7 @@ const ProfilePage: React.FC = () => {
                       setPasswordError(null);
                       setPasswordSuccess(null);
                     }}
-                    className="win-input pl-10 py-2.5"
+                    className="as-input pl-10"
                     placeholder="Enter current password"
                   />
                 </div>
@@ -670,11 +675,11 @@ const ProfilePage: React.FC = () => {
 
               {/* New Password */}
               <div>
-                <label className="block text-sm font-medium text-win-text-secondary mb-1.5">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   New Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                     <LockIcon />
                   </div>
                   <input
@@ -685,7 +690,7 @@ const ProfilePage: React.FC = () => {
                       setPasswordError(null);
                       setPasswordSuccess(null);
                     }}
-                    className="win-input pl-10 py-2.5"
+                    className="as-input pl-10"
                     placeholder="Enter new password"
                   />
                 </div>
@@ -694,12 +699,12 @@ const ProfilePage: React.FC = () => {
 
             <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
               <div className="flex flex-col gap-1">
-                <span className="text-sm text-win-text-tertiary">
+                <span className="text-sm text-zinc-500">
                   Enter your current password and new password above
                 </span>
                 <Link 
                   to="/forgot-password" 
-                  className="text-sm text-win-accent hover:underline"
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                 >
                   Forgot Password?
                 </Link>
@@ -708,7 +713,7 @@ const ProfilePage: React.FC = () => {
                 type="button"
                 onClick={handlePasswordChange}
                 disabled={isChangingPassword || !currentPassword || !newPassword}
-                className="win-btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="as-btn-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isChangingPassword ? (
                   <>
@@ -726,49 +731,51 @@ const ProfilePage: React.FC = () => {
           </div>
 
           {/* Personal Information */}
-          <div className="win-card p-6">
-            <h3 className="text-base font-semibold text-win-text-primary mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-              </svg>
+          <div className="as-card p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <span className="text-zinc-500">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+                </svg>
+              </span>
               Personal Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* First Name */}
               <div>
-                <label className="block text-sm font-medium text-win-text-secondary mb-1.5">First Name</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">First Name</label>
                 <input
                   type="text"
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleInputChange}
-                  className="win-input py-2.5"
+                  className="as-input"
                   placeholder="Enter first name"
                 />
               </div>
 
               {/* Last Name */}
               <div>
-                <label className="block text-sm font-medium text-win-text-secondary mb-1.5">Last Name</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Last Name</label>
                 <input
                   type="text"
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleInputChange}
-                  className="win-input py-2.5"
+                  className="as-input"
                   placeholder="Enter last name"
                 />
               </div>
 
               {/* Gender */}
               <div>
-                <label className="block text-sm font-medium text-win-text-secondary mb-1.5">Gender</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Gender</label>
                 <div className="relative">
                   <select
                     name="gender"
                     value={formData.gender}
                     onChange={handleInputChange}
-                    className="win-input appearance-none pr-10 py-2.5"
+                    className="as-input appearance-none pr-10"
                   >
                     <option value="">Select gender</option>
                     <option value="male">Male</option>
@@ -776,7 +783,7 @@ const ProfilePage: React.FC = () => {
                     <option value="other">Other</option>
                     <option value="prefer_not_to_say">Prefer not to say</option>
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 pr-3 flex items-center text-win-text-tertiary">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -787,17 +794,17 @@ const ProfilePage: React.FC = () => {
           </div>
 
           {/* Contact & Company Information */}
-          <div className="win-card p-6">
-            <h3 className="text-base font-semibold text-win-text-primary mb-4 flex items-center gap-2">
-              <BuildingIcon />
+          <div className="as-card p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <span className="text-zinc-500"><BuildingIcon /></span>
               Contact & Company
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Phone */}
               <div>
-                <label className="block text-sm font-medium text-win-text-secondary mb-1.5">Phone Number</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone Number</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                     <PhoneIcon />
                   </div>
                   <input
@@ -805,7 +812,7 @@ const ProfilePage: React.FC = () => {
                     name="phone_number"
                     value={formData.phone_number}
                     onChange={handleInputChange}
-                    className="win-input pl-10 py-2.5"
+                    className="as-input pl-10"
                     placeholder="Enter phone number"
                   />
                 </div>
@@ -813,9 +820,9 @@ const ProfilePage: React.FC = () => {
 
               {/* Company */}
               <div>
-                <label className="block text-sm font-medium text-win-text-secondary mb-1.5">Company Name</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Company Name</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                     <BuildingIcon />
                   </div>
                   <input
@@ -823,7 +830,7 @@ const ProfilePage: React.FC = () => {
                     name="company_name"
                     value={formData.company_name}
                     onChange={handleInputChange}
-                    className="win-input pl-10 py-2.5"
+                    className="as-input pl-10"
                     placeholder="Enter company name"
                   />
                 </div>
@@ -836,14 +843,14 @@ const ProfilePage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="px-6 py-2.5 text-sm font-medium text-win-text-secondary bg-win-bg-subtle border border-win-border-default rounded-win hover:bg-win-bg-subtle/80 transition-colors"
+              className="as-btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving || (formData.username !== originalUsername && isUsernameAvailable === false)}
-              className="win-btn-primary inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="as-btn-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <>
@@ -863,14 +870,16 @@ const ProfilePage: React.FC = () => {
         </form>
 
         {/* Security PIN Section */}
-        <div className="win-card p-6 mt-6">
-          <h3 className="text-base font-semibold text-win-text-primary mb-2 flex items-center gap-2">
-            <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+        <div className="as-card p-6 mt-6">
+          <h3 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
+            <span className="text-purple-400">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </span>
             Security PIN
           </h3>
-          <p className="text-sm text-win-text-tertiary mb-4">
+          <p className="text-sm text-zinc-400 mb-4">
             {hasPin 
               ? "Your 4-digit PIN is set. You can reset it below if needed."
               : "Set up a 4-digit PIN to secure access to your organizations."}
@@ -878,7 +887,7 @@ const ProfilePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowPinResetModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-win hover:bg-purple-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-500 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -888,20 +897,20 @@ const ProfilePage: React.FC = () => {
         </div>
 
         {/* Danger Zone - Delete Account */}
-        <div className="win-card p-6 border-red-500/30 mt-6">
+        <div className="as-card p-6 border-red-500/30 mt-6">
           <h3 className="text-base font-semibold text-red-400 mb-2 flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
             </svg>
             Danger Zone
           </h3>
-          <p className="text-sm text-win-text-tertiary mb-4">
+          <p className="text-sm text-zinc-400 mb-4">
             Once you delete your account, there is no going back. Please be certain.
           </p>
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-win hover:bg-red-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-500 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -913,20 +922,20 @@ const ProfilePage: React.FC = () => {
 
       {/* Delete Account Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="win-card p-6 max-w-md w-full">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="as-modal max-w-md w-full">
             <h3 className="text-lg font-semibold text-red-400 mb-2 flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
               Delete Account
             </h3>
-            <p className="text-sm text-win-text-secondary mb-4">
+            <p className="text-sm text-zinc-400 mb-4">
               This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
             </p>
             
             {deleteError && (
-              <div className="mb-4 p-3 rounded-win bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+              <div className="as-alert-danger mb-4">
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -935,11 +944,11 @@ const ProfilePage: React.FC = () => {
             )}
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-win-text-secondary mb-1.5">
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                 Enter your password to confirm
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-win-text-tertiary">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
                   <LockIcon />
                 </div>
                 <input
@@ -949,7 +958,7 @@ const ProfilePage: React.FC = () => {
                     setDeletePassword(e.target.value);
                     setDeleteError(null);
                   }}
-                  className="win-input pl-10 py-2.5"
+                  className="as-input pl-10"
                   placeholder="Enter your password"
                   autoFocus
                 />
@@ -964,7 +973,7 @@ const ProfilePage: React.FC = () => {
                   setDeletePassword("");
                   setDeleteError(null);
                 }}
-                className="px-4 py-2 text-sm font-medium text-win-text-secondary bg-win-bg-subtle border border-win-border-default rounded-win hover:bg-win-bg-subtle/80 transition-colors"
+                className="as-btn-secondary"
               >
                 Cancel
               </button>
@@ -972,7 +981,7 @@ const ProfilePage: React.FC = () => {
                 type="button"
                 onClick={handleDeleteAccount}
                 disabled={isDeletingAccount || !deletePassword}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-win hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDeletingAccount ? (
                   <>
@@ -995,10 +1004,10 @@ const ProfilePage: React.FC = () => {
 
       {/* PIN Reset Modal */}
       {showPinResetModal && (
-        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="win-bg-layer rounded-2xl shadow-win-flyout max-w-md w-full border border-win-border-default overflow-hidden">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="as-modal max-w-md w-full overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-purple-700 dark:from-purple-500 dark:to-purple-600 px-6 py-5">
+            <div className="bg-gradient-to-r from-purple-600 to-purple-500 -m-6 mb-6 px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1017,9 +1026,9 @@ const ProfilePage: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div>
               {pinResetError && (
-                <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-2">
+                <div className="as-alert-danger mb-4">
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -1028,7 +1037,7 @@ const ProfilePage: React.FC = () => {
               )}
 
               {pinResetSuccess && (
-                <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-500 text-sm flex items-center gap-2">
+                <div className="as-alert-success mb-4">
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
@@ -1039,13 +1048,13 @@ const ProfilePage: React.FC = () => {
               {/* Step 1: Request OTP */}
               {pinResetStep === 'request' && (
                 <div>
-                  <p className="text-win-text-secondary mb-4 text-center">
-                    We'll send a verification code to your email: <strong>{formData.email}</strong>
+                  <p className="text-zinc-400 mb-4 text-center">
+                    We'll send a verification code to your email: <strong className="text-white">{formData.email}</strong>
                   </p>
                   <button
                     onClick={handleRequestPinResetOtp}
                     disabled={isPinResetting}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isPinResetting ? (
                       <>
@@ -1060,7 +1069,7 @@ const ProfilePage: React.FC = () => {
               {/* Step 2: Verify OTP */}
               {pinResetStep === 'verify' && (
                 <div>
-                  <p className="text-win-text-secondary mb-4 text-center">
+                  <p className="text-zinc-400 mb-4 text-center">
                     Enter the 6-digit code sent to your email
                   </p>
                   <input
@@ -1068,14 +1077,14 @@ const ProfilePage: React.FC = () => {
                     maxLength={6}
                     value={pinResetOtp}
                     onChange={(e) => setPinResetOtp(e.target.value.replace(/\D/g, ''))}
-                    className="win-input text-center text-xl tracking-widest mb-4"
+                    className="as-input text-center text-xl tracking-widest mb-4 font-mono"
                     placeholder="000000"
                     autoFocus
                   />
                   <button
                     onClick={handleVerifyPinResetOtp}
                     disabled={isPinResetting || pinResetOtp.length !== 6}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isPinResetting ? (
                       <>
@@ -1090,7 +1099,7 @@ const ProfilePage: React.FC = () => {
               {/* Step 3: Set New PIN */}
               {pinResetStep === 'newpin' && (
                 <div>
-                  <p className="text-win-text-secondary mb-4 text-center">Enter your new PIN</p>
+                  <p className="text-zinc-400 mb-4 text-center">Enter your new PIN</p>
                   <div className="flex justify-center gap-3 mb-4">
                     {newPin.map((digit, index) => (
                       <input
@@ -1109,12 +1118,12 @@ const ProfilePage: React.FC = () => {
                           }
                         }}
                         id={`new-pin-${index}`}
-                        className="w-12 h-12 text-center text-xl font-bold win-input rounded-lg"
+                        className="w-12 h-12 text-center text-xl font-bold as-input rounded-lg"
                         inputMode="numeric"
                       />
                     ))}
                   </div>
-                  <p className="text-win-text-secondary mb-4 text-center">Confirm your new PIN</p>
+                  <p className="text-zinc-400 mb-4 text-center">Confirm your new PIN</p>
                   <div className="flex justify-center gap-3 mb-4">
                     {confirmNewPin.map((digit, index) => (
                       <input
@@ -1133,7 +1142,7 @@ const ProfilePage: React.FC = () => {
                           }
                         }}
                         id={`confirm-pin-${index}`}
-                        className="w-12 h-12 text-center text-xl font-bold win-input rounded-lg"
+                        className="w-12 h-12 text-center text-xl font-bold as-input rounded-lg"
                         inputMode="numeric"
                       />
                     ))}
@@ -1141,7 +1150,7 @@ const ProfilePage: React.FC = () => {
                   <button
                     onClick={handleSetNewPin}
                     disabled={isPinResetting || newPin.join('').length !== 4 || confirmNewPin.join('').length !== 4}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isPinResetting ? (
                       <>
@@ -1156,7 +1165,7 @@ const ProfilePage: React.FC = () => {
               {/* Cancel Button */}
               <button
                 onClick={closePinResetModal}
-                className="w-full mt-3 win-btn-secondary py-2.5"
+                className="w-full mt-3 as-btn-secondary"
               >
                 Cancel
               </button>

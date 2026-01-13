@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useProfile } from '../contexts/ProfileContext';
 import apiClient from '../api/apiClient';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Types
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface DashboardStats {
   organization_count: number;
@@ -25,6 +30,237 @@ interface LoginRecord {
   timestamp: string;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Icons
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ShieldCheckIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+  </svg>
+);
+
+const BuildingIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+  </svg>
+);
+
+const KeyIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+  </svg>
+);
+
+const ActivityIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+  </svg>
+);
+
+const CheckCircleIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const XCircleIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const GlobeIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+  </svg>
+);
+
+const ArrowRightIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+  </svg>
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Security Score Ring Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface SecurityScoreProps {
+  score: number;
+  size?: number;
+}
+
+const SecurityScoreRing: React.FC<SecurityScoreProps> = ({ score, size = 140 }) => {
+  const strokeWidth = 10;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (score / 100) * circumference;
+  const offset = circumference - progress;
+
+  const getScoreColor = () => {
+    if (score >= 80) return { color: '#22c55e', label: 'Excellent', class: 'text-green-400' };
+    if (score >= 60) return { color: '#3b82f6', label: 'Good', class: 'text-blue-400' };
+    if (score >= 40) return { color: '#f59e0b', label: 'Fair', class: 'text-yellow-400' };
+    return { color: '#ef4444', label: 'Needs Attention', class: 'text-red-400' };
+  };
+
+  const scoreInfo = getScoreColor();
+
+  return (
+    <div className="relative inline-flex items-center justify-center">
+      <svg width={size} height={size} className="transform -rotate-90">
+        {/* Background ring */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-zinc-800"
+        />
+        {/* Progress ring */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={scoreInfo.color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="transition-all duration-1000 ease-out"
+          style={{
+            filter: `drop-shadow(0 0 8px ${scoreInfo.color}40)`
+          }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-3xl font-bold text-white">{score}</span>
+        <span className={`text-xs font-medium ${scoreInfo.class}`}>{scoreInfo.label}</span>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Stat Card Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface StatCardProps {
+  icon: React.ReactNode;
+  value: number | string;
+  label: string;
+  trend?: { value: number; positive: boolean };
+  color: 'blue' | 'green' | 'purple' | 'orange';
+  href?: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ icon, value, label, color, href }) => {
+  const colorClasses = {
+    blue: 'from-blue-50 to-blue-50/50 dark:from-blue-500/10 dark:to-blue-500/5 border-blue-200 dark:border-blue-500/20',
+    green: 'from-green-50 to-green-50/50 dark:from-green-500/10 dark:to-green-500/5 border-green-200 dark:border-green-500/20',
+    purple: 'from-purple-50 to-purple-50/50 dark:from-purple-500/10 dark:to-purple-500/5 border-purple-200 dark:border-purple-500/20',
+    orange: 'from-orange-50 to-orange-50/50 dark:from-orange-500/10 dark:to-orange-500/5 border-orange-200 dark:border-orange-500/20',
+  };
+
+  const iconColorClasses = {
+    blue: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/15',
+    green: 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-500/15',
+    purple: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/15',
+    orange: 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-500/15',
+  };
+
+  const content = (
+    <div className={`relative group overflow-hidden rounded-xl border bg-gradient-to-br ${colorClasses[color]} p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}>
+      <div className="relative">
+        <div className="flex items-start justify-between mb-3 sm:mb-4">
+          <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center ${iconColorClasses[color]}`}>
+            {icon}
+          </div>
+          {href && (
+            <ArrowRightIcon className="w-4 h-4 text-zinc-400 dark:text-zinc-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+          )}
+        </div>
+        <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white mb-1">{value}</p>
+        <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">{label}</p>
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return <Link to={href}>{content}</Link>;
+  }
+
+  return content;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Login Record Row Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LoginRecordRow: React.FC<{ record: LoginRecord; isLast: boolean }> = ({ record, isLast }) => {
+  const isSuccess = record.status === 'success';
+
+  return (
+    <tr className={`group transition-colors duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/50`}>
+      <td className="py-3 sm:py-4 px-3 sm:px-4">
+        <div className="flex items-center gap-2">
+          {isSuccess ? (
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20">
+              <CheckCircleIcon className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-green-600 dark:text-green-400" />
+              <span className="text-xs font-medium text-green-700 dark:text-green-400">Success</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20">
+              <XCircleIcon className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-red-600 dark:text-red-400" />
+              <span className="text-xs font-medium text-red-700 dark:text-red-400">Failed</span>
+            </div>
+          )}
+        </div>
+      </td>
+      <td className="py-3 sm:py-4 px-3 sm:px-4">
+        <div className="text-xs sm:text-sm text-zinc-900 dark:text-zinc-200">{record.date}</div>
+        <div className="text-xs text-zinc-500 dark:text-zinc-500">{record.time}</div>
+      </td>
+      <td className="py-3 sm:py-4 px-3 sm:px-4">
+        <code className="text-xs sm:text-sm font-mono text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
+          {record.ip_address || 'N/A'}
+        </code>
+      </td>
+      <td className="py-3 sm:py-4 px-3 sm:px-4">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <GlobeIcon className="w-3 sm:w-4 h-3 sm:h-4 text-zinc-400 dark:text-zinc-500" />
+          <span className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">{record.country || 'Unknown'}</span>
+        </div>
+      </td>
+      <td className="py-3 sm:py-4 px-3 sm:px-4">
+        <span className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">{record.isp || 'N/A'}</span>
+      </td>
+      <td className="py-3 sm:py-4 px-3 sm:px-4">
+        {record.latitude != null && record.longitude != null ? (
+          <a
+            href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-mono text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:underline transition-colors"
+          >
+            {Number(record.latitude).toFixed(2)}°, {Number(record.longitude).toFixed(2)}°
+          </a>
+        ) : (
+          <span className="text-xs text-zinc-400 dark:text-zinc-500">—</span>
+        )}
+      </td>
+    </tr>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Main Dashboard Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const DashboardPage: React.FC = () => {
   const { displayName } = useProfile();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -42,7 +278,6 @@ const DashboardPage: React.FC = () => {
       setStats(response.data);
     } catch (error) {
       console.error('Failed to fetch dashboard stats:', error);
-      // Set default empty stats to prevent crash
       setStats({
         organization_count: 0,
         profile_count: 0,
@@ -63,158 +298,156 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  // Calculate security score based on various factors
+  const securityScore = useMemo(() => {
+    if (!stats) return 0;
+    
+    let score = 50; // Base score
+    
+    // Bonus for having profiles organized
+    if (stats.organization_count > 0) score += 15;
+    if (stats.profile_count > 0) score += 10;
+    
+    // Analyze recent logins
+    const recentLogins = stats.recent_logins || [];
+    const successfulLogins = recentLogins.filter(l => l.status === 'success').length;
+    const failedLogins = recentLogins.filter(l => l.status === 'failed').length;
+    
+    // Deduct for failed login attempts
+    if (failedLogins > 3) score -= 15;
+    else if (failedLogins > 0) score -= 5;
+    
+    // Bonus for successful logins (shows active usage)
+    if (successfulLogins > 0) score += 10;
+    
+    // Additional points for consistency
+    if (recentLogins.length > 0 && failedLogins === 0) score += 10;
+    
+    return Math.max(0, Math.min(100, score));
+  }, [stats]);
+
+  const displayRecords = showAllRecords ? allRecords : (stats?.recent_logins || []);
+  const failedLoginCount = stats?.recent_logins?.filter(l => l.status === 'failed').length || 0;
+
+  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-win-bg-solid flex items-center justify-center">
-        <div className="text-win-text-secondary">Loading...</div>
+      <div className="min-h-screen bg-white dark:bg-zinc-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
-  const displayRecords = showAllRecords ? allRecords : (stats?.recent_logins || []);
-
   return (
-    <div className="min-h-screen bg-win-bg-solid">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-win-text-primary mb-2">Dashboard</h1>
-          <p className="text-win-text-secondary">Welcome back, {displayName}!</p>
-        </div>
+    <div className="min-h-screen bg-white dark:bg-zinc-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        
+        {/* ═══════════════════════════════════════════════════════════════════════
+            Page Header
+            ═══════════════════════════════════════════════════════════════════════ */}
+        <header className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">Dashboard</h1>
+          <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-1">
+            Welcome back, <span className="text-zinc-900 dark:text-zinc-200 font-medium">{displayName}</span>
+          </p>
+        </header>
 
-        {/* Stats Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Organizations */}
-          <div className="win-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-win-text-primary mb-1">{stats?.organization_count || 0}</p>
-            <p className="text-sm text-win-text-tertiary">Organizations</p>
+        {/* ═══════════════════════════════════════════════════════════════════════
+            Stats Grid
+            ═══════════════════════════════════════════════════════════════════════ */}
+        <section className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white mb-4">Overview</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              icon={<BuildingIcon className="w-5 h-5" />}
+              value={stats?.organization_count || 0}
+              label="Organizations"
+              color="blue"
+              href="/"
+            />
+            <StatCard
+              icon={<KeyIcon className="w-5 h-5" />}
+              value={stats?.profile_count || 0}
+              label="Saved Profiles"
+              color="green"
+            />
+            <StatCard
+              icon={<ActivityIcon className="w-5 h-5" />}
+              value={stats?.recent_logins?.length || 0}
+              label="Recent Logins"
+              color="purple"
+            />
+            <StatCard
+              icon={failedLoginCount > 0 ? <XCircleIcon /> : <CheckCircleIcon />}
+              value={failedLoginCount}
+              label="Failed Logins (Recent)"
+              color={failedLoginCount > 0 ? "orange" : "green"}
+            />
           </div>
+        </section>
 
-          {/* Profiles */}
-          <div className="win-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+        {/* ═══════════════════════════════════════════════════════════════════════
+            Login Records Table
+            ═══════════════════════════════════════════════════════════════════════ */}
+        <section>
+          <div className="as-card overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+            {/* Table Header */}
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">Login Activity</h2>
+                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500">Monitor your recent login attempts and locations</p>
               </div>
+              {!showAllRecords && stats?.recent_logins && stats.recent_logins.length > 0 && (
+                <button
+                  onClick={fetchAllLoginRecords}
+                  className="text-xs sm:text-sm text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-medium transition-colors"
+                >
+                  View All
+                </button>
+              )}
             </div>
-            <p className="text-2xl font-bold text-win-text-primary mb-1">{stats?.profile_count || 0}</p>
-            <p className="text-sm text-win-text-tertiary">Saved Profiles</p>
-          </div>
 
-          {/* Login Records */}
-          <div className="win-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-500/10 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
+            {/* Table Content */}
+            {displayRecords.length === 0 ? (
+              <div className="py-12 sm:py-16 text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center">
+                  <ActivityIcon className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-400 dark:text-zinc-500" />
+                </div>
+                <h3 className="text-base sm:text-lg font-medium text-zinc-900 dark:text-white mb-2">No login records yet</h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Your login activity will appear here once you start using your account.
+                </p>
               </div>
-            </div>
-            <p className="text-2xl font-bold text-win-text-primary mb-1">{stats?.recent_logins?.length || 0}</p>
-            <p className="text-sm text-win-text-tertiary">Recent Logins</p>
-          </div>
-
-          {/* Security */}
-          <div className="win-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-orange-500/10 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs sm:text-sm">
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">Status</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">Date & Time</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">IP Address</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">Location</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">ISP</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">Coordinates</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                    {displayRecords.map((record, index) => (
+                      <LoginRecordRow
+                        key={record.id}
+                        record={record}
+                        isLast={index === displayRecords.length - 1}
+                      />
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-            <p className="text-2xl font-bold text-win-text-primary mb-1">Secure</p>
-            <p className="text-sm text-win-text-tertiary">Encrypted</p>
-          </div>
-        </div>
-
-        {/* Login Records Table */}
-        <div className="win-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-win-text-primary">Login Records</h2>
-            {!showAllRecords && stats?.recent_logins && stats.recent_logins.length > 0 && (
-              <button
-                onClick={fetchAllLoginRecords}
-                className="text-sm text-win-accent hover:text-win-accent-light transition-colors"
-              >
-                View All
-              </button>
             )}
           </div>
-
-          {displayRecords.length === 0 ? (
-            <p className="text-win-text-tertiary text-center py-8">No login records yet</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-win-border-subtle">
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Status</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Date & Time</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">IP Address</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Coordinates (Lat, Long)</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">Location</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-win-text-tertiary">ISP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayRecords.map((record) => (
-                    <tr key={record.id} className="border-b border-win-border-subtle hover:bg-win-bg-subtle transition-colors">
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                          record.status === 'success' 
-                            ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-                            : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                        }`}>
-                          {record.status === 'success' ? (
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          )}
-                          {record.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-win-text-secondary">
-                        <div>{record.date}</div>
-                        <div className="text-xs text-win-text-tertiary">{record.time}</div>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-win-text-secondary font-mono">{record.ip_address || 'N/A'}</td>
-                      <td className="py-3 px-4 text-sm text-win-text-secondary">
-                        {record.latitude != null && record.longitude != null ? (
-                          <a 
-                            href={`https://www.google.com/maps?q=${record.latitude},${record.longitude}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-win-accent hover:underline text-xs font-mono"
-                          >
-                            {Number(record.latitude).toFixed(4)}, {Number(record.longitude).toFixed(4)}
-                          </a>
-                        ) : (
-                          <span className="text-win-text-tertiary">N/A</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-win-text-secondary">{record.country || 'N/A'}</td>
-                      <td className="py-3 px-4 text-sm text-win-text-secondary">{record.isp || 'N/A'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        </section>
       </div>
     </div>
   );

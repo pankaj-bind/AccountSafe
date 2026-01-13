@@ -1,5 +1,117 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/apiClient';
+import { generatePassword, getPasswordStrength, PasswordOptions } from '../utils/passwordGenerator';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Icon Components
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ArrowLeftIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+  </svg>
+);
+
+const PlusIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+  </svg>
+);
+
+const UserIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+);
+
+const KeyIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+  </svg>
+);
+
+const MailIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+);
+
+const DocumentIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const NotesIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </svg>
+);
+
+const CopyIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
+);
+
+const CheckIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+  </svg>
+);
+
+const EyeIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+);
+
+const EyeOffIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+  </svg>
+);
+
+const PencilIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+  </svg>
+);
+
+const TrashIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
+
+const ShieldIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+);
+
+const ClockIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const RefreshIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+
+const SparklesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+  </svg>
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Types
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface Organization {
   id: number;
@@ -25,6 +137,282 @@ interface ProfileManagerProps {
   organization: Organization;
   onBack: () => void;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Credential Field Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface CredentialFieldProps {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  isCopied: boolean;
+  onCopy: () => void;
+  isPassword?: boolean;
+  showPassword?: boolean;
+  onTogglePassword?: () => void;
+  mono?: boolean;
+}
+
+const CredentialField: React.FC<CredentialFieldProps> = ({
+  label,
+  value,
+  icon,
+  isCopied,
+  onCopy,
+  isPassword = false,
+  showPassword = false,
+  onTogglePassword,
+  mono = false
+}) => (
+  <div className="group/field">
+    <div className="flex items-center gap-2 mb-1.5">
+      <span className="text-zinc-500">{icon}</span>
+      <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{label}</span>
+    </div>
+    <div className="flex items-center gap-2">
+      <div className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[42px] ${mono ? 'font-mono' : ''}`}>
+        <span className="flex-1 text-sm text-zinc-200 break-all">
+          {isPassword && !showPassword ? '••••••••••••' : value}
+        </span>
+        {isPassword && onTogglePassword && (
+          <button
+            onClick={onTogglePassword}
+            className="p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+            title={showPassword ? 'Hide' : 'Show'}
+          >
+            {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        )}
+      </div>
+      <button
+        onClick={onCopy}
+        className={`p-2.5 rounded-lg transition-all ${
+          isCopied
+            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+            : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border border-zinc-700'
+        }`}
+        title={isCopied ? 'Copied!' : 'Copy'}
+      >
+        {isCopied ? <CheckIcon /> : <CopyIcon />}
+      </button>
+    </div>
+  </div>
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Profile Card Component
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface ProfileCardProps {
+  profile: Profile;
+  recoveryCodes: string[];
+  showPassword: boolean;
+  expandedNotes: boolean;
+  copiedField: string | null;
+  onEdit: () => void;
+  onDelete: () => void;
+  onCopy: (text: string, field: string) => void;
+  onTogglePassword: () => void;
+  onToggleNotes: () => void;
+  onCopyRecoveryCode: (code: string, index: number) => void;
+}
+
+const ProfileCard: React.FC<ProfileCardProps> = ({
+  profile,
+  recoveryCodes,
+  showPassword,
+  expandedNotes,
+  copiedField,
+  onEdit,
+  onDelete,
+  onCopy,
+  onTogglePassword,
+  onToggleNotes,
+  onCopyRecoveryCode
+}) => {
+  const hasCredentials = profile.username || profile.password || profile.email;
+  
+  return (
+    <div className="as-card p-0 overflow-hidden group hover:border-zinc-700 transition-all">
+      {/* Card Header */}
+      <div className="px-5 py-4 border-b border-zinc-800/50 bg-zinc-900/30">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 bg-blue-500/10 rounded-lg flex-shrink-0">
+              <KeyIcon className="w-5 h-5 text-blue-400" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-white truncate">
+                {profile.title || 'Untitled Profile'}
+              </h3>
+              <div className="flex items-center gap-2 mt-0.5">
+                <ClockIcon className="w-3 h-3 text-zinc-600" />
+                <span className="text-xs text-zinc-500">
+                  {new Date(profile.created_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Actions */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={onEdit}
+              className="p-2 text-zinc-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+              title="Edit"
+            >
+              <PencilIcon />
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+              title="Delete"
+            >
+              <TrashIcon />
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Card Body */}
+      <div className="p-5 space-y-4">
+        {/* Credentials */}
+        {hasCredentials && (
+          <div className="space-y-3">
+            {profile.username && (
+              <CredentialField
+                label="Username"
+                value={profile.username}
+                icon={<UserIcon className="w-4 h-4" />}
+                isCopied={copiedField === `username-${profile.id}`}
+                onCopy={() => onCopy(profile.username!, `username-${profile.id}`)}
+              />
+            )}
+            
+            {profile.password && (
+              <CredentialField
+                label="Password"
+                value={profile.password}
+                icon={<KeyIcon className="w-4 h-4" />}
+                isCopied={copiedField === `password-${profile.id}`}
+                onCopy={() => onCopy(profile.password!, `password-${profile.id}`)}
+                isPassword
+                showPassword={showPassword}
+                onTogglePassword={onTogglePassword}
+                mono
+              />
+            )}
+            
+            {profile.email && (
+              <CredentialField
+                label="Email"
+                value={profile.email}
+                icon={<MailIcon className="w-4 h-4" />}
+                isCopied={copiedField === `email-${profile.id}`}
+                onCopy={() => onCopy(profile.email!, `email-${profile.id}`)}
+              />
+            )}
+          </div>
+        )}
+        
+        {/* Recovery Codes */}
+        {recoveryCodes && recoveryCodes.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-zinc-500"><ShieldIcon className="w-4 h-4" /></span>
+              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                Recovery Codes
+              </span>
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-400 rounded">
+                {recoveryCodes.length} left
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {recoveryCodes.map((code, index) => (
+                <button
+                  key={index}
+                  onClick={() => onCopyRecoveryCode(code, index)}
+                  className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
+                    copiedField === `recovery-${profile.id}-${index}`
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                      : 'bg-purple-500/10 text-purple-300 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30'
+                  }`}
+                  title="Click to copy & remove"
+                >
+                  {code}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-zinc-600 mt-2">
+              Click a code to copy it. Codes are removed after copying.
+            </p>
+          </div>
+        )}
+        
+        {/* Document */}
+        {profile.document_url && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-zinc-500"><DocumentIcon className="w-4 h-4" /></span>
+              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Document</span>
+            </div>
+            <a
+              href={profile.document_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
+            >
+              <DocumentIcon className="w-4 h-4" />
+              <span>View Document</span>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
+        )}
+        
+        {/* Notes */}
+        {profile.notes && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
+              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Notes</span>
+            </div>
+            <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3">
+              <p className={`text-sm text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
+                {profile.notes}
+              </p>
+              {profile.notes.length > 150 && (
+                <button
+                  onClick={onToggleNotes}
+                  className="text-xs text-blue-400 hover:text-blue-300 mt-2 font-medium"
+                >
+                  {expandedNotes ? 'Show less' : 'Show more'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Empty State */}
+        {!hasCredentials && !profile.notes && !profile.document_url && recoveryCodes.length === 0 && (
+          <div className="text-center py-4 text-zinc-500 text-sm">
+            No credentials or data stored yet
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Main Component
+// ═══════════════════════════════════════════════════════════════════════════════
 
 const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack }) => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -234,392 +622,417 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   };
 
   return (
-    <div className="w-full win-bg-solid min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
+    <div className="min-h-screen bg-[var(--as-bg-base)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Back Button & Header */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        <div className="mb-8">
           <button
             onClick={onBack}
-            className="mb-3 sm:mb-4 flex items-center gap-2 win-text-accent hover:opacity-80 font-medium text-sm sm:text-base"
+            className="mb-6 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors group"
           >
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Categories
+            <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">Back to Vault</span>
           </button>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3 sm:gap-4">
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              {/* Organization Logo */}
               {orgData.logo_url ? (
-                <img
-                  src={orgData.logo_url}
-                  alt={orgData.name}
-                  className="w-12 h-12 sm:w-16 sm:h-16 object-contain flex-shrink-0"
-                />
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-800 flex-shrink-0 border border-zinc-700">
+                  <img
+                    src={orgData.logo_url}
+                    alt={orgData.name}
+                    className="w-full h-full object-contain p-2"
+                  />
+                </div>
               ) : (
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-bold text-xl sm:text-2xl">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                  <span className="text-white font-bold text-2xl">
                     {orgData.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
                   </span>
                 </div>
               )}
+              
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold win-text-primary">{orgData.name || 'Loading...'}</h1>
-                <p className="text-sm sm:text-base win-text-secondary">{profiles.length} {profiles.length === 1 ? 'profile' : 'profiles'}</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                  {orgData.name || 'Loading...'}
+                </h1>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-zinc-400 text-sm">
+                    {profiles.length} {profiles.length === 1 ? 'credential' : 'credentials'}
+                  </span>
+                </div>
               </div>
             </div>
+            
+            {/* Add Profile Button */}
             <button
               onClick={() => { setShowModal(true); setError(null); }}
-              className="w-full sm:w-auto win-btn-primary text-sm sm:text-base px-4 sm:px-6"
+              className="as-btn-primary flex items-center justify-center gap-2 group"
             >
-              + Add Profile
+              <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" />
+              <span>Add Credential</span>
             </button>
           </div>
         </div>
 
-        {/* Error */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Error Alert */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {error && (
-          <div className="mb-4 sm:mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-base">
-            <div className="flex justify-between items-center gap-2">
-              <span className="flex-1">{error}</span>
-              <button onClick={() => setError(null)} className="font-bold text-xl flex-shrink-0">&times;</button>
+          <div className="as-alert-danger mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>{error}</span>
             </div>
+            <button onClick={() => setError(null)} className="hover:opacity-70 transition-opacity">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         )}
 
-        {/* Loading */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Loading State */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {loading && (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-win-accent border-t-transparent"></div>
-            <p className="mt-4 win-text-secondary">Loading...</p>
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-zinc-700 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-blue-500 rounded-full animate-spin"></div>
+            </div>
+            <p className="mt-6 text-zinc-400">Loading credentials...</p>
           </div>
         )}
 
-        {/* Empty */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Empty State */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {!loading && profiles.length === 0 && (
-          <div className="text-center py-20">
-            <div className="text-7xl mb-4">🔐</div>
-            <h3 className="text-xl font-semibold win-text-primary mb-2">No profiles yet</h3>
-            <p className="win-text-tertiary">Create your first profile to store credentials or documents!</p>
+          <div className="as-card p-12 text-center">
+            <div className="w-20 h-20 bg-zinc-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <KeyIcon className="w-10 h-10 text-zinc-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">No credentials yet</h3>
+            <p className="text-zinc-400 mb-6 max-w-md mx-auto">
+              Add your first credential to start storing passwords, emails, and recovery codes securely.
+            </p>
+            <button
+              onClick={() => { setShowModal(true); setError(null); }}
+              className="as-btn-primary inline-flex items-center gap-2"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Add First Credential
+            </button>
           </div>
         )}
 
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {/* Profiles Grid */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {!loading && profiles.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {profiles.map((profile) => (
-              <div
+              <ProfileCard
                 key={profile.id}
-                className="win-bg-layer border border-win-border-default rounded-lg p-4 sm:p-6 hover:shadow-win-elevated transition-all group relative"
-              >
-                <div className="absolute -top-1.5 sm:-top-2 -right-1.5 sm:-right-2 flex gap-1">
-                  <button
-                    onClick={() => handleEditProfile(profile)}
-                    className="w-6 h-6 sm:w-7 sm:h-7 bg-blue-500 dark:bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs sm:text-sm hover:bg-blue-600 dark:hover:bg-blue-700 shadow-win-card"
-                    title="Edit"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    onClick={() => handleDeleteProfile(profile.id)}
-                    className="w-6 h-6 sm:w-7 sm:h-7 bg-red-500 dark:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs sm:text-sm hover:bg-red-600 dark:hover:bg-red-700 shadow-win-card"
-                    title="Delete"
-                  >
-                    ✕
-                  </button>
-                </div>
+                profile={profile}
+                recoveryCodes={recoveryCodes[profile.id] || []}
+                showPassword={showPassword[profile.id] || false}
+                expandedNotes={expandedNotes[profile.id] || false}
+                copiedField={copiedField}
+                onEdit={() => handleEditProfile(profile)}
+                onDelete={() => handleDeleteProfile(profile.id)}
+                onCopy={copyToClipboard}
+                onTogglePassword={() => togglePasswordVisibility(profile.id)}
+                onToggleNotes={() => toggleNotesExpansion(profile.id)}
+                onCopyRecoveryCode={(code, index) => handleCopyRecoveryCode(profile.id, code, index)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
-                <div className="mb-3 sm:mb-4">
-                  {profile.title && <h3 className="text-base sm:text-lg font-bold win-text-primary mb-2 sm:mb-3 pr-12">{profile.title}</h3>}
+      {/* ═══════════════════════════════════════════════════════════════════════════════ */}
+      {/* Create/Edit Profile Modal */}
+      {/* ═══════════════════════════════════════════════════════════════════════════════ */}
+      {showModal && (
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]" 
+          onClick={() => setShowModal(false)}
+        >
+          <div 
+            className="as-modal w-full max-w-lg max-h-[90vh] overflow-y-auto animate-[modalIn_0.3s_ease-out]" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-zinc-800 sticky top-0 bg-zinc-900 z-10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <KeyIcon className="w-5 h-5 text-blue-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white">
+                  {editingProfile ? 'Edit Credential' : 'Add Credential'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleCreateProfile} className="p-6 space-y-5">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  <span className="flex items-center gap-2">
+                    <NotesIcon className="w-4 h-4 text-zinc-500" />
+                    Title
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={newProfile.title}
+                  onChange={(e) => setNewProfile({ ...newProfile, title: e.target.value })}
+                  placeholder="e.g., Admin Account, Personal Login"
+                  className="as-input w-full"
+                  autoFocus
+                />
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  <span className="flex items-center gap-2">
+                    <UserIcon className="w-4 h-4 text-zinc-500" />
+                    Username
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={newProfile.username}
+                  onChange={(e) => setNewProfile({ ...newProfile, username: e.target.value })}
+                  placeholder="e.g., john_doe or admin@example.com"
+                  className="as-input w-full"
+                />
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  <span className="flex items-center gap-2">
+                    <KeyIcon className="w-4 h-4 text-zinc-500" />
+                    Password
+                  </span>
+                </label>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newProfile.password}
+                      onChange={(e) => setNewProfile({ ...newProfile, password: e.target.value })}
+                      placeholder="Enter password or generate one"
+                      className="as-input flex-1 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const pwd = generatePassword({
+                          length: 16,
+                          uppercase: true,
+                          lowercase: true,
+                          numbers: true,
+                          symbols: true
+                        });
+                        setNewProfile({ ...newProfile, password: pwd });
+                      }}
+                      className="px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-400 hover:text-blue-300 transition-all flex items-center gap-2"
+                      title="Generate strong password"
+                    >
+                      <SparklesIcon className="w-4 h-4" />
+                      <span className="hidden sm:inline text-sm">Generate</span>
+                    </button>
+                  </div>
                   
-                  {profile.username && (
-                    <div className="mb-2 sm:mb-3">
-                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Username</label>
-                      <div className="flex items-stretch gap-1.5 sm:gap-2">
-                        <p className="flex-1 text-xs sm:text-sm win-text-primary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle break-all min-h-[34px] sm:min-h-[38px] flex items-center">{profile.username}</p>
-                        <button
-                          onClick={() => copyToClipboard(profile.username!, `username-${profile.id}`)}
-                          className={`w-[34px] h-[34px] sm:w-[38px] sm:h-[38px] rounded transition-colors flex-shrink-0 flex items-center justify-center ${
-                            copiedField === `username-${profile.id}` 
-                              ? 'bg-green-100 text-green-600' 
-                              : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                          }`}
-                          title={copiedField === `username-${profile.id}` ? 'Copied!' : 'Copy username'}
-                        >
-                          {copiedField === `username-${profile.id}` ? (
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {profile.password && (
-                    <div className="mb-2 sm:mb-3">
-                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Password</label>
-                      <div className="flex items-stretch gap-1.5 sm:gap-2">
-                        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 win-bg-subtle px-2 sm:px-3 rounded border border-win-border-subtle min-h-[34px] sm:min-h-[38px]">
-                          <p className="flex-1 text-xs sm:text-sm win-text-primary font-mono break-all">
-                            {showPassword[profile.id] ? profile.password : '••••••••'}
-                          </p>
-                          <button
-                            onClick={() => togglePasswordVisibility(profile.id)}
-                            className="win-text-tertiary hover:win-text-secondary flex-shrink-0"
-                            title={showPassword[profile.id] ? 'Hide password' : 'Show password'}
-                          >
-                            {showPassword[profile.id] ? (
-                              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                              </svg>
-                            ) : (
-                              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            )}
-                          </button>
+                  {/* Password Strength Indicator */}
+                  {newProfile.password && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-300 ${
+                              getPasswordStrength(newProfile.password).color === 'green' ? 'bg-emerald-500' :
+                              getPasswordStrength(newProfile.password).color === 'blue' ? 'bg-blue-500' :
+                              getPasswordStrength(newProfile.password).color === 'yellow' ? 'bg-yellow-500' :
+                              'bg-red-500'
+                            }`}
+                            style={{ width: `${getPasswordStrength(newProfile.password).score}%` }}
+                          />
                         </div>
-                        <button
-                          onClick={() => copyToClipboard(profile.password!, `password-${profile.id}`)}
-                          className={`w-[34px] h-[34px] sm:w-[38px] sm:h-[38px] rounded transition-colors flex-shrink-0 flex items-center justify-center ${
-                            copiedField === `password-${profile.id}` 
-                              ? 'bg-green-100 text-green-600' 
-                              : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                          }`}
-                          title={copiedField === `password-${profile.id}` ? 'Copied!' : 'Copy password'}
-                        >
-                          {copiedField === `password-${profile.id}` ? (
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {profile.email && (
-                    <div className="mb-2 sm:mb-3">
-                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Email</label>
-                      <div className="flex items-stretch gap-1.5 sm:gap-2">
-                        <p className="flex-1 text-xs sm:text-sm win-text-primary win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle break-all min-h-[34px] sm:min-h-[38px] flex items-center">{profile.email}</p>
-                        <button
-                          onClick={() => copyToClipboard(profile.email!, `email-${profile.id}`)}
-                          className={`w-[34px] h-[34px] sm:w-[38px] sm:h-[38px] rounded transition-colors flex-shrink-0 flex items-center justify-center ${
-                            copiedField === `email-${profile.id}` 
-                              ? 'bg-green-100 text-green-600' 
-                              : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                          }`}
-                          title={copiedField === `email-${profile.id}` ? 'Copied!' : 'Copy email'}
-                        >
-                          {copiedField === `email-${profile.id}` ? (
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {recoveryCodes[profile.id] && recoveryCodes[profile.id].length > 0 && (
-                    <div className="mb-2 sm:mb-3">
-                      <label className="block text-xs font-semibold win-text-tertiary mb-1">
-                        Recovery Codes ({recoveryCodes[profile.id].length} remaining)
-                      </label>
-                      <div className="overflow-x-auto pb-1">
-                        <div className="flex gap-1.5 sm:gap-2 min-w-max">
-                          {recoveryCodes[profile.id].map((code, index) => (
-                            <button
-                              key={index}
-                              onClick={() => handleCopyRecoveryCode(profile.id, code, index)}
-                              className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-mono rounded transition-all border whitespace-nowrap ${
-                                copiedField === `recovery-${profile.id}-${index}`
-                                  ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700'
-                                  : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800 dark:hover:bg-purple-900/30'
-                              }`}
-                              title={copiedField === `recovery-${profile.id}-${index}` ? 'Copied! Code will be deleted' : 'Click to copy and delete'}
-                            >
-                              {code}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-[10px] sm:text-xs win-text-tertiary mt-1.5">
-                        Click a code to copy it. The code will be automatically deleted after copying.
-                      </p>
-                    </div>
-                  )}
-                  
-                  {profile.document_url && (
-                    <div className="mb-2 sm:mb-3">
-                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Document</label>
-                      <a
-                        href={profile.document_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm win-text-accent hover:underline bg-blue-50 dark:bg-blue-900/20 px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-blue-200 dark:border-blue-800 break-all"
-                      >
-                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span>View/Download Document</span>
-                      </a>
-                    </div>
-                  )}
-                  
-                  {profile.notes && (
-                    <div className="mb-1 sm:mb-2">
-                      <label className="block text-xs font-semibold win-text-tertiary mb-1">Notes</label>
-                      <div className="win-bg-subtle px-2 sm:px-3 py-1.5 sm:py-2 rounded border border-win-border-subtle">
-                        <p className={`text-xs sm:text-sm win-text-secondary whitespace-pre-wrap break-words ${
-                          !expandedNotes[profile.id] ? 'line-clamp-3' : ''
+                        <span className={`text-xs font-medium ${
+                          getPasswordStrength(newProfile.password).color === 'green' ? 'text-emerald-400' :
+                          getPasswordStrength(newProfile.password).color === 'blue' ? 'text-blue-400' :
+                          getPasswordStrength(newProfile.password).color === 'yellow' ? 'text-yellow-400' :
+                          'text-red-400'
                         }`}>
-                          {profile.notes}
-                        </p>
-                        {profile.notes.length > 30 && (
-                          <button
-                            onClick={() => toggleNotesExpansion(profile.id)}
-                            className="text-xs win-text-accent hover:underline mt-1 font-medium"
-                          >
-                            {expandedNotes[profile.id] ? 'Show less' : 'Show more'}
-                          </button>
+                          {getPasswordStrength(newProfile.password).label}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {newProfile.password.length >= 12 && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded">12+ chars</span>
+                        )}
+                        {/[A-Z]/.test(newProfile.password) && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded">Uppercase</span>
+                        )}
+                        {/[a-z]/.test(newProfile.password) && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded">Lowercase</span>
+                        )}
+                        {/[0-9]/.test(newProfile.password) && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded">Numbers</span>
+                        )}
+                        {/[^a-zA-Z0-9]/.test(newProfile.password) && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded">Symbols</span>
                         )}
                       </div>
                     </div>
                   )}
-                </div>
-                <div className="text-[10px] sm:text-xs win-text-tertiary pt-2 border-t border-win-border-subtle">
-                  Created {new Date(profile.created_at).toLocaleDateString()}
+                  
+                  {/* Password Suggestions when field is empty */}
+                  {!newProfile.password && (
+                    <div className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+                      <p className="text-xs text-zinc-400 mb-2 flex items-center gap-1.5">
+                        <SparklesIcon className="w-3.5 h-3.5" />
+                        Quick suggestions (click to use):
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          generatePassword({ length: 12, uppercase: true, lowercase: true, numbers: true, symbols: false }),
+                          generatePassword({ length: 16, uppercase: true, lowercase: true, numbers: true, symbols: true }),
+                          generatePassword({ length: 20, uppercase: true, lowercase: true, numbers: true, symbols: true })
+                        ].map((pwd, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setNewProfile({ ...newProfile, password: pwd })}
+                            className="text-xs font-mono px-2 py-1.5 bg-zinc-700/50 hover:bg-zinc-700 border border-zinc-600 rounded text-zinc-300 hover:text-white transition-colors truncate max-w-[150px]"
+                            title={pwd}
+                          >
+                            {pwd.substring(0, 12)}...
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
 
-        {/* Create Profile Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4 backdrop-blur-sm" onClick={() => setShowModal(false)}>
-            <div className="win-bg-layer rounded-xl sm:rounded-2xl shadow-win-flyout max-w-lg w-full max-h-[95vh] overflow-y-auto border border-win-border-default" onClick={(e) => e.stopPropagation()}>
-              <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 sm:px-6 py-4 sm:py-5 sticky top-0 z-10">
-                <h3 className="text-xl sm:text-2xl font-bold text-white">{editingProfile ? 'Edit Profile' : 'Add Profile'}</h3>
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  <span className="flex items-center gap-2">
+                    <MailIcon className="w-4 h-4 text-zinc-500" />
+                    Email
+                  </span>
+                </label>
+                <input
+                  type="email"
+                  value={newProfile.email}
+                  onChange={(e) => setNewProfile({ ...newProfile, email: e.target.value })}
+                  placeholder="e.g., user@example.com"
+                  className="as-input w-full"
+                />
               </div>
-              <form onSubmit={handleCreateProfile} className="p-4 sm:p-6">
-                <div className="mb-4 sm:mb-5">
-                  <label className="block win-text-primary text-sm font-semibold mb-2">
-                    Profile Title
-                  </label>
-                  <input
-                    type="text"
-                    value={newProfile.title}
-                    onChange={(e) => setNewProfile({ ...newProfile, title: e.target.value })}
-                    placeholder="e.g., Admin Account, License Key, Certificate"
-                    className="win-input text-sm sm:text-base"
-                    autoFocus
-                  />
-                </div>
 
-                <div className="mb-4 sm:mb-5">
-                  <label className="block win-text-primary text-sm font-semibold mb-2">Username</label>
-                  <input
-                    type="text"
-                    value={newProfile.username}
-                    onChange={(e) => setNewProfile({ ...newProfile, username: e.target.value })}
-                    placeholder="e.g., admin@example.com"
-                    className="win-input text-sm sm:text-base"
-                  />
-                </div>
+              {/* Recovery Codes */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  <span className="flex items-center gap-2">
+                    <ShieldIcon className="w-4 h-4 text-zinc-500" />
+                    Recovery Codes
+                  </span>
+                </label>
+                <textarea
+                  value={newProfile.recovery_codes}
+                  onChange={(e) => setNewProfile({ ...newProfile, recovery_codes: e.target.value })}
+                  placeholder="Paste recovery codes (space-separated)"
+                  rows={3}
+                  className="as-input w-full resize-none font-mono text-sm"
+                />
+                <p className="text-xs text-zinc-500 mt-1.5">
+                  Codes will appear as clickable buttons. Clicking copies and removes them.
+                </p>
+              </div>
 
-                <div className="mb-4 sm:mb-5">
-                  <label className="block win-text-primary text-sm font-semibold mb-2">Password</label>
-                  <input
-                    type="text"
-                    value={newProfile.password}
-                    onChange={(e) => setNewProfile({ ...newProfile, password: e.target.value })}
-                    placeholder="Enter password"
-                    className="win-input text-sm sm:text-base font-mono"
-                  />
-                </div>
-
-                <div className="mb-4 sm:mb-5">
-                  <label className="block win-text-primary text-sm font-semibold mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={newProfile.email}
-                    onChange={(e) => setNewProfile({ ...newProfile, email: e.target.value })}
-                    placeholder="e.g., user@example.com"
-                    className="win-input text-sm sm:text-base"
-                  />
-                </div>
-
-                <div className="mb-4 sm:mb-5">
-                  <label className="block win-text-primary text-sm font-semibold mb-2">Recovery Codes</label>
-                  <textarea
-                    value={newProfile.recovery_codes}
-                    onChange={(e) => setNewProfile({ ...newProfile, recovery_codes: e.target.value })}
-                    placeholder="Paste recovery codes here (space-separated, e.g., ababf-f07ba 3664b-e1841 8bad0-8a77c)"
-                    rows={3}
-                    className="win-input resize-none text-sm sm:text-base font-mono"
-                  />
-                  <p className="text-xs win-text-tertiary mt-2">Recovery codes will be displayed as individual buttons that can be copied and deleted</p>
-                </div>
-
-                <div className="mb-4 sm:mb-5">
-                  <label className="block win-text-primary text-sm font-semibold mb-2">Document</label>
+              {/* Document */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  <span className="flex items-center gap-2">
+                    <DocumentIcon className="w-4 h-4 text-zinc-500" />
+                    Document
+                  </span>
+                </label>
+                <div className="relative">
                   <input
                     type="file"
                     onChange={handleFileChange}
-                    className="win-input text-sm file:mr-3 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
-                  />
-                  <p className="text-xs win-text-tertiary mt-2">Upload PDF, images, or other documents</p>
-                </div>
-
-                <div className="mb-5 sm:mb-6">
-                  <label className="block win-text-primary text-sm font-semibold mb-2">Notes</label>
-                  <textarea
-                    value={newProfile.notes}
-                    onChange={(e) => setNewProfile({ ...newProfile, notes: e.target.value })}
-                    placeholder="Additional information..."
-                    rows={4}
-                    className="win-input resize-none text-sm sm:text-base"
+                    className="as-input w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-500/10 file:text-blue-400 hover:file:bg-blue-500/20 file:cursor-pointer cursor-pointer"
                   />
                 </div>
+                <p className="text-xs text-zinc-500 mt-1.5">
+                  Upload PDFs, images, or other documents
+                </p>
+              </div>
 
-                <div className="flex gap-2 sm:gap-3 justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowModal(false);
-                      setEditingProfile(null);
-                      setNewProfile({ title: '', username: '', password: '', email: '', recovery_codes: '', notes: '' });
-                      setSelectedFile(null);
-                    }}
-                    className="win-btn-secondary text-sm sm:text-base px-4 sm:px-6"
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="win-btn-primary text-sm sm:text-base px-4 sm:px-6">
-                    {editingProfile ? 'Update' : 'Create'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  <span className="flex items-center gap-2">
+                    <NotesIcon className="w-4 h-4 text-zinc-500" />
+                    Notes
+                  </span>
+                </label>
+                <textarea
+                  value={newProfile.notes}
+                  onChange={(e) => setNewProfile({ ...newProfile, notes: e.target.value })}
+                  placeholder="Additional information..."
+                  rows={4}
+                  className="as-input w-full resize-none"
+                />
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingProfile(null);
+                    setNewProfile({ title: '', username: '', password: '', email: '', recovery_codes: '', notes: '' });
+                    setSelectedFile(null);
+                  }}
+                  className="as-btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="as-btn-primary flex-1">
+                  {editingProfile ? 'Save Changes' : 'Add Credential'}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
