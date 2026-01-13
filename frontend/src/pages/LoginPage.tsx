@@ -68,19 +68,19 @@ const LoginPage: React.FC = () => {
     };
     
     return (
-        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-white dark:bg-[#09090b]">
+        <div className="min-h-screen flex items-start sm:items-center justify-center px-4 py-8 sm:py-12 bg-white dark:bg-[#09090b] pt-8 sm:pt-0">
             <div className="w-full max-w-md">
                 {/* Logo and Title */}
-                <div className="text-center mb-8">
-                    <div className="flex justify-center mb-5">
+                <div className="text-center mb-6 sm:mb-8">
+                    <div className="flex justify-center mb-4 sm:mb-5">
                         <ShieldIcon />
                     </div>
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Welcome back</h1>
-                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Sign in to your AccountSafe vault</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">Welcome back</h1>
+                    <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Sign in to your AccountSafe vault</p>
                 </div>
 
                 {/* Card */}
-                <div className="as-card p-8">
+                <div className="as-card p-5 sm:p-8">
                     {message && (
                         <div className="as-alert-success mb-6">
                             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -99,7 +99,7 @@ const LoginPage: React.FC = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium text-zinc-300 mb-2">
                                 Username
@@ -148,7 +148,7 @@ const LoginPage: React.FC = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full as-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full as-btn-primary py-3 mt-2 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
                                 <>

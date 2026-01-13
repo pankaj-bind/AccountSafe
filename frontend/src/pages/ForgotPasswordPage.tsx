@@ -261,18 +261,18 @@ const ForgotPasswordPage: React.FC = () => {
         { text: "One special character", valid: /[\W_]/.test(password) },
     ];
     return (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-2 sm:mt-3 flex flex-wrap gap-1.5 sm:gap-2">
             {requirements.map(req => (
                 <span 
                     key={req.text} 
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                    className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${
                         req.valid 
                             ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' 
                             : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-500 border border-zinc-300 dark:border-zinc-700'
                     }`}
                 >
                     {req.valid ? <CheckIcon /> : <XIcon />}
-                    {req.text}
+                    <span className="whitespace-nowrap">{req.text}</span>
                 </span>
             ))}
         </div>
@@ -286,17 +286,17 @@ const ForgotPasswordPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#09090b] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white dark:bg-[#09090b] flex items-center justify-center px-4 py-8 sm:p-4">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="as-card p-8">
+        <div className="as-card p-5 sm:p-8">
           {/* Header */}
-          <div className="text-center mb-6">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
+          <div className="text-center mb-5 sm:mb-6">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-3 sm:mb-4 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
               <KeyIcon />
             </div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-white">Reset Password</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+            <h1 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white">Reset Password</h1>
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
               {step === 'email' && 'Enter your email to receive a reset code'}
               {step === 'otp' && 'Enter the 6-digit code sent to your email'}
               {step === 'password' && 'Create your new password'}
@@ -306,10 +306,10 @@ const ForgotPasswordPage: React.FC = () => {
 
           {/* Step Indicators */}
           {step !== 'success' && (
-            <div className="flex items-center justify-center gap-2 mb-6">
+            <div className="flex items-center justify-center gap-1 sm:gap-2 mb-5 sm:mb-6">
               {stepIndicators.map((s, i) => (
                 <React.Fragment key={s.step}>
-                  <div className={`flex items-center gap-1.5 ${
+                  <div className={`flex items-center gap-1 sm:gap-1.5 ${
                     step === s.step ? 'text-blue-500 dark:text-blue-400' : 
                     stepIndicators.findIndex(x => x.step === step) > i ? 'text-green-600 dark:text-green-400' : 'text-zinc-400 dark:text-zinc-500'
                   }`}>
@@ -319,10 +319,10 @@ const ForgotPasswordPage: React.FC = () => {
                     }`}>
                       {stepIndicators.findIndex(x => x.step === step) > i ? <CheckIcon /> : i + 1}
                     </div>
-                    <span className="text-xs">{s.label}</span>
+                    <span className="text-[10px] sm:text-xs hidden sm:inline">{s.label}</span>
                   </div>
                   {i < stepIndicators.length - 1 && (
-                    <div className={`w-8 h-0.5 ${
+                    <div className={`w-4 sm:w-8 h-0.5 ${
                       stepIndicators.findIndex(x => x.step === step) > i ? 'bg-green-500 dark:bg-green-400' : 'bg-zinc-300 dark:bg-zinc-700'
                     }`} />
                   )}

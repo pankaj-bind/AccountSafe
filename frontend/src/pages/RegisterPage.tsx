@@ -173,18 +173,18 @@ const RegisterPage: React.FC = () => {
         ];
 
         return (
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
                 {requirements.map(req => (
                     <span 
                         key={req.text} 
-                        className={`inline-flex items-center text-xs px-2 py-1 rounded-full ${
+                        className={`inline-flex items-center text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ${
                             req.valid 
                                 ? 'bg-green-500/10 text-green-400 border border-green-500/30' 
                                 : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
                         }`}
                     >
                         {req.valid ? <CheckIcon /> : <XIcon />}
-                        <span className="ml-1">{req.text}</span>
+                        <span className="ml-0.5 sm:ml-1 whitespace-nowrap">{req.text}</span>
                     </span>
                 ))}
             </div>
@@ -192,19 +192,19 @@ const RegisterPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-white dark:bg-[#09090b]">
+        <div className="min-h-screen flex items-start sm:items-center justify-center px-4 py-8 sm:py-12 bg-white dark:bg-[#09090b] pt-8 sm:pt-0">
             <div className="w-full max-w-md">
                 {/* Logo and Title */}
-                <div className="text-center mb-8">
-                    <div className="flex justify-center mb-5">
+                <div className="text-center mb-6 sm:mb-8">
+                    <div className="flex justify-center mb-4 sm:mb-5">
                         <ShieldIcon />
                     </div>
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Create an account</h1>
-                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Start securing your credentials today</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">Create an account</h1>
+                    <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Start securing your credentials today</p>
                 </div>
 
                 {/* Card */}
-                <div className="as-card p-8">
+                <div className="as-card p-5 sm:p-8">
                     {success && (
                         <div className="as-alert-success mb-6">
                             <CheckIcon />

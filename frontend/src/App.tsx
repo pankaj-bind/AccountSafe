@@ -44,6 +44,7 @@ const App: React.FC = () => {
                   {/* Protected Routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                  <Route path="/organizations" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                   <Route path="/organization/:id" element={<ProtectedRoute><OrganizationPage /></ProtectedRoute>} />
                 </Routes>
               </main>

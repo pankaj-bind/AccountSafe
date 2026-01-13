@@ -87,7 +87,20 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [userDropdownRef]);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
   return (
+    <>
     <nav className="sticky top-0 z-50 bg-white/80 dark:bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -277,107 +290,107 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
+    </nav>
 
-      {/* Mobile Menu Panel */}
+      {/* Mobile Menu Dropdown - Top Right Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-zinc-200 dark:border-zinc-800 animate-fadeIn">
-          {/* Navigation Links */}
-          <div className="px-4 py-3 space-y-1">
-            <Link 
-              to="/" 
-              onClick={closeMenus} 
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                isActiveRoute('/') ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-              </svg>
-              Home
-            </Link>
-            {token && (
-              <>
-                <Link 
-                  to="/dashboard" 
-                  onClick={closeMenus} 
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                    isActiveRoute('/dashboard') ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
-                  }`}
-                >
-                  <DashboardIcon />
-                  Dashboard
-                </Link>
-                <Link 
-                  to="/organizations" 
-                  onClick={closeMenus} 
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                    isActiveRoute('/organizations') ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
-                  }`}
-                >
-                  <VaultIcon />
-                  Secure Vault
-                </Link>
-              </>
-            )}
-          </div>
+        <>
+          {/* Backdrop */}
+          <div 
+            className="md:hidden fixed inset-0 bg-black/10 dark:bg-black/20 z-[60]"
+            onClick={closeMenus}
+          ></div>
           
-          {/* User Section */}
-          <div className="px-4 py-4 border-t border-zinc-200 dark:border-zinc-800">
+          {/* Dropdown Menu */}
+          <div className="md:hidden fixed top-16 right-4 z-[70] w-64 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl shadow-black/20 dark:shadow-black/60 overflow-hidden animate-fadeIn">
             {token ? (
               <>
-                {/* User Info */}
-                <div className="flex items-center gap-3 px-4 py-3 mb-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg">
-                  <img 
-                    className="h-10 w-10 rounded-full ring-2 ring-zinc-300 dark:ring-zinc-700" 
-                    src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=128&background=3b82f6&color=fff`} 
-                    alt="" 
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">{displayName || 'User'}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-500">Account Settings</p>
+                {/* User Info Header */}
+                <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <img 
+                        className="h-10 w-10 rounded-full ring-2 ring-blue-500/50" 
+                        src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=128&background=3b82f6&color=fff`} 
+                        alt="" 
+                      />
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{displayName || 'User'}</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Manage your account</p>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="space-y-1">
+                {/* Menu Items */}
+                <div className="py-2">
+                  <Link 
+                    to="/dashboard" 
+                    onClick={closeMenus} 
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                    </svg>
+                    Dashboard
+                  </Link>
+                  <Link 
+                    to="/organizations" 
+                    onClick={closeMenus} 
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                    Secure Vault
+                  </Link>
                   <Link 
                     to="/profile" 
                     onClick={closeMenus} 
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 transition-all"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                   >
-                    <UserIcon />
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
                     Profile Settings
                   </Link>
+                  
+                  <div className="my-2 border-t border-zinc-200 dark:border-zinc-800"></div>
+                  
                   <button 
                     onClick={handleLogout} 
-                    className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                   >
-                    <LogoutIcon />
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
                     Sign out
                   </button>
                 </div>
               </>
             ) : (
-              <div className="space-y-3">
+              <div className="p-3 space-y-2">
                 <Link 
                   to="/login" 
                   onClick={closeMenus} 
-                  className="block w-full px-4 py-3 rounded-lg text-sm font-medium text-center text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all"
+                  className="block w-full px-4 py-2.5 rounded-lg text-sm font-medium text-center text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all"
                 >
                   Log in
                 </Link>
                 <Link 
                   to="/register" 
                   onClick={closeMenus} 
-                  className="block w-full px-4 py-3 rounded-lg text-sm font-medium text-center text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25"
+                  className="block w-full px-4 py-2.5 rounded-lg text-sm font-medium text-center text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25"
                 >
-                  Get Started Free
+                  Get Started
                 </Link>
               </div>
             )}
           </div>
-        </div>
+        </>
       )}
-    </nav>
+    </>
   );
 };
 

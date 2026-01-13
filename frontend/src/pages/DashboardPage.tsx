@@ -218,28 +218,28 @@ const LoginRecordRow: React.FC<{ record: LoginRecord; isLast: boolean; index: nu
       transition={{ delay: index * 0.05, duration: 0.2 }}
       className={`group transition-colors duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/50`}
     >
-      <td className="py-3 sm:py-4 px-3 sm:px-4">
+      <td className="sticky left-0 z-10 bg-white dark:bg-zinc-900 group-hover:bg-zinc-50 dark:group-hover:bg-zinc-800/50 py-3 sm:py-4 px-3 sm:px-4">
         <div className="flex items-center gap-2">
           {isSuccess ? (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20">
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 whitespace-nowrap">
               <CheckCircleIcon className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-green-600 dark:text-green-400" />
               <span className="text-xs font-medium text-green-700 dark:text-green-400">Success</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20">
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 whitespace-nowrap">
               <XCircleIcon className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-red-600 dark:text-red-400" />
               <span className="text-xs font-medium text-red-700 dark:text-red-400">Failed</span>
             </div>
           )}
         </div>
       </td>
-      <td className="py-3 sm:py-4 px-3 sm:px-4">
+      <td className="py-3 sm:py-4 px-3 sm:px-4 whitespace-nowrap">
         <div className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-200" title={dateTime.fullDate}>
           {dateTime.relative}
         </div>
         <div className="text-xs text-zinc-500 dark:text-zinc-500">{dateTime.formatted}</div>
       </td>
-      <td className="py-3 sm:py-4 px-3 sm:px-4">
+      <td className="py-3 sm:py-4 px-3 sm:px-4 whitespace-nowrap">
         <code className={`text-xs sm:text-sm font-mono px-1.5 sm:px-2 py-0.5 sm:py-1 rounded ${
           ip.isUnknown 
             ? 'text-zinc-400 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 italic' 
@@ -456,19 +456,21 @@ const DashboardPage: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="inline-block min-w-full align-middle">
+                  <div className="overflow-hidden">
+                    <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
                   <thead>
                     <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs sm:text-sm">
-                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">Status</th>
-                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">Date & Time</th>
-                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">IP Address</th>
-                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">Location</th>
-                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">ISP</th>
-                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300">Coordinates</th>
+                      <th className="sticky left-0 z-10 bg-zinc-50 dark:bg-zinc-900/50 text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">Status</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">Date & Time</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">IP Address</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">Location</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">ISP</th>
+                      <th className="text-left py-3 px-3 sm:px-4 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">Coordinates</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
                     <AnimatePresence>
                       {displayRecords.map((record, index) => (
                         <LoginRecordRow
@@ -482,6 +484,8 @@ const DashboardPage: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
             )}
           </div>
         </section>
