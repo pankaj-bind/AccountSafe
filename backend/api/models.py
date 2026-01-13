@@ -278,6 +278,7 @@ class LoginRecord(models.Model):
     isp = models.CharField(max_length=255, blank=True, null=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    timezone = models.CharField(max_length=50, blank=True, null=True)  # e.g., 'Asia/Kolkata'
     user_agent = models.TextField(blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     

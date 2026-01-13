@@ -206,17 +206,42 @@ class LoginRecordSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username_attempted', 'password_attempted', 'status',
             'ip_address', 'country', 'isp', 'latitude', 'longitude',
-            'date', 'time', 'location', 'user_agent', 'timestamp'
+            'date', 'time', 'location', 'user_agent', 'timestamp', 'timezone'
         ]
         read_only_fields = fields
     
+    def get_local_datetime(self, obj):
+        """Convert UTC timestamp to local timezone"""
+        import pytz
+        from django.utils import timezone as dj_timezone
+        
+        # Get the timestamp (in UTC)
+        utc_time = obj.timestamp
+        if dj_timezone.is_naive(utc_time):
+            utc_time = dj_timezone.make_aware(utc_time, pytz.UTC)
+        
+        # Convert to local timezone if available
+        if obj.timezone:
+            try:
+                local_tz = pytz.timezone(obj.timezone)
+                local_time = utc_time.astimezone(local_tz)
+                return local_time
+            except:
+                pass
+        
+        return utc_time
+    
     def get_date(self, obj):
-        """Return formatted date"""
-        return obj.timestamp.strftime('%Y-%m-%d')
+        """Return formatted date in local timezone"""
+        local_time = self.get_local_datetime(obj)
+        return local_time.strftime('%Y-%m-%d')
     
     def get_time(self, obj):
-        """Return formatted time"""
-        return obj.timestamp.strftime('%H:%M:%S')
+        """Return formatted time in local timezone with timezone abbreviation"""
+        local_time = self.get_local_datetime(obj)
+        # Get timezone abbreviation
+        tz_abbr = local_time.strftime('%Z') if obj.timezone else 'UTC'
+        return f"{local_time.strftime('%H:%M:%S')} ({tz_abbr})"
     
     def get_location(self, obj):
         """Return location as latitude,longitude string"""

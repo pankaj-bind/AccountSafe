@@ -951,7 +951,8 @@ def get_location_data(ip_address):
             'country': 'Local',
             'isp': 'Local Network',
             'latitude': None,
-            'longitude': None
+            'longitude': None,
+            'timezone': None
         }
     
     try:
@@ -983,7 +984,8 @@ def get_location_data(ip_address):
                 'country': location_str,  # Full location string
                 'isp': data.get('org', 'Unknown'),
                 'latitude': latitude,
-                'longitude': longitude
+                'longitude': longitude,
+                'timezone': data.get('timezone', None)  # e.g., 'Asia/Kolkata'
             }
     except Exception as e:
         print(f"Error fetching location data: {e}")
@@ -992,7 +994,8 @@ def get_location_data(ip_address):
         'country': 'Unknown',
         'isp': 'Unknown',
         'latitude': None,
-        'longitude': None
+        'longitude': None,
+        'timezone': None
     }
 
 
@@ -1200,6 +1203,7 @@ def track_login_attempt(request, username, password=None, is_success=False, user
         isp=location_data['isp'],
         latitude=location_data['latitude'],
         longitude=location_data['longitude'],
+        timezone=location_data['timezone'],
         user_agent=user_agent
     )
     

@@ -8,6 +8,9 @@ django-cors-headers
 # HTTP requests
 requests
 
+# Timezone support
+pytz
+
 # Environment variables
 python-dotenv
 

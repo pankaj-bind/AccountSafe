@@ -36,3 +36,6 @@ __pycache__
 .Python
 *.sqlite3
 db.sqlite3
+
+# Test folder - local testing only
+/tests/
