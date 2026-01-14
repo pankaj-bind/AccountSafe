@@ -27,17 +27,30 @@ export const login = async (username: string, password: string) => {
     // Store master password in session for encryption key derivation
     storeMasterPasswordForSession(password);
     
+    // Check for existing salt in localStorage first (for migration of existing users)
+    const existingLocalSalt = localStorage.getItem(`encryption_salt_${username}`);
+    
     // Fetch encryption salt from backend (stored in UserProfile)
     try {
       const profileResponse = await apiClient.get('/profile/');
-      const encryptionSalt = profileResponse.data.encryption_salt;
+      const backendSalt = profileResponse.data.encryption_salt;
       
-      if (encryptionSalt) {
+      if (backendSalt) {
         // User has encryption salt stored on backend - use it
-        localStorage.setItem(`encryption_salt_${username}`, encryptionSalt);
-        storeKeyData(encryptionSalt);
+        localStorage.setItem(`encryption_salt_${username}`, backendSalt);
+        storeKeyData(backendSalt);
+      } else if (existingLocalSalt) {
+        // Migrate existing local salt to backend (for existing users)
+        storeKeyData(existingLocalSalt);
+        
+        // Save to backend for future logins from other devices
+        try {
+          await apiClient.put('/profile/update/', { encryption_salt: existingLocalSalt });
+        } catch (err) {
+          console.error('Failed to save encryption salt to backend:', err);
+        }
       } else {
-        // No salt on backend (old user or first login) - generate and save one
+        // Brand new user with no salt anywhere - generate and save one
         const salt = generateSalt();
         localStorage.setItem(`encryption_salt_${username}`, salt);
         storeKeyData(salt);
@@ -52,9 +65,8 @@ export const login = async (username: string, password: string) => {
     } catch (err) {
       console.error('Failed to fetch user profile:', err);
       // Fallback: use localStorage if backend fetch fails
-      const existingSalt = localStorage.getItem(`encryption_salt_${username}`);
-      if (existingSalt) {
-        storeKeyData(existingSalt);
+      if (existingLocalSalt) {
+        storeKeyData(existingLocalSalt);
       } else {
         const salt = generateSalt();
         localStorage.setItem(`encryption_salt_${username}`, salt);

@@ -5,6 +5,7 @@ import { generatePassword, getPasswordStrength } from '../utils/passwordGenerato
 import { maskSensitiveData } from '../utils/formatters';
 import { encryptCredentialFields, decryptCredentialFields } from '../utils/encryption';
 import { getSessionEncryptionKey } from '../services/encryptionService';
+import PasswordReentryModal from './PasswordReentryModal';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icon Components
@@ -457,6 +458,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [recoveryCodes, setRecoveryCodes] = useState<{[key: number]: string[]}>({});
   const [expandedNotes, setExpandedNotes] = useState<{[key: number]: boolean}>({});
+  const [showPasswordReentry, setShowPasswordReentry] = useState(false);
   const [newProfile, setNewProfile] = useState({
     title: '',
     username: '',
@@ -502,7 +504,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
       // Decrypt credentials client-side
       const encryptionKey = await getSessionEncryptionKey();
       if (!encryptionKey) {
-        setError('Encryption key not found. Please log in again.');
+        // Show password re-entry modal instead of error
+        setShowPasswordReentry(true);
         setLoading(false);
         return;
       }
@@ -550,7 +553,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
       // Get encryption key from session
       const encryptionKey = await getSessionEncryptionKey();
       if (!encryptionKey) {
-        setError('Encryption key not found. Please log in again.');
+        setShowPasswordReentry(true);
         return;
       }
 
@@ -757,8 +760,26 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     }
   };
 
+  const handlePasswordReentrySuccess = () => {
+    setShowPasswordReentry(false);
+    // Retry fetching profiles after successful password re-entry
+    fetchProfiles();
+  };
+
+  const handlePasswordReentryCancel = () => {
+    setShowPasswordReentry(false);
+    onBack();
+  };
+
   return (
     <div className="min-h-screen bg-[var(--as-bg-base)]">
+      {/* Password Re-entry Modal */}
+      <PasswordReentryModal
+        isOpen={showPasswordReentry}
+        onSuccess={handlePasswordReentrySuccess}
+        onCancel={handlePasswordReentryCancel}
+      />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
