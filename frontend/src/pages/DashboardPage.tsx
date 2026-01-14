@@ -156,7 +156,7 @@ const SecurityScoreRing: React.FC<SecurityScoreProps> = ({ score, size = 140 }) 
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-white">{score}</span>
+        <span className="text-3xl font-bold text-zinc-900 dark:text-white">{score}</span>
         <span className={`text-xs font-medium ${scoreInfo.class}`}>{scoreInfo.label}</span>
       </div>
     </div>
