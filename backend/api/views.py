@@ -1287,3 +1287,197 @@ def login_records(request):
         'count': records.count(),
         'records': serializer.data
     })
+
+
+# --- Security Health Score Views ---
+class SecurityHealthScoreView(APIView):
+    """
+    Calculate and return the security health score for the authenticated user's vault.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        from .health_score import calculate_health_score
+        
+        try:
+            score_data = calculate_health_score(request.user)
+            return Response(score_data)
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to calculate health score: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class UpdatePasswordStrengthView(APIView):
+    """
+    Update the password strength score for a specific profile.
+    Called from frontend after client-side zxcvbn calculation.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, profile_id):
+        from .health_score import update_password_strength
+        
+        strength_score = request.data.get('strength_score')
+        
+        if strength_score is None:
+            return Response(
+                {'error': 'strength_score is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            strength_score = int(strength_score)
+            if not (0 <= strength_score <= 4):
+                return Response(
+                    {'error': 'strength_score must be between 0 and 4'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except ValueError:
+            return Response(
+                {'error': 'strength_score must be an integer'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Verify user owns this profile
+        try:
+            profile = Profile.objects.get(id=profile_id)
+            if profile.organization.category.user != request.user:
+                return Response(
+                    {'error': 'Permission denied'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except Profile.DoesNotExist:
+            return Response(
+                {'error': 'Profile not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        success = update_password_strength(profile_id, strength_score)
+        if success:
+            return Response({'message': 'Password strength updated successfully'})
+        else:
+            return Response(
+                {'error': 'Failed to update password strength'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class UpdateBreachStatusView(APIView):
+    """
+    Update the breach status for a specific profile.
+    Called from frontend after client-side HIBP check.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, profile_id):
+        from .health_score import update_breach_status
+        
+        is_breached = request.data.get('is_breached')
+        breach_count = request.data.get('breach_count', 0)
+        
+        if is_breached is None:
+            return Response(
+                {'error': 'is_breached is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Verify user owns this profile
+        try:
+            profile = Profile.objects.get(id=profile_id)
+            if profile.organization.category.user != request.user:
+                return Response(
+                    {'error': 'Permission denied'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except Profile.DoesNotExist:
+            return Response(
+                {'error': 'Profile not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        success = update_breach_status(profile_id, bool(is_breached), int(breach_count))
+        if success:
+            return Response({'message': 'Breach status updated successfully'})
+        else:
+            return Response(
+                {'error': 'Failed to update breach status'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class BatchUpdateSecurityMetricsView(APIView):
+    """
+    Batch update security metrics (strength and breach status) for multiple profiles.
+    Useful for client-side to update all metrics at once after decryption.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        from .health_score import update_password_strength, update_breach_status
+        from django.utils import timezone
+        
+        updates = request.data.get('updates', [])
+        
+        if not isinstance(updates, list):
+            return Response(
+                {'error': 'updates must be an array'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        results = []
+        
+        for update in updates:
+            profile_id = update.get('profile_id')
+            strength_score = update.get('strength_score')
+            is_breached = update.get('is_breached')
+            
+            if not profile_id:
+                continue
+            
+            # Verify user owns this profile
+            try:
+                profile = Profile.objects.get(id=profile_id)
+                if profile.organization.category.user != request.user:
+                    results.append({
+                        'profile_id': profile_id,
+                        'success': False,
+                        'error': 'Permission denied'
+                    })
+                    continue
+            except Profile.DoesNotExist:
+                results.append({
+                    'profile_id': profile_id,
+                    'success': False,
+                    'error': 'Profile not found'
+                })
+                continue
+            
+            # Update strength if provided
+            if strength_score is not None:
+                try:
+                    strength_score = int(strength_score)
+                    if 0 <= strength_score <= 4:
+                        update_password_strength(profile_id, strength_score)
+                except ValueError:
+                    pass
+            
+            # Update breach status if provided
+            if is_breached is not None:
+                update_breach_status(profile_id, bool(is_breached))
+            
+            # Update last_password_update to now if not already set
+            if not profile.last_password_update:
+                profile.last_password_update = timezone.now()
+                profile.save(update_fields=['last_password_update'])
+            
+            results.append({
+                'profile_id': profile_id,
+                'success': True
+            })
+        
+        return Response({
+            'message': f'Updated {len(results)} profiles',
+            'results': results
+        })

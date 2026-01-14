@@ -222,6 +222,12 @@ class Profile(models.Model):
         help_text="Upload document (PDF, images, etc.) - Max 10MB"
     )
     
+    # Security health tracking fields
+    is_breached = models.BooleanField(default=False, help_text="Whether this password has been found in known data breaches")
+    last_breach_check_date = models.DateTimeField(null=True, blank=True, help_text="Last time this password was checked against HIBP")
+    password_strength = models.IntegerField(default=0, help_text="zxcvbn strength score (0-4)")
+    last_password_update = models.DateTimeField(null=True, blank=True, help_text="Last time the password was changed")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

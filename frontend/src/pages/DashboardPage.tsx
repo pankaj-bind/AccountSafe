@@ -16,6 +16,21 @@ interface DashboardStats {
   recent_logins: LoginRecord[];
 }
 
+interface SecurityHealthScore {
+  overall_score: number;
+  total_passwords: number;
+  strength_score: number;
+  uniqueness_score: number;
+  integrity_score: number;
+  hygiene_score: number;
+  breakdown: {
+    weak_passwords: number;
+    reused_passwords: number;
+    breached_passwords: number;
+    outdated_passwords: number;
+  };
+}
+
 interface LoginRecord {
   id: number;
   username_attempted: string;
@@ -305,20 +320,25 @@ const LoginRecordRow: React.FC<{ record: LoginRecord; isLast: boolean; index: nu
 const DashboardPage: React.FC = () => {
   const { displayName } = useProfile();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [healthScore, setHealthScore] = useState<SecurityHealthScore | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAllRecords, setShowAllRecords] = useState(false);
   const [allRecords, setAllRecords] = useState<LoginRecord[]>([]);
 
   useEffect(() => {
-    fetchDashboardStats();
+    fetchDashboardData();
   }, []);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardData = async () => {
     try {
-      const response = await apiClient.get('/dashboard/statistics/');
-      setStats(response.data);
+      const [statsResponse, healthResponse] = await Promise.all([
+        apiClient.get('/dashboard/statistics/'),
+        apiClient.get('/security/health-score/')
+      ]);
+      setStats(statsResponse.data);
+      setHealthScore(healthResponse.data);
     } catch (error) {
-      console.error('Failed to fetch dashboard stats:', error);
+      console.error('Failed to fetch dashboard data:', error);
       setStats({
         organization_count: 0,
         profile_count: 0,
@@ -338,34 +358,6 @@ const DashboardPage: React.FC = () => {
       console.error('Failed to fetch login records:', error);
     }
   };
-
-  // Calculate security score based on various factors
-  const securityScore = useMemo(() => {
-    if (!stats) return 0;
-    
-    let score = 50; // Base score
-    
-    // Bonus for having profiles organized
-    if (stats.organization_count > 0) score += 15;
-    if (stats.profile_count > 0) score += 10;
-    
-    // Analyze recent logins
-    const recentLogins = stats.recent_logins || [];
-    const successfulLogins = recentLogins.filter(l => l.status === 'success').length;
-    const failedLogins = recentLogins.filter(l => l.status === 'failed').length;
-    
-    // Deduct for failed login attempts
-    if (failedLogins > 3) score -= 15;
-    else if (failedLogins > 0) score -= 5;
-    
-    // Bonus for successful logins (shows active usage)
-    if (successfulLogins > 0) score += 10;
-    
-    // Additional points for consistency
-    if (recentLogins.length > 0 && failedLogins === 0) score += 10;
-    
-    return Math.max(0, Math.min(100, score));
-  }, [stats]);
 
   const displayRecords = showAllRecords ? allRecords : (stats?.recent_logins || []);
   const failedLoginCount = stats?.recent_logins?.filter(l => l.status === 'failed').length || 0;
@@ -390,36 +382,137 @@ const DashboardPage: React.FC = () => {
         </header>
 
         {/* ═══════════════════════════════════════════════════════════════════════
-            Stats Grid
+            Security Health Score
             ═══════════════════════════════════════════════════════════════════════ */}
         <section className="mb-6 sm:mb-8">
-          <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white mb-4">Overview</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <StatCard
-              icon={<BuildingIcon className="w-5 h-5" />}
-              value={stats?.organization_count || 0}
-              label="Organizations"
-              color="blue"
-              href="/"
-            />
-            <StatCard
-              icon={<KeyIcon className="w-5 h-5" />}
-              value={stats?.profile_count || 0}
-              label="Saved Profiles"
-              color="green"
-            />
-            <StatCard
-              icon={<ActivityIcon className="w-5 h-5" />}
-              value={stats?.recent_logins?.length || 0}
-              label="Recent Logins"
-              color="purple"
-            />
-            <StatCard
-              icon={failedLoginCount > 0 ? <XCircleIcon /> : <CheckCircleIcon />}
-              value={failedLoginCount}
-              label="Failed Logins (Recent)"
-              color={failedLoginCount > 0 ? "orange" : "green"}
-            />
+          <div className="as-card overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+            <div className="px-4 sm:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+              <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+                <ShieldCheckIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                Security Health Score
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500 mt-1">
+                Based on password strength, uniqueness, breach status, and hygiene
+              </p>
+            </div>
+
+            <div className="p-6 sm:p-8">
+              {healthScore ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Left: Score Ring */}
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <SecurityScoreRing score={Math.round(healthScore.overall_score)} />
+                    <div className="text-center">
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                        Based on {healthScore.total_passwords} password{healthScore.total_passwords !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: Score Breakdown */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-3">Score Breakdown</h3>
+                    
+                    {/* Strength */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                          Password Strength
+                          <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">(40%)</span>
+                        </span>
+                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                          {healthScore.strength_score.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${healthScore.strength_score}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+                        {healthScore.breakdown.weak_passwords} weak password{healthScore.breakdown.weak_passwords !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+
+                    {/* Uniqueness */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                          Password Uniqueness
+                          <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">(30%)</span>
+                        </span>
+                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                          {healthScore.uniqueness_score.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${healthScore.uniqueness_score}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+                        {healthScore.breakdown.reused_passwords} reused password{healthScore.breakdown.reused_passwords !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+
+                    {/* Integrity */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                          Password Integrity
+                          <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">(20%)</span>
+                        </span>
+                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                          {healthScore.integrity_score.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${healthScore.integrity_score}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+                        {healthScore.breakdown.breached_passwords} breached password{healthScore.breakdown.breached_passwords !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+
+                    {/* Hygiene */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                          Password Hygiene
+                          <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">(10%)</span>
+                        </span>
+                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+                          {healthScore.hygiene_score.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${healthScore.hygiene_score}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+                        {healthScore.breakdown.outdated_passwords} outdated password{healthScore.breakdown.outdated_passwords !== 1 ? 's' : ''} (&gt;1 year)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center">
+                    <ShieldCheckIcon className="w-6 h-6 text-zinc-400 dark:text-zinc-500" />
+                  </div>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    Loading security health score...
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 

@@ -27,6 +27,10 @@ from api.views import (
     ResetPinView,
     dashboard_statistics,
     login_records,
+    SecurityHealthScoreView,
+    UpdatePasswordStrengthView,
+    UpdateBreachStatusView,
+    BatchUpdateSecurityMetricsView,
 )
 
 urlpatterns = [
@@ -67,6 +71,12 @@ urlpatterns = [
     path('api/pin/verify/', VerifyPinView.as_view(), name='verify-pin'),
     path('api/pin/status/', PinStatusView.as_view(), name='pin-status'),
     path('api/pin/reset/', ResetPinView.as_view(), name='reset-pin'),
+
+    # Security Health Score endpoints
+    path('api/security/health-score/', SecurityHealthScoreView.as_view(), name='security-health-score'),
+    path('api/security/profiles/<int:profile_id>/strength/', UpdatePasswordStrengthView.as_view(), name='update-password-strength'),
+    path('api/security/profiles/<int:profile_id>/breach/', UpdateBreachStatusView.as_view(), name='update-breach-status'),
+    path('api/security/batch-update/', BatchUpdateSecurityMetricsView.as_view(), name='batch-update-security-metrics'),
 
     # dj-rest-auth endpoints (logout, user details, registration)
     # Note: login is handled by CustomLoginView above
