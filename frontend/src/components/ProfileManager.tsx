@@ -269,7 +269,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   return (
     <div className="as-card p-0 overflow-hidden group hover:border-zinc-400 dark:hover:border-zinc-700 transition-all">
       {/* Card Header */}
-      <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30">
+      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-2 bg-blue-500/10 rounded-lg flex-shrink-0">
@@ -313,7 +313,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       </div>
       
       {/* Card Body */}
-      <div className="p-4 space-y-3">
+      <div className="p-0 sm:p-4 space-y-3">
         {/* Credentials */}
         {hasCredentials && (
           <div className="space-y-3">
@@ -780,21 +780,21 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         onCancel={handlePasswordReentryCancel}
       />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-6">
         
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {/* Back Button & Header */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         <button
           onClick={onBack}
-          className="mb-4 sm:mb-6 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors group"
+          className="mb-2 sm:mb-4 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors group"
         >
           <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium text-sm sm:text-base">Back to Vault</span>
         </button>
         
         {/* Organization Header - Logo and Title with Button */}
-        <div className="mb-6 flex items-center justify-between gap-3">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Organization Logo */}
             {orgData.logo_url ? (
@@ -829,7 +829,14 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             className="as-btn-primary p-3 rounded-xl flex items-center justify-center group flex-shrink-0"
             title="Add Credential"
           >
-            <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" />
+            {/* Icon only on mobile, show full label on sm+ */}
+            <span className="sm:hidden">
+              <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" />
+            </span>
+            <span className="hidden sm:inline-flex items-center gap-2">
+              <PlusIcon className="w-4 h-4" />
+              <span>Add New Credentials</span>
+            </span>
           </button>
         </div>
 
@@ -881,8 +888,10 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
               onClick={() => { setShowModal(true); setError(null); }}
               className="as-btn-primary inline-flex items-center gap-2"
             >
-              <PlusIcon className="w-5 h-5" />
-              Add First Credential
+              <span className="sm:hidden">
+                <PlusIcon className="w-5 h-5" />
+              </span>
+              <span className="hidden sm:inline">+ Add New Credentials</span>
             </button>
           </div>
         )}
