@@ -29,28 +29,34 @@ export const login = async (username: string, password: string) => {
     
     // Check for existing salt in localStorage first (for migration of existing users)
     const existingLocalSalt = localStorage.getItem(`encryption_salt_${username}`);
+    console.log('[Auth] Login - existingLocalSalt:', existingLocalSalt ? 'found' : 'not found');
     
     // Fetch encryption salt from backend (stored in UserProfile)
     try {
       const profileResponse = await apiClient.get('/profile/');
       const backendSalt = profileResponse.data.encryption_salt;
+      console.log('[Auth] Login - backendSalt:', backendSalt ? 'found' : 'not found');
       
       if (backendSalt) {
-        // User has encryption salt stored on backend - use it
+        // User has encryption salt stored on backend - use it (priority: backend)
+        console.log('[Auth] Using backend salt');
         localStorage.setItem(`encryption_salt_${username}`, backendSalt);
         storeKeyData(backendSalt);
       } else if (existingLocalSalt) {
         // Migrate existing local salt to backend (for existing users)
+        console.log('[Auth] Migrating local salt to backend');
         storeKeyData(existingLocalSalt);
         
         // Save to backend for future logins from other devices
         try {
           await apiClient.put('/profile/update/', { encryption_salt: existingLocalSalt });
+          console.log('[Auth] Salt saved to backend successfully');
         } catch (err) {
-          console.error('Failed to save encryption salt to backend:', err);
+          console.error('[Auth] Failed to save encryption salt to backend:', err);
         }
       } else {
         // Brand new user with no salt anywhere - generate and save one
+        console.log('[Auth] Generating new salt for new user');
         const salt = generateSalt();
         localStorage.setItem(`encryption_salt_${username}`, salt);
         storeKeyData(salt);
@@ -58,14 +64,16 @@ export const login = async (username: string, password: string) => {
         // Save to backend for future logins
         try {
           await apiClient.put('/profile/update/', { encryption_salt: salt });
+          console.log('[Auth] New salt saved to backend successfully');
         } catch (err) {
-          console.error('Failed to save encryption salt to backend:', err);
+          console.error('[Auth] Failed to save encryption salt to backend:', err);
         }
       }
     } catch (err) {
-      console.error('Failed to fetch user profile:', err);
+      console.error('[Auth] Failed to fetch user profile:', err);
       // Fallback: use localStorage if backend fetch fails
       if (existingLocalSalt) {
+        console.log('[Auth] Using fallback local salt');
         storeKeyData(existingLocalSalt);
       } else {
         const salt = generateSalt();

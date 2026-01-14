@@ -109,6 +109,10 @@ const RegisterPage: React.FC = () => {
             await register(username, email, password, password2);
             setSuccess('Account created successfully!');
             
+            // Store salt BEFORE auto-login so login function can use it
+            localStorage.setItem(`encryption_salt_${username}`, salt);
+            storeKeyData(salt, generatedRecoveryKey);
+            
             // Auto-login
             const loginResponse = await login(username, password);
             const authToken = loginResponse.key || loginResponse.token;
@@ -116,17 +120,8 @@ const RegisterPage: React.FC = () => {
             if (authToken) {
                 setToken(authToken);
                 
-                // Store encryption data in localStorage for this session
-                localStorage.setItem(`encryption_salt_${username}`, salt);
-                storeKeyData(salt, generatedRecoveryKey);
-                storeMasterPasswordForSession(password);
-                
-                // Save encryption salt to backend (UserProfile)
-                try {
-                    await apiClient.put('/profile/update/', { encryption_salt: salt });
-                } catch (err) {
-                    console.error('Failed to save encryption salt to backend:', err);
-                }
+                // Password is already stored by login function
+                // Salt is already stored above and will be migrated to backend by login function
                 
                 // Show recovery key modal
                 setRecoveryKey(generatedRecoveryKey);

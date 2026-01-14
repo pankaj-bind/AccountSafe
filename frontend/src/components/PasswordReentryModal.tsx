@@ -40,38 +40,32 @@ const PasswordReentryModal: React.FC<PasswordReentryModalProps> = ({
       // If no salt in backend, try localStorage
       if (!salt) {
         salt = localStorage.getItem(`encryption_salt_${username}`);
+        
+        // If we found it in localStorage, save it to backend for other devices
+        if (salt) {
+          try {
+            await apiClient.put('/profile/update/', { encryption_salt: salt });
+            console.log('Migrated salt from localStorage to backend');
+          } catch (err) {
+            console.error('Failed to save salt to backend:', err);
+          }
+        }
       }
 
       if (!salt) {
         // No salt anywhere - this is a problem
-        setError('Encryption setup not found. Please contact support.');
+        setError('Encryption setup not found. Your data may have been encrypted with a different salt. Please contact support or try logging in from the original device.');
         setIsLoading(false);
         return;
       }
 
-      // Try to derive the key to validate password
-      try {
-        const key = await deriveKeyFromPassword(password, salt);
-        if (key) {
-          // Password is valid, store it for the session
-          storeMasterPasswordForSession(password);
-          storeKeyData(salt);
-          
-          // Save salt to backend if not already there
-          if (!profileResponse.data.encryption_salt) {
-            try {
-              await apiClient.put('/profile/update/', { encryption_salt: salt });
-            } catch (err) {
-              console.error('Failed to save salt to backend:', err);
-            }
-          }
-          
-          setPassword('');
-          onSuccess();
-        }
-      } catch (err) {
-        setError('Failed to verify password. Please try again.');
-      }
+      // Store the salt and password for this session
+      storeMasterPasswordForSession(password);
+      storeKeyData(salt);
+      localStorage.setItem(`encryption_salt_${username}`, salt);
+      
+      setPassword('');
+      onSuccess();
     } catch (err: any) {
       if (err.response?.status === 401) {
         setError('Session expired. Please log in again.');
