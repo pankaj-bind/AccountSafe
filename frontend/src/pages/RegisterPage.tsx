@@ -96,6 +96,7 @@ const RegisterPage: React.FC = () => {
                         setTurnstileToken(null);
                     },
                     theme: 'dark',
+                    size: 'normal',
                 });
             }
         };
@@ -363,8 +364,8 @@ const RegisterPage: React.FC = () => {
                         </div>
 
                         {/* Cloudflare Turnstile */}
-                        <div className="flex justify-center py-2">
-                            <div ref={turnstileRef}></div>
+                        <div className="flex justify-center py-3">
+                            <div ref={turnstileRef} className="transform scale-95 sm:scale-100"></div>
                         </div>
 
                         <button 

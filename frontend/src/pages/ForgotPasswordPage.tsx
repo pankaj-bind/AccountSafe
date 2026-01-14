@@ -156,6 +156,7 @@ const ForgotPasswordPage: React.FC = () => {
             setTurnstileToken(null);
           },
           theme: 'dark',
+          size: 'normal',
         });
       }
     };
@@ -430,8 +431,8 @@ const ForgotPasswordPage: React.FC = () => {
               </div>
               
               {/* Cloudflare Turnstile */}
-              <div className="flex justify-center py-2">
-                <div ref={turnstileRef}></div>
+              <div className="flex justify-center py-3">
+                <div ref={turnstileRef} className="transform scale-95 sm:scale-100"></div>
               </div>
 
               <button type="submit" disabled={isLoading || !turnstileToken} className="w-full as-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50">
