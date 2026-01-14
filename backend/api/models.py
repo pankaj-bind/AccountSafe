@@ -108,6 +108,9 @@ class UserProfile(models.Model):
 
     # Security PIN for organization access
     security_pin = models.CharField(max_length=4, blank=True, null=True, help_text="4-digit security PIN for accessing organizations")
+    
+    # Encryption salt for client-side encryption
+    encryption_salt = models.CharField(max_length=255, blank=True, null=True, help_text="Salt for deriving client-side encryption key")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

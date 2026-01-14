@@ -27,15 +27,39 @@ export const login = async (username: string, password: string) => {
     // Store master password in session for encryption key derivation
     storeMasterPasswordForSession(password);
     
-    // Retrieve or generate encryption salt for this user
-    // In a real app, this would be fetched from backend or stored with user profile
-    const existingSalt = localStorage.getItem(`encryption_salt_${username}`);
-    if (!existingSalt) {
-      const salt = generateSalt();
-      localStorage.setItem(`encryption_salt_${username}`, salt);
-      storeKeyData(salt);
-    } else {
-      storeKeyData(existingSalt);
+    // Fetch encryption salt from backend (stored in UserProfile)
+    try {
+      const profileResponse = await apiClient.get('/profile/');
+      const encryptionSalt = profileResponse.data.encryption_salt;
+      
+      if (encryptionSalt) {
+        // User has encryption salt stored on backend - use it
+        localStorage.setItem(`encryption_salt_${username}`, encryptionSalt);
+        storeKeyData(encryptionSalt);
+      } else {
+        // No salt on backend (old user or first login) - generate and save one
+        const salt = generateSalt();
+        localStorage.setItem(`encryption_salt_${username}`, salt);
+        storeKeyData(salt);
+        
+        // Save to backend for future logins
+        try {
+          await apiClient.put('/profile/update/', { encryption_salt: salt });
+        } catch (err) {
+          console.error('Failed to save encryption salt to backend:', err);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err);
+      // Fallback: use localStorage if backend fetch fails
+      const existingSalt = localStorage.getItem(`encryption_salt_${username}`);
+      if (existingSalt) {
+        storeKeyData(existingSalt);
+      } else {
+        const salt = generateSalt();
+        localStorage.setItem(`encryption_salt_${username}`, salt);
+        storeKeyData(salt);
+      }
     }
     
     return response.data;

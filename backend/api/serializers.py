@@ -35,7 +35,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'username', 'email', 'first_name', 'last_name',
             'phone_number', 'company_name', 'gender',
-            'profile_picture', 'created_at', 'updated_at'
+            'profile_picture', 'encryption_salt', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -43,12 +43,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=False)
     username = serializers.CharField(required=False, max_length=150)
+    encryption_salt = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = UserProfile
         fields = [
             'first_name', 'last_name', 'phone_number',
-            'company_name', 'gender', 'profile_picture', 'email', 'username'
+            'company_name', 'gender', 'profile_picture', 'email', 'username', 'encryption_salt'
         ]
 
     def validate_username(self, value):

@@ -604,7 +604,23 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             },
           }
         );
-        setProfiles(profiles.map(p => p.id === editingProfile.id ? response.data : p));
+        
+        // Decrypt the response data before updating state
+        try {
+          const decryptedFields = await decryptCredentialFields(response.data, encryptionKey);
+          const decryptedProfile = {
+            ...response.data,
+            username: decryptedFields.username || null,
+            password: decryptedFields.password || null,
+            email: decryptedFields.email || null,
+            notes: decryptedFields.notes || null,
+            recovery_codes: decryptedFields.recovery_codes || null,
+          };
+          setProfiles(profiles.map(p => p.id === editingProfile.id ? decryptedProfile : p));
+        } catch (error) {
+          console.error(`Failed to decrypt updated profile:`, error);
+          setProfiles(profiles.map(p => p.id === editingProfile.id ? response.data : p));
+        }
       } else {
         const response = await apiClient.post(
           `organizations/${organization.id}/profiles/`,
@@ -615,7 +631,23 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             },
           }
         );
-        setProfiles([...profiles, response.data]);
+        
+        // Decrypt the response data before adding to state
+        try {
+          const decryptedFields = await decryptCredentialFields(response.data, encryptionKey);
+          const decryptedProfile = {
+            ...response.data,
+            username: decryptedFields.username || null,
+            password: decryptedFields.password || null,
+            email: decryptedFields.email || null,
+            notes: decryptedFields.notes || null,
+            recovery_codes: decryptedFields.recovery_codes || null,
+          };
+          setProfiles([...profiles, decryptedProfile]);
+        } catch (error) {
+          console.error(`Failed to decrypt new profile:`, error);
+          setProfiles([...profiles, response.data]);
+        }
       }
 
       setShowModal(false);

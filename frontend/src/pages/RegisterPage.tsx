@@ -6,6 +6,7 @@ import { register, login, checkUsername } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 import { initializeUserEncryption, storeKeyData, storeMasterPasswordForSession } from '../services/encryptionService';
 import RecoveryKeyModal from '../components/RecoveryKeyModal';
+import apiClient from '../api/apiClient';
 
 // Icons
 const UserIcon = () => (
@@ -115,10 +116,17 @@ const RegisterPage: React.FC = () => {
             if (authToken) {
                 setToken(authToken);
                 
-                // Store encryption data
+                // Store encryption data in localStorage for this session
                 localStorage.setItem(`encryption_salt_${username}`, salt);
                 storeKeyData(salt, generatedRecoveryKey);
                 storeMasterPasswordForSession(password);
+                
+                // Save encryption salt to backend (UserProfile)
+                try {
+                    await apiClient.put('/profile/update/', { encryption_salt: salt });
+                } catch (err) {
+                    console.error('Failed to save encryption salt to backend:', err);
+                }
                 
                 // Show recovery key modal
                 setRecoveryKey(generatedRecoveryKey);
