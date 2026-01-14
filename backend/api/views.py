@@ -26,6 +26,7 @@ from .serializers import (
     ProfileSerializer,
     LoginRecordSerializer,
 )
+from .turnstile import verify_turnstile_token, get_client_ip
 
 
 class CheckUsernameView(APIView):
@@ -49,12 +50,23 @@ class CustomLoginView(APIView):
         
         username = request.data.get('username')
         password = request.data.get('password')
+        turnstile_token = request.data.get('turnstile_token')
         
         if not username or not password:
             return Response(
                 {"error": "Both username and password are required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        # Verify Turnstile token if provided
+        if turnstile_token:
+            remote_ip = get_client_ip(request)
+            result = verify_turnstile_token(turnstile_token, remote_ip)
+            if not result.get('success'):
+                return Response(
+                    {"error": "Verification failed. Please try again."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
         # Authenticate user
         user = authenticate(request, username=username, password=password)
@@ -92,6 +104,17 @@ class RequestPasswordResetOTPView(APIView):
         serializer = OTPRequestSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data["email"]
+            turnstile_token = serializer.validated_data.get("turnstile_token")
+            
+            # Verify Turnstile token if provided
+            if turnstile_token:
+                remote_ip = get_client_ip(request)
+                result = verify_turnstile_token(turnstile_token, remote_ip)
+                if not result.get('success'):
+                    return Response(
+                        {"error": "Verification failed. Please try again."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             
             # Check if user exists
             user = User.objects.filter(email__iexact=email).first()

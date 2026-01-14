@@ -10,16 +10,16 @@ const API_URL = process.env.REACT_APP_API_URL
   : 'http://localhost:8000/api/';
 
 // --- Authentication functions ---
-export const register = async (username: string, email: string, password1: string, password2: string) => {
+export const register = async (username: string, email: string, password1: string, password2: string, turnstileToken?: string) => {
   const response = await axios.post(`${API_URL}auth/registration/`, {
-    username, email, password1, password2,
+    username, email, password1, password2, turnstile_token: turnstileToken,
   });
   return response.data;
 };
 
-export const login = async (username: string, password: string) => {
+export const login = async (username: string, password: string, turnstileToken?: string) => {
   try {
-    const response = await apiClient.post('/auth/login/', { username, password });
+    const response = await apiClient.post('/auth/login/', { username, password, turnstile_token: turnstileToken });
     const token = response.data.key;
     
     localStorage.setItem('authToken', token);
@@ -106,8 +106,8 @@ export const checkUsername = async (username: string) => {
 };
 
 // --- Password reset functions ---
-export const requestPasswordResetOTP = async (email: string) => {
-  const response = await axios.post(`${API_URL}password-reset/request-otp/`, { email });
+export const requestPasswordResetOTP = async (email: string, turnstileToken?: string) => {
+  const response = await axios.post(`${API_URL}password-reset/request-otp/`, { email, turnstile_token: turnstileToken });
   return response.data;
 };
 

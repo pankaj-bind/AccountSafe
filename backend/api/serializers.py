@@ -4,15 +4,31 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from .models import UserProfile, Category, Organization, Profile, LoginRecord
+from .turnstile import verify_turnstile_token, get_client_ip
 
 
 class CustomRegisterSerializer(RegisterSerializer):
-    """Custom serializer for user registration"""
-    pass
+    """Custom serializer for user registration with Turnstile verification"""
+    turnstile_token = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    
+    def validate(self, data):
+        # Verify Turnstile token if provided
+        turnstile_token = data.pop('turnstile_token', None)
+        if turnstile_token:
+            request = self.context.get('request')
+            remote_ip = get_client_ip(request) if request else None
+            result = verify_turnstile_token(turnstile_token, remote_ip)
+            if not result.get('success'):
+                raise serializers.ValidationError({
+                    'turnstile_token': 'Verification failed. Please try again.'
+                })
+        
+        return super().validate(data)
 
 
 class OTPRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
+    turnstile_token = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
 
 class OTPVerifySerializer(serializers.Serializer):

@@ -1,12 +1,19 @@
 // src/pages/RegisterPage.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register, login, checkUsername } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 import { initializeUserEncryption, storeKeyData, storeMasterPasswordForSession } from '../services/encryptionService';
 import RecoveryKeyModal from '../components/RecoveryKeyModal';
 import apiClient from '../api/apiClient';
+
+// Cloudflare Turnstile
+declare global {
+    interface Window {
+        turnstile: any;
+    }
+}
 
 // Icons
 const UserIcon = () => (
@@ -54,8 +61,58 @@ const RegisterPage: React.FC = () => {
     const [showRecoveryModal, setShowRecoveryModal] = useState(false);
     const [recoveryKey, setRecoveryKey] = useState('');
 
+    // Turnstile
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const turnstileRef = useRef<HTMLDivElement>(null);
+
     const { setToken } = useAuth();
     const navigate = useNavigate();
+
+    // Load Cloudflare Turnstile script
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+
+        return () => {
+            document.head.removeChild(script);
+        };
+    }, []);
+
+    // Render Turnstile widget
+    useEffect(() => {
+        if (!turnstileRef.current) return;
+
+        const renderWidget = () => {
+            if (window.turnstile && turnstileRef.current) {
+                window.turnstile.render(turnstileRef.current, {
+                    sitekey: process.env.REACT_APP_TURNSTILE_SITE_KEY || '',
+                    callback: (token: string) => {
+                        setTurnstileToken(token);
+                    },
+                    'error-callback': () => {
+                        setTurnstileToken(null);
+                    },
+                    theme: 'dark',
+                });
+            }
+        };
+
+        if (window.turnstile) {
+            renderWidget();
+        } else {
+            const interval = setInterval(() => {
+                if (window.turnstile) {
+                    renderWidget();
+                    clearInterval(interval);
+                }
+            }, 100);
+
+            return () => clearInterval(interval);
+        }
+    }, []);
     
     useEffect(() => {
         if (!username) {
@@ -87,6 +144,11 @@ const RegisterPage: React.FC = () => {
         setError(null);
         setSuccess(null);
 
+        if (!turnstileToken) {
+            setError('Please complete the verification challenge.');
+            return;
+        }
+
         if (password !== password2) {
             setError('Passwords do not match');
             return;
@@ -106,7 +168,7 @@ const RegisterPage: React.FC = () => {
             const { salt, recoveryKey: generatedRecoveryKey } = await initializeUserEncryption();
             
             // Register account
-            await register(username, email, password, password2);
+            await register(username, email, password, password2, turnstileToken);
             setSuccess('Account created successfully!');
             
             // Store salt BEFORE auto-login so login function can use it
@@ -300,9 +362,14 @@ const RegisterPage: React.FC = () => {
                             )}
                         </div>
 
+                        {/* Cloudflare Turnstile */}
+                        <div className="flex justify-center py-2">
+                            <div ref={turnstileRef}></div>
+                        </div>
+
                         <button 
                             type="submit" 
-                            disabled={isLoading}
+                            disabled={isLoading || !turnstileToken}
                             className="w-full as-btn-primary py-3 mt-2 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (

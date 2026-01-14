@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { login } from '../services/authService';
 import { getPinStatus } from '../services/pinService';
 import { useAuth } from '../contexts/AuthContext';
 import PinSetupModal from '../components/PinSetupModal';
+
+// Cloudflare Turnstile
+declare global {
+    interface Window {
+        turnstile: any;
+    }
+}
 
 // Icons
 const UserIcon = () => (
@@ -30,17 +37,71 @@ const LoginPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [showPinSetup, setShowPinSetup] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const turnstileRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
     const { setToken } = useAuth();
     const location = useLocation();
     const message = location.state?.message;
 
+    // Load Cloudflare Turnstile script
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+
+        return () => {
+            document.head.removeChild(script);
+        };
+    }, []);
+
+    // Render Turnstile widget
+    useEffect(() => {
+        if (!turnstileRef.current) return;
+
+        const renderWidget = () => {
+            if (window.turnstile && turnstileRef.current) {
+                window.turnstile.render(turnstileRef.current, {
+                    sitekey: process.env.REACT_APP_TURNSTILE_SITE_KEY || '',
+                    callback: (token: string) => {
+                        setTurnstileToken(token);
+                    },
+                    'error-callback': () => {
+                        setTurnstileToken(null);
+                    },
+                    theme: 'dark',
+                });
+            }
+        };
+
+        if (window.turnstile) {
+            renderWidget();
+        } else {
+            const interval = setInterval(() => {
+                if (window.turnstile) {
+                    renderWidget();
+                    clearInterval(interval);
+                }
+            }, 100);
+
+            return () => clearInterval(interval);
+        }
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+
+        if (!turnstileToken) {
+            setError('Please complete the verification challenge.');
+            return;
+        }
+
         setIsLoading(true);
         try {
-            const data = await login(username, password);
+            const data = await login(username, password, turnstileToken);
             setToken(data.key);
             
             // Check if user has PIN set
@@ -145,9 +206,14 @@ const LoginPage: React.FC = () => {
                             </div>
                         </div>
 
+                        {/* Cloudflare Turnstile */}
+                        <div className="flex justify-center py-2">
+                            <div ref={turnstileRef}></div>
+                        </div>
+
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || !turnstileToken}
                             className="w-full as-btn-primary py-3 mt-2 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (

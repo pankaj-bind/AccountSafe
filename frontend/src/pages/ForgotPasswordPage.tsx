@@ -1,8 +1,15 @@
 // src/pages/ForgotPasswordPage.tsx
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { requestPasswordResetOTP, verifyPasswordResetOTP, setNewPasswordWithOTP } from '../services/authService';
+
+// Cloudflare Turnstile
+declare global {
+    interface Window {
+        turnstile: any;
+    }
+}
 
 // Icons
 const EmailIcon = () => (
@@ -67,6 +74,10 @@ const ForgotPasswordPage: React.FC = () => {
   const [resendCooldown, setResendCooldown] = useState<number>(0);
   const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
   
+  // Turnstile
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  
   const navigate = useNavigate();
 
   // Format time as MM:SS
@@ -117,13 +128,65 @@ const ForgotPasswordPage: React.FC = () => {
     setPasswordErrors(errors);
   }, [password, step]);
 
+  // Load Cloudflare Turnstile script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
+  // Render Turnstile widget
+  useEffect(() => {
+    if (!turnstileRef.current || step !== 'email') return;
+
+    const renderWidget = () => {
+      if (window.turnstile && turnstileRef.current) {
+        window.turnstile.render(turnstileRef.current, {
+          sitekey: process.env.REACT_APP_TURNSTILE_SITE_KEY || '',
+          callback: (token: string) => {
+            setTurnstileToken(token);
+          },
+          'error-callback': () => {
+            setTurnstileToken(null);
+          },
+          theme: 'dark',
+        });
+      }
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      const interval = setInterval(() => {
+        if (window.turnstile) {
+          renderWidget();
+          clearInterval(interval);
+        }
+      }, 100);
+
+      return () => clearInterval(interval);
+    }
+  }, [step]);
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setMessage(null);
+
+    if (!turnstileToken) {
+      setError('Please complete the verification challenge.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const response = await requestPasswordResetOTP(email);
+      const response = await requestPasswordResetOTP(email, turnstileToken);
       setMessage('A verification code has been sent to your email.');
       setOtpExpiryTime(response.expires_in || 300);
       setResendCooldown(60); // 60 second cooldown for resend
@@ -365,7 +428,13 @@ const ForgotPasswordPage: React.FC = () => {
                   />
                 </div>
               </div>
-              <button type="submit" disabled={isLoading} className="w-full as-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50">
+              
+              {/* Cloudflare Turnstile */}
+              <div className="flex justify-center py-2">
+                <div ref={turnstileRef}></div>
+              </div>
+
+              <button type="submit" disabled={isLoading || !turnstileToken} className="w-full as-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50">
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
