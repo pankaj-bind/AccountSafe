@@ -269,14 +269,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   return (
     <div className="as-card p-0 overflow-hidden group hover:border-zinc-400 dark:hover:border-zinc-700 transition-all">
       {/* Card Header */}
-      <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
             <div className="p-2 bg-blue-500/10 rounded-lg flex-shrink-0">
-              <KeyIcon className="w-5 h-5 text-blue-400" />
+              <KeyIcon className="w-4 h-4 text-blue-400" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-zinc-900 dark:text-white truncate">
+              <h3 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-white truncate">
                 {profile.title || 'Untitled Profile'}
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
@@ -313,7 +313,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       </div>
       
       {/* Card Body */}
-      <div className="p-5 space-y-4">
+      <div className="p-4 space-y-3">
         {/* Credentials */}
         {hasCredentials && (
           <div className="space-y-3">
@@ -780,25 +780,26 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         onCancel={handlePasswordReentryCancel}
       />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {/* Back Button & Header */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
-        <div className="mb-8">
-          <button
-            onClick={onBack}
-            className="mb-6 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors group"
-          >
-            <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Back to Vault</span>
-          </button>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
-            <div className="flex items-center gap-3 sm:gap-4">
+        <button
+          onClick={onBack}
+          className="mb-3 sm:mb-4 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors group"
+        >
+          <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-medium text-sm sm:text-base">Back to Vault</span>
+        </button>
+        
+        <div className="flex flex-col gap-4">
+          {/* Organization Header - Logo and Title with Button */}
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               {/* Organization Logo */}
               {orgData.logo_url ? (
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
                   <img
                     src={orgData.logo_url}
                     alt={orgData.name}
@@ -806,15 +807,15 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   />
                 </div>
               ) : (
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                  <span className="text-white font-bold text-xl sm:text-2xl">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                  <span className="text-white font-bold text-lg sm:text-2xl">
                     {orgData.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
                   </span>
                 </div>
               )}
               
               <div className="min-w-0 flex-1">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white truncate">
+                <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white truncate">
                   {orgData.name || 'Loading...'}
                 </h1>
                 <div className="flex items-center gap-3 mt-1">
@@ -828,10 +829,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             {/* Add Profile Button */}
             <button
               onClick={() => { setShowModal(true); setError(null); }}
-              className="as-btn-primary flex items-center justify-center gap-2 group w-full sm:w-auto flex-shrink-0"
+              className="as-btn-primary flex items-center justify-center gap-2 group flex-shrink-0"
+              title="Add Credential"
             >
               <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" />
-              <span>Add Credential</span>
+              <span className="hidden sm:inline">Add Credential</span>
             </button>
           </div>
         </div>
