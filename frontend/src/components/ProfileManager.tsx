@@ -269,9 +269,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   return (
     <div className="as-card p-0 overflow-hidden group hover:border-zinc-400 dark:hover:border-zinc-700 transition-all">
       {/* Card Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
+      <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="p-2 bg-blue-500/10 rounded-lg flex-shrink-0">
               <KeyIcon className="w-4 h-4 text-blue-400" />
             </div>
@@ -787,55 +787,50 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         <button
           onClick={onBack}
-          className="mb-3 sm:mb-4 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors group"
+          className="mb-4 sm:mb-6 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors group"
         >
           <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium text-sm sm:text-base">Back to Vault</span>
         </button>
         
-        <div className="flex flex-col gap-4">
-          {/* Organization Header - Logo and Title with Button */}
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-              {/* Organization Logo */}
-              {orgData.logo_url ? (
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
-                  <img
-                    src={orgData.logo_url}
-                    alt={orgData.name}
-                    className="w-full h-full object-contain p-2 bg-white dark:bg-transparent"
-                  />
-                </div>
-              ) : (
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                  <span className="text-white font-bold text-lg sm:text-2xl">
-                    {orgData.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
-                  </span>
-                </div>
-              )}
-              
-              <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white truncate">
-                  {orgData.name || 'Loading...'}
-                </h1>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-zinc-400 text-xs sm:text-sm">
-                    {profiles.length} {profiles.length === 1 ? 'credential' : 'credentials'}
-                  </span>
-                </div>
+        {/* Organization Header - Logo and Title with Button */}
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            {/* Organization Logo */}
+            {orgData.logo_url ? (
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
+                <img
+                  src={orgData.logo_url}
+                  alt={orgData.name}
+                  className="w-full h-full object-contain p-2 bg-white dark:bg-transparent"
+                />
               </div>
-            </div>
+            ) : (
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                <span className="text-white font-bold text-xl sm:text-2xl">
+                  {orgData.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
+                </span>
+              </div>
+            )}
             
-            {/* Add Profile Button */}
-            <button
-              onClick={() => { setShowModal(true); setError(null); }}
-              className="as-btn-primary flex items-center justify-center gap-2 group flex-shrink-0"
-              title="Add Credential"
-            >
-              <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" />
-              <span className="hidden sm:inline">Add Credential</span>
-            </button>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white truncate">
+                {orgData.name || 'Loading...'}
+              </h1>
+              <span className="text-zinc-400 text-xs sm:text-sm">
+                {profiles.length} {profiles.length === 1 ? 'credential' : 'credentials'}
+              </span>
+            </div>
           </div>
+          
+          {/* Add Profile Button */}
+          <button
+            onClick={() => { setShowModal(true); setError(null); }}
+            className="as-btn-primary p-3 rounded-xl flex items-center justify-center group flex-shrink-0"
+            title="Add Credential"
+          >
+            <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" />
+          </button>
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
@@ -896,8 +891,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {/* Profiles Grid */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {!loading && profiles.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-            {profiles.map((profile) => (
+          <div className="space-y-4 md:grid md:grid-cols-2 md:gap-6 md:space-y-0 xl:grid-cols-3">{profiles.map((profile) => (
               <ProfileCard
                 key={profile.id}
                 profile={profile}
