@@ -794,11 +794,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             <span className="font-medium">Back to Vault</span>
           </button>
           
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 sm:gap-4">
               {/* Organization Logo */}
               {orgData.logo_url ? (
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
                   <img
                     src={orgData.logo_url}
                     alt={orgData.name}
@@ -806,19 +806,19 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   />
                 </div>
               ) : (
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                  <span className="text-white font-bold text-2xl">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                  <span className="text-white font-bold text-xl sm:text-2xl">
                     {orgData.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
                   </span>
                 </div>
               )}
               
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white truncate">
                   {orgData.name || 'Loading...'}
                 </h1>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-zinc-400 text-sm">
+                  <span className="text-zinc-400 text-xs sm:text-sm">
                     {profiles.length} {profiles.length === 1 ? 'credential' : 'credentials'}
                   </span>
                 </div>
@@ -828,7 +828,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             {/* Add Profile Button */}
             <button
               onClick={() => { setShowModal(true); setError(null); }}
-              className="as-btn-primary flex items-center justify-center gap-2 group"
+              className="as-btn-primary flex items-center justify-center gap-2 group w-full sm:w-auto flex-shrink-0"
             >
               <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" />
               <span>Add Credential</span>
@@ -894,7 +894,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {/* Profiles Grid */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {!loading && profiles.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             {profiles.map((profile) => (
               <ProfileCard
                 key={profile.id}

@@ -45,15 +45,31 @@ class SetNewPasswordSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.CharField(source='user.email', read_only=True)
+    profile_picture_url = serializers.SerializerMethodField()
+    display_name = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
         fields = [
-            'username', 'email', 'first_name', 'last_name',
+            'id', 'username', 'email', 'first_name', 'last_name',
             'phone_number', 'company_name', 'gender',
-            'profile_picture', 'encryption_salt', 'created_at', 'updated_at'
+            'profile_picture', 'profile_picture_url', 'display_name',
+            'encryption_salt', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_profile_picture_url(self, obj):
+        """Return the full URL of the profile picture if it exists"""
+        if obj.profile_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_picture.url)
+            return obj.profile_picture.url
+        return None
+
+    def get_display_name(self, obj):
+        """Return the display name (full name or username)"""
+        return obj.display_name
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):

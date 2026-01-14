@@ -517,7 +517,7 @@ def get_user_profile(request):
     """Get the profile of the authenticated user"""
     try:
         profile = request.user.userprofile
-        serializer = UserProfileSerializer(profile)
+        serializer = UserProfileSerializer(profile, context={'request': request})
         return Response(serializer.data)
     except UserProfile.DoesNotExist:
         return Response(
@@ -542,8 +542,8 @@ def update_user_profile(request):
         # Refresh the profile from database to get updated data
         profile.refresh_from_db()
         profile.user.refresh_from_db()
-        # Return full profile data
-        response_serializer = UserProfileSerializer(profile)
+        # Return full profile data with request context for proper URL construction
+        response_serializer = UserProfileSerializer(profile, context={'request': request})
         return Response(response_serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
