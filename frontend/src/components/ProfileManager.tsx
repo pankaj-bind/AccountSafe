@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import zxcvbn from 'zxcvbn';
 import apiClient from '../api/apiClient';
 import { generatePassword, getPasswordStrength } from '../utils/passwordGenerator';
 import { maskSensitiveData } from '../utils/formatters';
 import { encryptCredentialFields, decryptCredentialFields } from '../utils/encryption';
 import { getSessionEncryptionKey } from '../services/encryptionService';
+import { checkPasswordBreach, updatePasswordStrength, updateBreachStatus, updatePasswordHash } from '../services/securityService';
 import PasswordReentryModal from './PasswordReentryModal';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -545,6 +547,33 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     }
   };
 
+  // Helper function to check password security metrics
+  const checkPasswordSecurity = async (profileId: number, password: string) => {
+    if (!password) return;
+
+    try {
+      // 1. Calculate password strength using zxcvbn (0-4 scale)
+      const strengthResult = zxcvbn(password);
+      await updatePasswordStrength(profileId, strengthResult.score);
+
+      // 2. Check if password has been breached using HIBP
+      const breachResult = await checkPasswordBreach(password);
+      await updateBreachStatus(profileId, breachResult.isBreached, breachResult.breachCount);
+
+      // 3. Update password hash for uniqueness checking
+      await updatePasswordHash(profileId, password);
+
+      console.log(`Security metrics updated for profile ${profileId}:`, {
+        strength: strengthResult.score,
+        breached: breachResult.isBreached,
+        breachCount: breachResult.breachCount
+      });
+    } catch (error) {
+      console.error('Failed to update security metrics:', error);
+      // Don't fail the profile creation/update if security check fails
+    }
+  };
+
   const handleCreateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -620,6 +649,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             recovery_codes: decryptedFields.recovery_codes || null,
           };
           setProfiles(profiles.map(p => p.id === editingProfile.id ? decryptedProfile : p));
+          
+          // Check password security metrics (strength + breach check)
+          if (newProfile.password) {
+            await checkPasswordSecurity(response.data.id, newProfile.password);
+          }
         } catch (error) {
           console.error(`Failed to decrypt updated profile:`, error);
           setProfiles(profiles.map(p => p.id === editingProfile.id ? response.data : p));
@@ -647,6 +681,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             recovery_codes: decryptedFields.recovery_codes || null,
           };
           setProfiles([...profiles, decryptedProfile]);
+          
+          // Check password security metrics (strength + breach check)
+          if (newProfile.password) {
+            await checkPasswordSecurity(response.data.id, newProfile.password);
+          }
         } catch (error) {
           console.error(`Failed to decrypt new profile:`, error);
           setProfiles([...profiles, response.data]);

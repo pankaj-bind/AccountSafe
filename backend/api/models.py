@@ -226,6 +226,7 @@ class Profile(models.Model):
     is_breached = models.BooleanField(default=False, help_text="Whether this password has been found in known data breaches")
     last_breach_check_date = models.DateTimeField(null=True, blank=True, help_text="Last time this password was checked against HIBP")
     password_strength = models.IntegerField(default=0, help_text="zxcvbn strength score (0-4)")
+    password_hash = models.CharField(max_length=64, blank=True, null=True, help_text="SHA-256 hash of password for uniqueness checking (not for authentication)")
     last_password_update = models.DateTimeField(null=True, blank=True, help_text="Last time the password was changed")
     
     created_at = models.DateTimeField(auto_now_add=True)

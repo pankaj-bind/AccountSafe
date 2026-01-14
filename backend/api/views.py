@@ -1407,6 +1407,48 @@ class UpdateBreachStatusView(APIView):
             )
 
 
+class UpdatePasswordHashView(APIView):
+    """
+    Update the password hash for a specific profile (for uniqueness checking).
+    Called from frontend after creating/updating a password.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, profile_id):
+        from .health_score import update_password_hash
+        
+        password_hash = request.data.get('password_hash')
+        
+        if not password_hash:
+            return Response(
+                {'error': 'password_hash is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Verify user owns this profile
+        try:
+            profile = Profile.objects.get(id=profile_id)
+            if profile.organization.category.user != request.user:
+                return Response(
+                    {'error': 'Permission denied'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except Profile.DoesNotExist:
+            return Response(
+                {'error': 'Profile not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        success = update_password_hash(profile_id, password_hash)
+        if success:
+            return Response({'message': 'Password hash updated successfully'})
+        else:
+            return Response(
+                {'error': 'Failed to update password hash'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class BatchUpdateSecurityMetricsView(APIView):
     """
     Batch update security metrics (strength and breach status) for multiple profiles.

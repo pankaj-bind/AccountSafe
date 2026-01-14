@@ -30,6 +30,7 @@ from api.views import (
     SecurityHealthScoreView,
     UpdatePasswordStrengthView,
     UpdateBreachStatusView,
+    UpdatePasswordHashView,
     BatchUpdateSecurityMetricsView,
 )
 
@@ -76,6 +77,7 @@ urlpatterns = [
     path('api/security/health-score/', SecurityHealthScoreView.as_view(), name='security-health-score'),
     path('api/security/profiles/<int:profile_id>/strength/', UpdatePasswordStrengthView.as_view(), name='update-password-strength'),
     path('api/security/profiles/<int:profile_id>/breach/', UpdateBreachStatusView.as_view(), name='update-breach-status'),
+    path('api/security/profiles/<int:profile_id>/hash/', UpdatePasswordHashView.as_view(), name='update-password-hash'),
     path('api/security/batch-update/', BatchUpdateSecurityMetricsView.as_view(), name='batch-update-security-metrics'),
 
     # dj-rest-auth endpoints (logout, user details, registration)

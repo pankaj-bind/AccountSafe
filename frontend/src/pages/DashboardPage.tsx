@@ -388,7 +388,6 @@ const DashboardPage: React.FC = () => {
           <div className="as-card overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
             <div className="px-4 sm:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
               <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
-                <ShieldCheckIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                 Security Health Score
               </h2>
               <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500 mt-1">

@@ -51,12 +51,20 @@ def calculate_health_score(user: User) -> Dict:
     strength_score = (avg_strength / 4) * 100  # Normalize 0-4 to 0-100
     
     # 2. Uniqueness Score (30%): Percentage of unique passwords
-    # Count profiles with unique encrypted passwords
-    password_counts = profiles.values('password_encrypted').annotate(
-        count=Count('id')
-    )
-    unique_passwords = sum(1 for pc in password_counts if pc['count'] == 1)
-    uniqueness_score = (unique_passwords / total_count) * 100 if total_count > 0 else 100
+    # Since passwords are encrypted, we use password_hash (SHA-256) for uniqueness checking
+    # Only consider profiles that have a password_hash set
+    profiles_with_hash = profiles.exclude(password_hash__isnull=True).exclude(password_hash='')
+    hash_count = profiles_with_hash.count()
+    
+    if hash_count > 0:
+        password_counts = profiles_with_hash.values('password_hash').annotate(
+            count=Count('id')
+        )
+        unique_passwords = sum(1 for pc in password_counts if pc['count'] == 1)
+        uniqueness_score = (unique_passwords / hash_count) * 100
+    else:
+        # If no hashes available, assume all unique
+        uniqueness_score = 100
     
     # 3. Integrity Score (20%): Percentage NOT breached
     safe_count = profiles.filter(is_breached=False).count()
@@ -80,7 +88,11 @@ def calculate_health_score(user: User) -> Dict:
     
     # Calculate breakdown counts for UI
     weak_passwords = profiles.filter(password_strength__lte=2).count()
-    reused_passwords = total_count - unique_passwords
+    # Calculate reused passwords based on password_hash
+    if hash_count > 0:
+        reused_passwords = hash_count - unique_passwords
+    else:
+        reused_passwords = 0
     breached_passwords = profiles.filter(is_breached=True).count()
     outdated_passwords = profiles.filter(
         last_password_update__lt=one_year_ago,
@@ -228,6 +240,26 @@ def update_breach_status(profile_id: int, is_breached: bool, breach_count: int =
         profile.is_breached = is_breached
         profile.last_breach_check_date = timezone.now()
         profile.save(update_fields=['is_breached', 'last_breach_check_date'])
+        return True
+    except Profile.DoesNotExist:
+        return False
+
+
+def update_password_hash(profile_id: int, password_hash: str):
+    """
+    Update the password hash for a profile (for uniqueness checking).
+    
+    This should be called from the frontend after calculating SHA-256 hash client-side.
+    The hash is used to detect duplicate passwords without storing plaintext.
+    
+    Args:
+        profile_id: The ID of the Profile to update
+        password_hash: SHA-256 hash of the plaintext password (hex string)
+    """
+    try:
+        profile = Profile.objects.get(id=profile_id)
+        profile.password_hash = password_hash
+        profile.save(update_fields=['password_hash'])
         return True
     except Profile.DoesNotExist:
         return False

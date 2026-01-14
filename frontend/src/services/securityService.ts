@@ -67,6 +67,24 @@ export const updateBreachStatus = async (
 };
 
 /**
+ * Update password hash for uniqueness checking
+ */
+export const updatePasswordHash = async (
+  profileId: number,
+  password: string
+): Promise<void> => {
+  // Calculate SHA-256 hash of password
+  const msgBuffer = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  await apiClient.post(`/security/profiles/${profileId}/hash/`, {
+    password_hash: hashHex
+  });
+};
+
+/**
  * Batch update security metrics for multiple profiles
  * More efficient than individual updates
  */
