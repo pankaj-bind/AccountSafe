@@ -122,7 +122,7 @@ const Navbar: React.FC = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
             {/* Nav Links */}
-            <div className="flex items-center bg-zinc-100 dark:bg-zinc-900/50 rounded-lg p-1 mr-4">
+            <div className="flex items-center bg-zinc-100 dark:bg-zinc-900/50 rounded-lg p-1 mr-4 space-x-1">
               <Link 
                 to="/" 
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
