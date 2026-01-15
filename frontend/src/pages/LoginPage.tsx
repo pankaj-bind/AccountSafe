@@ -71,7 +71,7 @@ const LoginPage: React.FC = () => {
                     'error-callback': () => {
                         setTurnstileToken(null);
                     },
-                    theme: 'dark',
+                    theme: 'light',
                     size: 'normal',
                 });
             }
