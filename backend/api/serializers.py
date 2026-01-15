@@ -184,6 +184,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             'notes_encrypted', 'notes_iv',
             'recovery_codes_encrypted', 'recovery_codes_iv',
             'document', 'document_url',
+            'is_breached', 'last_breach_check_date', 'password_strength', 
+            'password_hash', 'last_password_update',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['organization', 'created_at', 'updated_at']

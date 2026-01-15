@@ -34,6 +34,14 @@ from api.views import (
     BatchUpdateSecurityMetricsView,
 )
 
+# Shared secret views
+from api.shared_secret_views import (
+    create_shared_secret,
+    view_shared_secret,
+    list_user_shared_secrets,
+    revoke_shared_secret,
+)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/check-username/', CheckUsernameView.as_view(), name='check-username'),
@@ -79,6 +87,12 @@ urlpatterns = [
     path('api/security/profiles/<int:profile_id>/breach/', UpdateBreachStatusView.as_view(), name='update-breach-status'),
     path('api/security/profiles/<int:profile_id>/hash/', UpdatePasswordHashView.as_view(), name='update-password-hash'),
     path('api/security/batch-update/', BatchUpdateSecurityMetricsView.as_view(), name='batch-update-security-metrics'),
+
+    # Shared Secret endpoints (Secure Link Sharing)
+    path('api/shared-secrets/create/', create_shared_secret, name='create-shared-secret'),
+    path('api/shared-secrets/<uuid:share_id>/', view_shared_secret, name='view-shared-secret'),
+    path('api/shared-secrets/', list_user_shared_secrets, name='list-shared-secrets'),
+    path('api/shared-secrets/<uuid:share_id>/revoke/', revoke_shared_secret, name='revoke-shared-secret'),
 
     # dj-rest-auth endpoints (logout, user details, registration)
     # Note: login is handled by CustomLoginView above

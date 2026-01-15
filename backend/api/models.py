@@ -1,6 +1,7 @@
 # api/models.py
 
 import random
+import uuid
 from datetime import timedelta
 
 from django.conf import settings
@@ -268,3 +269,34 @@ class LoginRecord(models.Model):
         verbose_name = "Login Record"
         verbose_name_plural = "Login Records"
         ordering = ['-timestamp']
+
+
+# --- Model for Secure Link Sharing (Burn-on-Read) ---
+class SharedSecret(models.Model):
+    """
+    Stores encrypted credential data for one-time secure sharing.
+    Implements burn-on-read: automatically deleted after first view.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name='shared_secrets')
+    encrypted_blob = models.TextField()  # Fernet-encrypted JSON of credential data
+    salt = models.CharField(max_length=64)  # Unique salt for this secret (hex-encoded)
+    expires_at = models.DateTimeField()  # Expiry time (default: 24 hours)
+    view_count = models.IntegerField(default=0)  # Track views (should only be 0 or 1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"SharedSecret {self.id} - expires {self.expires_at}"
+    
+    def is_expired(self):
+        """Check if the secret has expired"""
+        return timezone.now() >= self.expires_at
+    
+    class Meta:
+        verbose_name = "Shared Secret"
+        verbose_name_plural = "Shared Secrets"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['expires_at']),
+            models.Index(fields=['profile', 'created_at']),
+        ]

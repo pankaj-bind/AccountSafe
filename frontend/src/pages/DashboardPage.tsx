@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useProfile } from '../contexts/ProfileContext';
 import apiClient from '../api/apiClient';
@@ -82,12 +81,6 @@ const GlobeIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
-const ArrowRightIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-  </svg>
-);
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // Security Score Ring Component
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -152,18 +145,6 @@ const SecurityScoreRing: React.FC<SecurityScoreProps> = ({ score, size = 140 }) 
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Stat Card Component
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface StatCardProps {
-  icon: React.ReactNode;
-  value: number | string;
-  label: string;
-  trend?: { value: number; positive: boolean };
-  color: 'blue' | 'green' | 'purple' | 'orange';
-  href?: string;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // Login Record Row Component
 // ═══════════════════════════════════════════════════════════════════════════════

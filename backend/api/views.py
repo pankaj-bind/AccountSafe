@@ -748,10 +748,17 @@ class ProfileListCreateView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        # Debug: Print incoming data
+        print("Incoming request data:", request.data)
+        print("Request FILES:", request.FILES)
+        
         serializer = ProfileSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(organization=organization)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        # Debug: Print validation errors
+        print("Validation errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
