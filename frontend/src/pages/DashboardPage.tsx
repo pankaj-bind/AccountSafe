@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useProfile } from '../contexts/ProfileContext';
@@ -55,18 +55,6 @@ interface LoginRecord {
 const ShieldCheckIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-  </svg>
-);
-
-const BuildingIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
-  </svg>
-);
-
-const KeyIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
   </svg>
 );
 
@@ -175,45 +163,6 @@ interface StatCardProps {
   color: 'blue' | 'green' | 'purple' | 'orange';
   href?: string;
 }
-
-const StatCard: React.FC<StatCardProps> = ({ icon, value, label, color, href }) => {
-  const colorClasses = {
-    blue: 'from-blue-50 to-blue-50/50 dark:from-blue-500/10 dark:to-blue-500/5 border-blue-200 dark:border-blue-500/20',
-    green: 'from-green-50 to-green-50/50 dark:from-green-500/10 dark:to-green-500/5 border-green-200 dark:border-green-500/20',
-    purple: 'from-purple-50 to-purple-50/50 dark:from-purple-500/10 dark:to-purple-500/5 border-purple-200 dark:border-purple-500/20',
-    orange: 'from-orange-50 to-orange-50/50 dark:from-orange-500/10 dark:to-orange-500/5 border-orange-200 dark:border-orange-500/20',
-  };
-
-  const iconColorClasses = {
-    blue: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/15',
-    green: 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-500/15',
-    purple: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/15',
-    orange: 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-500/15',
-  };
-
-  const content = (
-    <div className={`relative group overflow-hidden rounded-xl border bg-gradient-to-br ${colorClasses[color]} p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}>
-      <div className="relative">
-        <div className="flex items-start justify-between mb-3 sm:mb-4">
-          <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center ${iconColorClasses[color]}`}>
-            {icon}
-          </div>
-          {href && (
-            <ArrowRightIcon className="w-4 h-4 text-zinc-400 dark:text-zinc-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
-          )}
-        </div>
-        <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white mb-1">{value}</p>
-        <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">{label}</p>
-      </div>
-    </div>
-  );
-
-  if (href) {
-    return <Link to={href}>{content}</Link>;
-  }
-
-  return content;
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Login Record Row Component
@@ -360,7 +309,6 @@ const DashboardPage: React.FC = () => {
   };
 
   const displayRecords = showAllRecords ? allRecords : (stats?.recent_logins || []);
-  const failedLoginCount = stats?.recent_logins?.filter(l => l.status === 'failed').length || 0;
 
   // Loading state - use skeleton loader for MAANG-grade UX
   if (loading) {

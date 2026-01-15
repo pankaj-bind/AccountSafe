@@ -4,9 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register, login, checkUsername } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
-import { initializeUserEncryption, storeKeyData, storeMasterPasswordForSession } from '../services/encryptionService';
+import { initializeUserEncryption, storeKeyData } from '../services/encryptionService';
 import RecoveryKeyModal from '../components/RecoveryKeyModal';
-import apiClient from '../api/apiClient';
 
 // Cloudflare Turnstile
 declare global {

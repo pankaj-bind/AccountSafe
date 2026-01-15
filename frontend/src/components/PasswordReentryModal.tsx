@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { storeMasterPasswordForSession, storeKeyData } from '../services/encryptionService';
-import { deriveKeyFromPassword } from '../utils/encryption';
 import apiClient from '../api/apiClient';
 
 interface PasswordReentryModalProps {

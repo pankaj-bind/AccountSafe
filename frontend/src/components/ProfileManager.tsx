@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import zxcvbn from 'zxcvbn';
+import QRCode from 'qrcode';
 import apiClient from '../api/apiClient';
 import { generatePassword, getPasswordStrength } from '../utils/passwordGenerator';
 import { maskSensitiveData } from '../utils/formatters';
@@ -104,15 +105,21 @@ const ClockIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
-const RefreshIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-  </svg>
-);
-
 const SparklesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+  </svg>
+);
+
+const QRCodeIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+  </svg>
+);
+
+const ShareIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
   </svg>
 );
 
@@ -130,6 +137,7 @@ interface Organization {
 interface Profile {
   id: number;
   title: string;
+  organization: number;
   username: string | null;
   password?: string;
   email: string | null;
@@ -138,6 +146,23 @@ interface Profile {
   document_url: string | null;
   notes: string | null;
   created_at: string;
+  // Encrypted field pairs
+  username_encrypted?: string | null;
+  username_iv?: string | null;
+  password_encrypted?: string | null;
+  password_iv?: string | null;
+  email_encrypted?: string | null;
+  email_iv?: string | null;
+  notes_encrypted?: string | null;
+  notes_iv?: string | null;
+  recovery_codes_encrypted?: string | null;
+  recovery_codes_iv?: string | null;
+  // Security tracking
+  is_breached?: boolean;
+  last_breach_check_date?: string | null;
+  password_strength?: number | null;
+  password_hash?: string | null;
+  last_password_update?: string | null;
 }
 
 interface ProfileManagerProps {
@@ -195,11 +220,7 @@ const CredentialField: React.FC<CredentialFieldProps> = ({
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-zinc-400 dark:text-zinc-500">{icon}</span>
         <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{label}</span>
-        {isSensitive && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            Sensitive
-          </span>
-        )}
+        {/* Sensitive badge removed per design */}
       </div>
       <div className="flex items-center gap-2">
         <div className={`flex-1 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[42px] ${mono ? 'font-mono' : ''}`}>
@@ -243,13 +264,20 @@ interface ProfileCardProps {
   profile: Profile;
   recoveryCodes: string[];
   showPassword: boolean;
+  showUsername: boolean;
+  showEmail: boolean;
   expandedNotes: boolean;
+  isExpanded: boolean;
   copiedField: string | null;
   onEdit: () => void;
   onDelete: () => void;
+  onShare: () => void;
   onCopy: (text: string, field: string) => void;
   onTogglePassword: () => void;
+  onToggleUsername: () => void;
+  onToggleEmail: () => void;
   onToggleNotes: () => void;
+  onToggleExpand: () => void;
   onCopyRecoveryCode: (code: string, index: number) => void;
 }
 
@@ -257,16 +285,24 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   profile,
   recoveryCodes,
   showPassword,
+  showUsername,
+  showEmail,
   expandedNotes,
+  isExpanded,
   copiedField,
   onEdit,
   onDelete,
+  onShare,
   onCopy,
   onTogglePassword,
+  onToggleUsername,
+  onToggleEmail,
   onToggleNotes,
+  onToggleExpand,
   onCopyRecoveryCode
 }) => {
   const hasCredentials = profile.username || profile.password || profile.email;
+  const hasSecondaryFields = profile.email || profile.notes || profile.document_url || (recoveryCodes && recoveryCodes.length > 0);
   
   return (
     <div className="as-card p-0 overflow-hidden group hover:border-zinc-400 dark:hover:border-zinc-700 transition-all">
@@ -297,6 +333,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           {/* Actions */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
+              onClick={onShare}
+              className="p-2 text-zinc-400 dark:text-zinc-400 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
+              title="Share securely"
+            >
+              <ShareIcon />
+            </button>
+            <button
               onClick={onEdit}
               className="p-2 text-zinc-400 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
               title="Edit"
@@ -315,8 +358,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       </div>
       
       {/* Card Body */}
-      <div className="p-0 sm:p-4 space-y-3">
-        {/* Credentials */}
+      <div className="p-4 space-y-3">
+        {/* Primary Credentials - Always Visible */}
         {hasCredentials && (
           <div className="space-y-3">
             {profile.username && (
@@ -326,6 +369,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 icon={<UserIcon className="w-4 h-4" />}
                 isCopied={copiedField === `username-${profile.id}`}
                 onCopy={() => onCopy(profile.username!, `username-${profile.id}`)}
+                isSensitive
+                showSensitive={showUsername}
+                onToggleSensitive={onToggleUsername}
               />
             )}
             
@@ -342,7 +388,18 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 mono
               />
             )}
-            
+          </div>
+        )}
+
+        {/* Expanded Section - Email, Notes, Documents, Recovery Codes */}
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-3 pt-2 border-t border-zinc-200 dark:border-zinc-800"
+          >
             {profile.email && (
               <CredentialField
                 label="Email"
@@ -350,88 +407,98 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 icon={<MailIcon className="w-4 h-4" />}
                 isCopied={copiedField === `email-${profile.id}`}
                 onCopy={() => onCopy(profile.email!, `email-${profile.id}`)}
+                isSensitive
+                showSensitive={showEmail}
+                onToggleSensitive={onToggleEmail}
               />
             )}
-          </div>
-        )}
-        
-        {/* Recovery Codes */}
-        {recoveryCodes && recoveryCodes.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-zinc-400 dark:text-zinc-500"><ShieldIcon className="w-4 h-4" /></span>
-              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Recovery Codes
-              </span>
-              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded">
-                {recoveryCodes.length} left
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {recoveryCodes.map((code, index) => (
-                <button
-                  key={index}
-                  onClick={() => onCopyRecoveryCode(code, index)}
-                  className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
-                    copiedField === `recovery-${profile.id}-${index}`
-                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                      : 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30'
-                  }`}
-                  title="Click to copy & remove"
+            
+            {/* Recovery Codes */}
+            {recoveryCodes && recoveryCodes.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-zinc-400 dark:text-zinc-500"><ShieldIcon className="w-4 h-4" /></span>
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Recovery Codes
+                  </span>
+                  <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded">
+                    {recoveryCodes.length} left
+                  </span>
+                  {/* Sensitive badge removed */}
+                </div>
+                <div className="relative">
+                  <div className="flex flex-wrap gap-2">
+                    {recoveryCodes.map((code, index) => (
+                      <button
+                        key={index}
+                        onClick={() => onCopyRecoveryCode(code, index)}
+                        className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
+                          copiedField === `recovery-${profile.id}-${index}`
+                            ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                            : 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30'
+                        } filter blur-sm hover:blur-none`}
+                        title="Click to copy & remove"
+                      >
+                        {code}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Blurred overlay retained for subtle background effect (non-blocking) */}
+                  <div className="absolute inset-0 backdrop-blur-[2px] bg-zinc-100/50 dark:bg-zinc-900/50 rounded-lg pointer-events-none" />
+                </div>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-2">
+                  Click a code to copy it. Codes are removed after copying.
+                </p>
+              </div>
+            )}
+            
+            {/* Document */}
+            {profile.document_url && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-zinc-400 dark:text-zinc-500"><DocumentIcon className="w-4 h-4" /></span>
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Document</span>
+                </div>
+                <a
+                  href={profile.document_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
                 >
-                  {code}
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-2">
-              Click a code to copy it. Codes are removed after copying.
-            </p>
-          </div>
-        )}
-        
-        {/* Document */}
-        {profile.document_url && (
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-zinc-400 dark:text-zinc-500"><DocumentIcon className="w-4 h-4" /></span>
-              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Document</span>
-            </div>
-            <a
-              href={profile.document_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
-            >
-              <DocumentIcon className="w-4 h-4" />
-              <span>View Document</span>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
-          </div>
-        )}
-        
-        {/* Notes */}
-        {profile.notes && (
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-zinc-400 dark:text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
-              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Notes</span>
-            </div>
-            <div className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-3">
-              <p className={`text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
-                {profile.notes}
-              </p>
-              {profile.notes.length > 150 && (
-                <button
-                  onClick={onToggleNotes}
-                  className="text-xs text-blue-400 hover:text-blue-300 mt-2 font-medium"
-                >
-                  {expandedNotes ? 'Show less' : 'Show more'}
-                </button>
-              )}
-            </div>
-          </div>
+                  <DocumentIcon className="w-4 h-4" />
+                  <span>View Document</span>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            )}
+            
+            {/* Notes */}
+            {profile.notes && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-zinc-400 dark:text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Notes</span>
+                  {/* Sensitive badge removed */}
+                </div>
+                <div className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-3">
+                  <p className={`text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
+                    {profile.notes}
+                  </p>
+                  {profile.notes.length > 150 && (
+                    <button
+                      onClick={onToggleNotes}
+                      className="text-xs text-blue-400 hover:text-blue-300 mt-2 font-medium"
+                    >
+                      {expandedNotes ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.div>
         )}
         
         {/* Empty State */}
@@ -439,6 +506,31 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           <div className="text-center py-4 text-zinc-400 dark:text-zinc-500 text-sm">
             No credentials or data stored yet
           </div>
+        )}
+
+        {/* Expand/Collapse Button */}
+        {hasSecondaryFields && (
+          <button
+            onClick={onToggleExpand}
+            className="w-full mt-3 py-2.5 flex items-center justify-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 border-t border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-all group"
+          >
+            <span>{isExpanded ? 'Show Less' : 'View Details'}</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${
+                isExpanded ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
         )}
       </div>
     </div>
@@ -454,13 +546,24 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   const [orgData, setOrgData] = useState<Organization>(organization);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [showPassword, setShowPassword] = useState<{[key: number]: boolean}>({});
+  const [showUsername, setShowUsername] = useState<{[key: number]: boolean}>({});
+  const [showEmail, setShowEmail] = useState<{[key: number]: boolean}>({});
+  const [expandedCard, setExpandedCard] = useState<{[key: number]: boolean}>({});
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [recoveryCodes, setRecoveryCodes] = useState<{[key: number]: string[]}>({});
   const [expandedNotes, setExpandedNotes] = useState<{[key: number]: boolean}>({});
   const [showPasswordReentry, setShowPasswordReentry] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareProfileId, setShareProfileId] = useState<number | null>(null);
+  const [shareExpiryHours, setShareExpiryHours] = useState(24);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrCodeUrl, setQRCodeUrl] = useState<string | null>(null);
+  const [qrProfileTitle, setQRProfileTitle] = useState<string>('');
   const [newProfile, setNewProfile] = useState({
     title: '',
     username: '',
@@ -474,6 +577,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   useEffect(() => {
     fetchOrganizationData();
     fetchProfiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organization.id]);
 
   // Initialize recovery codes for each profile
@@ -749,6 +853,20 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     }));
   };
 
+  const toggleUsernameVisibility = (profileId: number) => {
+    setShowUsername(prev => ({
+      ...prev,
+      [profileId]: !prev[profileId]
+    }));
+  };
+
+  const toggleEmailVisibility = (profileId: number) => {
+    setShowEmail(prev => ({
+      ...prev,
+      [profileId]: !prev[profileId]
+    }));
+  };
+
   const toggleNotesExpansion = (profileId: number) => {
     setExpandedNotes(prev => ({
       ...prev,
@@ -805,6 +923,96 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     fetchProfiles();
   };
 
+  const handleShareProfile = async (profileId: number) => {
+    setShareProfileId(profileId);
+    setShowShareModal(true);
+  };
+
+  const handleCreateShareLink = async () => {
+    if (!shareProfileId) return;
+
+    try {
+      // Find the profile to share
+      const profile = profiles.find(p => p.id === shareProfileId);
+      if (!profile) {
+        setError('Profile not found');
+        return;
+      }
+
+      // Get the master encryption key from session
+      const masterKey = await getSessionEncryptionKey();
+      if (!masterKey) {
+        setError('Session expired. Please re-enter your master password.');
+        setShowPasswordReentry(true);
+        return;
+      }
+
+      // Decrypt all fields before sending to backend
+      const decryptedData: any = {
+        title: profile.title,
+        organization: orgData.name, // Send organization name, not ID
+      };
+
+      // Decrypt each encrypted field
+      const decryptedFields = await decryptCredentialFields(
+        {
+          username_encrypted: profile.username_encrypted,
+          username_iv: profile.username_iv,
+          password_encrypted: profile.password_encrypted,
+          password_iv: profile.password_iv,
+          email_encrypted: profile.email_encrypted,
+          email_iv: profile.email_iv,
+          notes_encrypted: profile.notes_encrypted,
+          notes_iv: profile.notes_iv,
+          recovery_codes_encrypted: profile.recovery_codes_encrypted,
+          recovery_codes_iv: profile.recovery_codes_iv,
+        },
+        masterKey
+      );
+
+      // Add decrypted fields to data object
+      if (decryptedFields.username) decryptedData.username = decryptedFields.username;
+      if (decryptedFields.password) decryptedData.password = decryptedFields.password;
+      if (decryptedFields.email) decryptedData.email = decryptedFields.email;
+      if (decryptedFields.notes) decryptedData.notes = decryptedFields.notes;
+      if (decryptedFields.recovery_codes) decryptedData.recovery_codes = decryptedFields.recovery_codes;
+
+      // Create share link with plaintext data
+      const response = await apiClient.post('shared-secrets/create/', {
+        profile_id: shareProfileId,
+        expiry_hours: shareExpiryHours,
+        decrypted_data: decryptedData,
+      });
+
+      if (response.data.success) {
+        setShareUrl(response.data.share_url);
+        setError(null);
+        setSuccess(`Secure share link created! Link expires in ${shareExpiryHours} hour${shareExpiryHours > 1 ? 's' : ''} and can only be viewed once.`);
+        
+        // Clear success message after 5 seconds
+        setTimeout(() => setSuccess(null), 5000);
+      }
+    } catch (err: any) {
+      console.error('Failed to create share link:', err);
+      setError(err.response?.data?.error || 'Failed to create secure share link');
+      setSuccess(null);
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    if (shareUrl) {
+      await navigator.clipboard.writeText(shareUrl);
+      setSuccess('Link copied to clipboard!');
+      setTimeout(() => {
+        setSuccess(null);
+        setShowShareModal(false);
+        setShareUrl(null);
+        setShareProfileId(null);
+        setShareExpiryHours(24);
+      }, 2000);
+    }
+  };
+
   const handlePasswordReentryCancel = () => {
     setShowPasswordReentry(false);
     onBack();
@@ -818,6 +1026,367 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         onSuccess={handlePasswordReentrySuccess}
         onCancel={handlePasswordReentryCancel}
       />
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-[var(--as-bg-card)] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-zinc-200 dark:border-zinc-800"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Share Credential</h3>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">Create a one-time secure link</p>
+              </div>
+            </div>
+
+            {!shareUrl ? (
+              <>
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                      Link Expiry
+                    </label>
+                    <select
+                      value={shareExpiryHours}
+                      onChange={(e) => setShareExpiryHours(Number(e.target.value))}
+                      className="w-full px-4 py-3 bg-white dark:bg-[var(--as-bg-base)] border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value={1}>1 hour</option>
+                      <option value={6}>6 hours</option>
+                      <option value={12}>12 hours</option>
+                      <option value={24}>24 hours (1 day)</option>
+                      <option value={48}>48 hours (2 days)</option>
+                      <option value={72}>72 hours (3 days)</option>
+                      <option value={168}>1 week</option>
+                    </select>
+                  </div>
+
+                  <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 rounded-lg p-4">
+                    <div className="flex gap-3">
+                      <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div className="text-sm text-yellow-900 dark:text-yellow-200">
+                        <p className="font-medium mb-1">Security Notice</p>
+                        <p className="text-yellow-800 dark:text-yellow-300/80">Link can only be viewed once and will be permanently destroyed after viewing.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowShareModal(false);
+                      setShareProfileId(null);
+                      setShareExpiryHours(24);
+                    }}
+                    className="flex-1 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-lg transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateShareLink}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all font-medium shadow-lg"
+                  >
+                    Create Link
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-4 mb-6">
+                  {/* QR Code Section */}
+                  <div className="flex flex-col items-center bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-500/10 dark:to-indigo-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-6">
+                    <div className="mb-4 text-center">
+                      <h4 className="text-zinc-900 dark:text-white font-semibold text-lg mb-1">Scan QR Code</h4>
+                      <p className="text-zinc-600 dark:text-zinc-400 text-sm">Quick access for mobile devices</p>
+                    </div>
+                    
+                    <div className="relative bg-white p-4 rounded-2xl shadow-2xl mb-4">
+                      <canvas 
+                        ref={(canvas) => {
+                          if (canvas && shareUrl) {
+                            QRCode.toCanvas(canvas, shareUrl, {
+                              width: 220,
+                              margin: 2,
+                              color: {
+                                dark: '#1e293b',
+                                light: '#ffffff'
+                              },
+                              errorCorrectionLevel: 'H'
+                            }).then(() => {
+                              // Add logo overlay using actual logo.png
+                              const ctx = canvas.getContext('2d');
+                              if (ctx) {
+                                const logo = new Image();
+                                logo.crossOrigin = 'anonymous';
+                                logo.onload = () => {
+                                  const logoSize = 50;
+                                  const x = (canvas.width - logoSize) / 2;
+                                  const y = (canvas.height - logoSize) / 2;
+                                  
+                                  // Emerald rounded background with border (matching the style)
+                                  const padding = 8;
+                                  const bgSize = logoSize + (padding * 2);
+                                  const bgX = x - padding;
+                                  const bgY = y - padding;
+                                  const radius = 8;
+                                  
+                                  // Draw emerald-50 rounded background
+                                  ctx.fillStyle = '#ecfdf5'; // emerald-50
+                                  ctx.beginPath();
+                                  ctx.moveTo(bgX + radius, bgY);
+                                  ctx.lineTo(bgX + bgSize - radius, bgY);
+                                  ctx.quadraticCurveTo(bgX + bgSize, bgY, bgX + bgSize, bgY + radius);
+                                  ctx.lineTo(bgX + bgSize, bgY + bgSize - radius);
+                                  ctx.quadraticCurveTo(bgX + bgSize, bgY + bgSize, bgX + bgSize - radius, bgY + bgSize);
+                                  ctx.lineTo(bgX + radius, bgY + bgSize);
+                                  ctx.quadraticCurveTo(bgX, bgY + bgSize, bgX, bgY + bgSize - radius);
+                                  ctx.lineTo(bgX, bgY + radius);
+                                  ctx.quadraticCurveTo(bgX, bgY, bgX + radius, bgY);
+                                  ctx.closePath();
+                                  ctx.fill();
+                                  
+                                  // Draw emerald-200 border
+                                  ctx.strokeStyle = '#d1fae5'; // emerald-200
+                                  ctx.lineWidth = 2;
+                                  ctx.stroke();
+                                  
+                                  // Draw logo image
+                                  ctx.drawImage(logo, x, y, logoSize, logoSize);
+                                };
+                                logo.src = '/logo.png';
+                              }
+                            }).catch((err) => console.error('QR Code error:', err));
+                          }
+                        }}
+                        className="rounded-lg"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const canvas = document.querySelector('canvas');
+                        if (canvas) {
+                          canvas.toBlob((blob) => {
+                            if (blob) {
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = 'accountsafe-share-qr.png';
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }
+                          });
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-white/10 hover:bg-blue-200 dark:hover:bg-white/20 border border-blue-300 dark:border-white/20 text-blue-900 dark:text-white rounded-lg transition-all font-medium"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Download QR Code
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                      Share Link (Expires in {shareExpiryHours} hour{shareExpiryHours > 1 ? 's' : ''})
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={shareUrl}
+                        readOnly
+                        className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-[var(--as-bg-base)] border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white font-mono text-sm"
+                      />
+                      <button
+                        onClick={handleCopyShareLink}
+                        className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        title="Copy link"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-lg p-4">
+                    <div className="flex gap-3">
+                      <svg className="w-5 h-5 text-green-600 dark:text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <div className="text-sm text-green-900 dark:text-green-200">
+                        <p className="font-medium">Link Created Successfully!</p>
+                        <p className="text-green-800 dark:text-green-300/80 mt-1">Share this link or QR code with the recipient.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleCopyShareLink}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all font-medium shadow-lg"
+                >
+                  Copy Link & Close
+                </button>
+              </>
+            )}
+          </motion.div>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      {showQRModal && qrCodeUrl && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-[var(--as-bg-card)] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-zinc-200 dark:border-zinc-800"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-purple-600/20 rounded-xl flex items-center justify-center">
+                  <QRCodeIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{qrProfileTitle}</h3>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">Secure credential sharing</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowQRModal(false);
+                  setQRCodeUrl(null);
+                  setQRProfileTitle('');
+                }}
+                className="p-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* QR Code Display */}
+              <div className="flex flex-col items-center bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-500/10 dark:to-indigo-500/10 border border-purple-200 dark:border-purple-500/30 rounded-xl p-6">
+                <div className="mb-4 text-center">
+                  <h4 className="text-zinc-900 dark:text-white font-semibold text-lg mb-1">Scan to Access</h4>
+                  <p className="text-zinc-600 dark:text-zinc-400 text-sm">One-time secure link</p>
+                </div>
+                
+                <div className="relative bg-white p-4 rounded-2xl shadow-2xl mb-4">
+                  <canvas 
+                    ref={(canvas) => {
+                      if (canvas && qrCodeUrl) {
+                        QRCode.toCanvas(canvas, qrCodeUrl, {
+                          width: 280,
+                          margin: 2,
+                          color: {
+                            dark: '#1e293b',
+                            light: '#ffffff'
+                          },
+                          errorCorrectionLevel: 'H'
+                        }).then(() => {
+                          const ctx = canvas.getContext('2d');
+                          if (ctx) {
+                            const logo = new Image();
+                            logo.crossOrigin = 'anonymous';
+                            logo.onload = () => {
+                              const logoSize = 60;
+                              const x = (canvas.width - logoSize) / 2;
+                              const y = (canvas.height - logoSize) / 2;
+                              
+                              // Emerald rounded background with border (matching the style)
+                              const padding = 8;
+                              const bgSize = logoSize + (padding * 2);
+                              const bgX = x - padding;
+                              const bgY = y - padding;
+                              const radius = 12;
+                              
+                              // Draw emerald-50 rounded background
+                              ctx.fillStyle = '#ecfdf5'; // emerald-50
+                              ctx.beginPath();
+                              ctx.moveTo(bgX + radius, bgY);
+                              ctx.lineTo(bgX + bgSize - radius, bgY);
+                              ctx.quadraticCurveTo(bgX + bgSize, bgY, bgX + bgSize, bgY + radius);
+                              ctx.lineTo(bgX + bgSize, bgY + bgSize - radius);
+                              ctx.quadraticCurveTo(bgX + bgSize, bgY + bgSize, bgX + bgSize - radius, bgY + bgSize);
+                              ctx.lineTo(bgX + radius, bgY + bgSize);
+                              ctx.quadraticCurveTo(bgX, bgY + bgSize, bgX, bgY + bgSize - radius);
+                              ctx.lineTo(bgX, bgY + radius);
+                              ctx.quadraticCurveTo(bgX, bgY, bgX + radius, bgY);
+                              ctx.closePath();
+                              ctx.fill();
+                              
+                              // Emerald border
+                              ctx.strokeStyle = '#d1fae5'; // emerald-200
+                              ctx.lineWidth = 2;
+                              ctx.stroke();
+                              
+                              // Draw logo
+                              ctx.drawImage(logo, x, y, logoSize, logoSize);
+                            };
+                            logo.src = '/logo.png';
+                          }
+                        }).catch((err) => console.error('QR Code error:', err));
+                      }
+                    }}
+                    className="rounded-lg"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    const canvas = document.querySelector('canvas');
+                    if (canvas) {
+                      canvas.toBlob((blob) => {
+                        if (blob) {
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `accountsafe-${qrProfileTitle.replace(/\s+/g, '-').toLowerCase()}-qr.png`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }
+                      });
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-white/10 hover:bg-purple-200 dark:hover:bg-white/20 border border-purple-300 dark:border-white/20 text-purple-900 dark:text-white rounded-lg transition-all font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Download QR Code
+                </button>
+              </div>
+
+              <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <svg className="w-5 h-5 text-purple-600 dark:text-purple-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div className="text-sm text-purple-900 dark:text-purple-200">
+                    <p className="font-medium">One-Time Access</p>
+                    <p className="text-purple-800 dark:text-purple-300/80 mt-1">This QR code can only be scanned once and expires in 24 hours.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-6">
         
@@ -833,11 +1402,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         </button>
         
         {/* Organization Header - Logo and Title with Button */}
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto mb-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Organization Logo */}
             {orgData.logo_url ? (
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
                 <img
                   src={orgData.logo_url}
                   alt={orgData.name}
@@ -845,8 +1414,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                 />
               </div>
             ) : (
-              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                <span className="text-white font-bold text-xl sm:text-2xl">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                <span className="text-white font-bold text-lg sm:text-xl">
                   {orgData.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
                 </span>
               </div>
@@ -865,17 +1434,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
           {/* Add Profile Button */}
           <button
             onClick={() => { setShowModal(true); setError(null); }}
-            className="as-btn-primary p-3 rounded-xl flex items-center justify-center group flex-shrink-0"
+            className="as-btn-primary px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl flex items-center gap-2 group flex-shrink-0 shadow-lg"
             title="Add Credential"
           >
-            {/* Icon only on mobile, show full label on sm+ */}
-            <span className="sm:hidden">
-              <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" />
-            </span>
-            <span className="hidden sm:inline-flex items-center gap-2">
-              <PlusIcon className="w-4 h-4" />
-              <span>Add New Credentials</span>
-            </span>
+            <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:rotate-90" />
+            <span className="hidden sm:inline text-sm font-semibold">Add New Credentials</span>
           </button>
         </div>
 
@@ -891,6 +1454,23 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
               <span>{error}</span>
             </div>
             <button onClick={() => setError(null)} className="hover:opacity-70 transition-opacity">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {/* Success Alert */}
+        {/* ═══════════════════════════════════════════════════════════════════════════ */}
+        {success && (
+          <div className="as-alert-success mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CheckIcon className="w-5 h-5 flex-shrink-0" />
+              <span>{success}</span>
+            </div>
+            <button onClick={() => setSuccess(null)} className="hover:opacity-70 transition-opacity">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -939,19 +1519,26 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {/* Profiles Grid */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {!loading && profiles.length > 0 && (
-          <div className="space-y-4 md:grid md:grid-cols-2 md:gap-6 md:space-y-0 xl:grid-cols-3">{profiles.map((profile) => (
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">{profiles.map((profile) => (
               <ProfileCard
                 key={profile.id}
                 profile={profile}
                 recoveryCodes={recoveryCodes[profile.id] || []}
                 showPassword={showPassword[profile.id] || false}
+                showUsername={showUsername[profile.id] || false}
+                showEmail={showEmail[profile.id] || false}
                 expandedNotes={expandedNotes[profile.id] || false}
+                isExpanded={expandedCard[profile.id] || false}
                 copiedField={copiedField}
                 onEdit={() => handleEditProfile(profile)}
                 onDelete={() => handleDeleteProfile(profile.id)}
+                onShare={() => handleShareProfile(profile.id)}
                 onCopy={copyToClipboard}
                 onTogglePassword={() => togglePasswordVisibility(profile.id)}
+                onToggleUsername={() => toggleUsernameVisibility(profile.id)}
+                onToggleEmail={() => toggleEmailVisibility(profile.id)}
                 onToggleNotes={() => toggleNotesExpansion(profile.id)}
+                onToggleExpand={() => setExpandedCard(prev => ({ ...prev, [profile.id]: !prev[profile.id] }))}
                 onCopyRecoveryCode={(code, index) => handleCopyRecoveryCode(profile.id, code, index)}
               />
             ))}

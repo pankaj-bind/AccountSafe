@@ -22,6 +22,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import OrganizationPage from './pages/OrganizationPage';
+import SharedSecretPage from './pages/SharedSecretPage';
 import './App.css';
 
 const App: React.FC = () => {
@@ -40,6 +41,9 @@ const App: React.FC = () => {
                   <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
                   <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  
+                  {/* Shared Secret Route - Public */}
+                  <Route path="/shared/:secretId" element={<SharedSecretPage />} />
                   
                   {/* Protected Routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

@@ -242,7 +242,7 @@ const ForgotPasswordPage: React.FC = () => {
     setMessage(null);
     setIsLoading(true);
     try {
-      const response = await verifyPasswordResetOTP(email, otp);
+      await verifyPasswordResetOTP(email, otp);
       setMessage('Code verified! You can now set a new password.');
       setStep('password');
     } catch (err: any) {
