@@ -149,25 +149,3 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://accountsafe.*\.vercel\.app$",
 ]
-
-# --- CSRF Settings ---
-# Trust Vercel domains for CSRF
-CSRF_TRUSTED_ORIGINS = [
-    'https://accountsafe.vercel.app',
-    'https://accountsafe-git-main-pankaj-binds-projects.vercel.app',
-    'https://accountsafe-pankaj-binds-projects.vercel.app',
-]
-
-# Allow all Vercel preview URLs for CSRF
-import re
-class VercelCSRFTrustedOriginValidator:
-    def __call__(self, origin):
-        return re.match(r"^https://accountsafe.*\.vercel\.app$", origin) is not None
-
-# Add dynamic Vercel URL validation
-if not DEBUG:
-    CSRF_COOKIE_SECURE = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = 'None'
-    SESSION_COOKIE_SAMESITE = 'None'
-
