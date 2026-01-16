@@ -561,6 +561,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   const [shareProfileId, setShareProfileId] = useState<number | null>(null);
   const [shareExpiryHours, setShareExpiryHours] = useState(24);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [copiedShare, setCopiedShare] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrCodeUrl, setQRCodeUrl] = useState<string | null>(null);
   const [qrProfileTitle, setQRProfileTitle] = useState<string>('');
@@ -1002,7 +1003,13 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   const handleCopyShareLink = async () => {
     if (shareUrl) {
       await navigator.clipboard.writeText(shareUrl);
+      setCopiedShare(true);
       setSuccess('Link copied to clipboard!');
+      // Quick visual feedback for the button
+      setTimeout(() => {
+        setCopiedShare(false);
+      }, 1200);
+      // Close modal and clear share state after success message
       setTimeout(() => {
         setSuccess(null);
         setShowShareModal(false);
@@ -1211,12 +1218,19 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                       />
                       <button
                         onClick={handleCopyShareLink}
-                        className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        className={`px-4 py-3 rounded-lg transition-colors transform ${copiedShare ? 'bg-green-600 hover:bg-green-700 scale-95' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
                         title="Copy link"
+                        aria-pressed={copiedShare}
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
+                        {copiedShare ? (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -1236,9 +1250,9 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
                 <button
                   onClick={handleCopyShareLink}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all font-medium shadow-lg"
+                  className={`w-full px-4 py-3 rounded-lg transition-all font-medium shadow-lg ${copiedShare ? 'bg-green-600 hover:bg-green-700 scale-95 text-white' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'}`}
                 >
-                  Copy Link & Close
+                  {copiedShare ? 'Copied!' : 'Copy Link & Close'}
                 </button>
               </>
             )}
