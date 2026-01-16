@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useProfile } from '../contexts/ProfileContext';
+import { usePanic } from '../contexts/PanicContext';
 
 // Modern SVG Icons
 const SunIcon = () => (
@@ -51,6 +52,7 @@ const Navbar: React.FC = () => {
   const { token, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { profilePicture, displayName } = useProfile();
+  const { isPanicLocked } = usePanic();
   const navigate = useNavigate();
   const location = useLocation();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -93,6 +95,11 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
+  // Hide navbar when panic mode is active - AFTER all hooks
+  if (isPanicLocked) {
+    return null;
+  }
+
   return (
     <>
     <nav className="sticky top-0 z-50 bg-white/80 dark:bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800/50">
@@ -117,18 +124,19 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center gap-1">
             {/* Nav Links */}
             <div className="flex items-center bg-zinc-100 dark:bg-zinc-900/50 rounded-lg p-1 mr-4 space-x-1">
-              <Link 
-                to="/" 
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  isActiveRoute('/') 
-                    ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' 
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50'
-                }`}
-              >
-                Home
-              </Link>
               {token && (
                 <>
+                  <Link 
+                    to="/" 
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
+                      isActiveRoute('/') 
+                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' 
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50'
+                    }`}
+                  >
+                    <VaultIcon />
+                    Vault
+                  </Link>
                   <Link 
                     to="/dashboard" 
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
@@ -138,17 +146,6 @@ const Navbar: React.FC = () => {
                     }`}
                   >
                     Dashboard
-                  </Link>
-                  <Link 
-                    to="/organizations" 
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
-                      isActiveRoute('/organizations') 
-                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' 
-                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50'
-                    }`}
-                  >
-                    <VaultIcon />
-                    Vault
                   </Link>
                 </>
               )}
@@ -202,20 +199,20 @@ const Navbar: React.FC = () => {
                       {/* Menu Items */}
                       <div className="py-2">
                         <Link 
+                          to="/" 
+                          onClick={() => setIsUserDropdownOpen(false)} 
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <VaultIcon />
+                          Secure Vault
+                        </Link>
+                        <Link 
                           to="/dashboard" 
                           onClick={() => setIsUserDropdownOpen(false)} 
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         >
                           <DashboardIcon />
                           Dashboard
-                        </Link>
-                        <Link 
-                          to="/organizations" 
-                          onClick={() => setIsUserDropdownOpen(false)} 
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <VaultIcon />
-                          Secure Vault
                         </Link>
                         <Link 
                           to="/profile" 
@@ -320,6 +317,16 @@ const Navbar: React.FC = () => {
                 {/* Menu Items */}
                 <div className="py-2">
                   <Link 
+                    to="/" 
+                    onClick={closeMenus} 
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                    Secure Vault
+                  </Link>
+                  <Link 
                     to="/dashboard" 
                     onClick={closeMenus} 
                     className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -328,16 +335,6 @@ const Navbar: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
                     </svg>
                     Dashboard
-                  </Link>
-                  <Link 
-                    to="/organizations" 
-                    onClick={closeMenus} 
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                    </svg>
-                    Secure Vault
                   </Link>
                   <Link 
                     to="/profile" 

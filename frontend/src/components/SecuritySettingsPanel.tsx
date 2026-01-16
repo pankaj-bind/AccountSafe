@@ -377,8 +377,7 @@ const SecuritySettingsPanel: React.FC = () => {
         </p>
       </div>
 
-      {/* Ghost Vault (Duress Password) Section - Hidden in duress mode */}
-      {settings?.has_duress_password !== false && (
+      {/* Ghost Vault (Duress Password) Section */}
       <div className="as-card p-6 border-amber-500/30">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
           <span className="text-amber-500 dark:text-amber-400"><EyeSlashIcon /></span>
@@ -426,7 +425,6 @@ const SecuritySettingsPanel: React.FC = () => {
           </p>
         </div>
       </div>
-      )}
 
       {/* Duress Password Modal */}
       {showDuressModal && (

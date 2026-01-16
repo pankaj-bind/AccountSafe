@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProfileProvider } from './contexts/ProfileContext';
+import { PanicProvider } from './contexts/PanicContext';
 
 // Import Layout Components
 import Navbar from './components/Navbar';
@@ -31,31 +32,32 @@ const App: React.FC = () => {
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
-          <ProfileProvider>
-            <ProfileUpdater />
-            <PanicListener />
-            <div className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-200 font-sans">
-              <Navbar />
-              <main>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-                  <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  
-                  {/* Shared Secret Route - Public */}
-                  <Route path="/shared/:secretId" element={<SharedSecretPage />} />
-                  
-                  {/* Protected Routes */}
-                  <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-                  <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-                  <Route path="/organizations" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-                  <Route path="/organization/:id" element={<ProtectedRoute><OrganizationPage /></ProtectedRoute>} />
-                </Routes>
-              </main>
-            </div>
-          </ProfileProvider>
+          <PanicProvider>
+            <ProfileProvider>
+              <ProfileUpdater />
+              <PanicListener />
+              <div className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-200 font-sans">
+                <Navbar />
+                <main>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+                    <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    
+                    {/* Shared Secret Route - Public */}
+                    <Route path="/shared/:secretId" element={<SharedSecretPage />} />
+                    
+                    {/* Protected Routes */}
+                    <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+                    <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                    <Route path="/organization/:id" element={<ProtectedRoute><OrganizationPage /></ProtectedRoute>} />
+                  </Routes>
+                </main>
+              </div>
+            </ProfileProvider>
+          </PanicProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

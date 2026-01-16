@@ -114,7 +114,7 @@ const LoginPage: React.FC = () => {
                     navigate('/', { replace: true });
                 }
             } catch {
-                // If PIN check fails, just navigate to dashboard
+                // If PIN check fails, just navigate to home
                 navigate('/', { replace: true });
             }
         } catch (err) {

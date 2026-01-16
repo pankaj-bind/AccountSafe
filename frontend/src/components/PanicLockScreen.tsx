@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { clearEncryptionKeys } from '../services/encryptionService';
 
 interface PanicLockScreenProps {
   isOpen: boolean;
@@ -16,6 +18,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock }) =
   const [error, setError] = useState<string | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const username = localStorage.getItem('username') || 'User';
+  const navigate = useNavigate();
 
   // Reset state when modal opens
   useEffect(() => {
@@ -33,6 +36,26 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock }) =
       if (input) {
         setTimeout(() => input.focus(), 100);
       }
+    }
+  }, [isOpen]);
+
+  // Block browser back button when panic mode is active
+  useEffect(() => {
+    if (isOpen) {
+      // Push a state to prevent going back
+      window.history.pushState(null, '', window.location.href);
+      
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        // Re-push state to keep user on the panic screen
+        window.history.pushState(null, '', window.location.href);
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
     }
   }, [isOpen]);
 
@@ -64,8 +87,10 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock }) =
   };
 
   const handleCancel = () => {
-    // Log out the user
-    window.location.href = '/login';
+    // Properly log out the user
+    localStorage.removeItem('authToken');
+    clearEncryptionKeys();
+    navigate('/');
   };
 
   if (!isOpen) return null;

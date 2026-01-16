@@ -1,8 +1,7 @@
-import React, { useEffect, useCallback, useState, useRef } from 'react';
-import { clearEncryptionKeys, storeMasterPasswordForSession } from '../services/encryptionService';
+import React, { useEffect, useCallback, useRef } from 'react';
+import { clearEncryptionKeys } from '../services/encryptionService';
 import { getPanicDuressSettings } from '../services/securityService';
-import { relogin } from '../services/authService';
-import PanicLockScreen from './PanicLockScreen';
+import { usePanic } from '../contexts/PanicContext';
 
 interface PanicListenerProps {
   onPanic?: () => void;
@@ -20,10 +19,10 @@ interface PanicListenerProps {
  * Listens for 'panicShortcutUpdated' custom event to refetch settings when changed.
  */
 const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
-  const [isLocked, setIsLocked] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = React.useState(false);
   const shortcutRef = useRef<string[]>([]);
   const fetchCountRef = useRef(0);
+  const { isPanicLocked, triggerPanic: triggerPanicContext } = usePanic();
 
   // Fetch panic shortcut configuration
   const fetchPanicSettings = useCallback(async () => {
@@ -83,9 +82,9 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
       onPanic();
     }
     
-    // 3. Show lock screen modal
-    setIsLocked(true);
-  }, [onPanic]);
+    // 3. Trigger global panic lock via context
+    triggerPanicContext();
+  }, [onPanic, triggerPanicContext]);
 
   // Listen for panic mode trigger from the UI button
   useEffect(() => {
@@ -101,48 +100,9 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
     };
   }, [triggerPanic]);
 
-  /**
-   * Handle unlock with password re-entry
-   * Supports both master password (unlock) and duress password (re-login with fake vault)
-   */
-  const handleUnlock = useCallback(async (password: string) => {
-    const username = localStorage.getItem('username');
-    
-    if (!username) {
-      throw new Error('No username found');
-    }
-    
-    // Always re-login to get a fresh token (master or duress)
-    // This ensures:
-    // 1. Switching from duress to master clears the duress session
-    // 2. Switching from master to duress creates a new duress session
-    // 3. Re-entering same password type refreshes the session
-    try {
-      const result = await relogin(username, password);
-      
-      if (result.success) {
-        // Login successful - could be duress or master
-        // Store the password for encryption key derivation
-        storeMasterPasswordForSession(password);
-        
-        // Reload the page to fetch data with the new token
-        // This will show fake vault if it was a duress login
-        // or real vault if it was a master login
-        console.log('✅ Re-login successful, reloading to apply new session...');
-        window.location.reload();
-        return;
-      }
-    } catch (err) {
-      console.log('Re-login attempt failed:', err);
-    }
-    
-    // Login failed
-    throw new Error('Incorrect password');
-  }, []);
-
   // Set up global keyboard listeners
   useEffect(() => {
-    if (!isLoaded || isLocked) return;
+    if (!isLoaded || isPanicLocked) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       try {
@@ -201,13 +161,11 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [isLoaded, isLocked, triggerPanic]);
+  }, [isLoaded, isPanicLocked, triggerPanic]);
 
-  return (
-    <>
-      <PanicLockScreen isOpen={isLocked} onUnlock={handleUnlock} />
-    </>
-  );
+  // This component only handles keyboard detection
+  // The lock screen is rendered by ProtectedRoute when isPanicLocked is true
+  return null;
 };
 
 export default PanicListener;
