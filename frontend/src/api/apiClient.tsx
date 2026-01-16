@@ -1,8 +1,8 @@
 // src/api/apiClient.ts
 import axios from 'axios';
 
-// Use environment variable or fallback to localhost
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/';
+// Use environment variable or fallback to production backend
+const API_URL = process.env.REACT_APP_API_URL || 'https://accountsafe.pythonanywhere.com/api/';
 
 const apiClient = axios.create({
   baseURL: API_URL,
