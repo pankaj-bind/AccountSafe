@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { clearEncryptionKeys, storeMasterPasswordForSession } from '../services/encryptionService';
-import { getPanicDuressSettings, verifyPassword } from '../services/securityService';
+import { getPanicDuressSettings } from '../services/securityService';
 import { relogin } from '../services/authService';
 import PanicLockScreen from './PanicLockScreen';
 
