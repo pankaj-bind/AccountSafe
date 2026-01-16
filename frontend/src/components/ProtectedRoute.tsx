@@ -2,7 +2,7 @@ import React, { ReactNode, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePanic } from '../contexts/PanicContext';
-import { clearEncryptionKeys, storeMasterPasswordForSession } from '../services/encryptionService';
+import { storeMasterPasswordForSession } from '../services/encryptionService';
 import { relogin } from '../services/authService';
 import PanicLockScreen from './PanicLockScreen';
 
