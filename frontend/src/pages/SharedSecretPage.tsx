@@ -1,7 +1,7 @@
 import React, { useState, useLayoutEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FileLock, ShieldAlert, Copy, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { FileLock, Copy, Check, Loader2, AlertTriangle } from 'lucide-react';
 import apiClient from '../api/apiClient';
 
 // Hide navbar on this page for cleaner mobile experience
@@ -47,7 +47,6 @@ const SharedSecretPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [decryptedData, setDecryptedData] = useState<DecryptedData | null>(null);
-  const [burned, setBurned] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Fetch and view the shared secret (burns the link)
@@ -65,7 +64,6 @@ const SharedSecretPage: React.FC = () => {
       }
 
       const data = response.data.data;
-      setBurned(true);
       
       setDecryptedData({
         title: data.title || '',
