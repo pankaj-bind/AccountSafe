@@ -109,8 +109,16 @@ def create_shared_secret(request):
         )
         
         # Build the share URL - point to React frontend, not API
-        # Use localhost:3000 for frontend in development
-        frontend_url = 'http://localhost:3000' if 'localhost' in request.get_host() or '127.0.0.1' in request.get_host() else f"{request.scheme}://{request.get_host()}"
+        # Use environment variable for frontend URL, with fallbacks
+        import os
+        is_local = 'localhost' in request.get_host() or '127.0.0.1' in request.get_host()
+        
+        if is_local:
+            frontend_url = 'http://localhost:3000'
+        else:
+            # In production, use the configured frontend URL (Vercel)
+            frontend_url = os.getenv('FRONTEND_URL', 'https://accountsafe.vercel.app')
+        
         share_url = f"{frontend_url}/shared/{shared_secret.id}"
         
         return Response({

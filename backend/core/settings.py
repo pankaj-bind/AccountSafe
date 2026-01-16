@@ -144,3 +144,8 @@ cors_origins_str = os.getenv('CORS_ALLOWED_ORIGINS', default_cors)
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',') if origin.strip()]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
+
+# Allow all Vercel preview URLs
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://accountsafe.*\.vercel\.app$",
+]
