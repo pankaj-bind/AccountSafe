@@ -193,3 +193,137 @@ export const getPasswordStrengthScore = (password: string): number => {
   if (password.length >= 16 && variety === 4) return 4;
   return 3;
 };
+
+// ===========================
+// PANIC & DURESS SECURITY
+// ===========================
+
+export interface PanicDuressSettings {
+  panic_shortcut: string[];
+  has_duress_password: boolean;
+  sos_email: string | null;
+}
+
+// Forbidden key combinations (common browser shortcuts)
+export const FORBIDDEN_SHORTCUTS: string[][] = [
+  ['Control', 'w'], // Close tab
+  ['Control', 't'], // New tab
+  ['Control', 'n'], // New window
+  ['Control', 'r'], // Refresh
+  ['Control', 'Shift', 'r'], // Hard refresh
+  ['Control', 'f'], // Find
+  ['Control', 'h'], // History
+  ['Control', 'j'], // Downloads
+  ['Control', 'd'], // Bookmark
+  ['Control', 'p'], // Print
+  ['Control', 's'], // Save
+  ['Control', 'a'], // Select all
+  ['Control', 'c'], // Copy
+  ['Control', 'v'], // Paste
+  ['Control', 'x'], // Cut
+  ['Control', 'z'], // Undo
+  ['Control', 'Shift', 'i'], // DevTools
+  ['Control', 'Shift', 'j'], // DevTools console
+  ['F5'], // Refresh
+  ['F11'], // Fullscreen
+  ['F12'], // DevTools
+  ['Alt', 'F4'], // Close window
+];
+
+/**
+ * Check if a key combination is a forbidden browser shortcut
+ */
+export function isForbiddenShortcut(keys: string[]): boolean {
+  const normalizedKeys = keys.map(k => k.toLowerCase()).sort();
+  
+  return FORBIDDEN_SHORTCUTS.some(forbidden => {
+    const normalizedForbidden = forbidden.map(k => k.toLowerCase()).sort();
+    if (normalizedKeys.length !== normalizedForbidden.length) return false;
+    return normalizedKeys.every((key, index) => key === normalizedForbidden[index]);
+  });
+}
+
+/**
+ * Format key combination for display
+ */
+export function formatKeyCombo(keys: string[]): string {
+  if (!keys || keys.length === 0) return 'Not set';
+  
+  const keyMap: Record<string, string> = {
+    'Control': 'Ctrl',
+    'Meta': '⌘',
+    ' ': 'Space',
+  };
+  
+  return keys.map(key => keyMap[key] || key).join(' + ');
+}
+
+/**
+ * Get security settings (panic shortcut, duress status)
+ */
+export async function getPanicDuressSettings(): Promise<PanicDuressSettings> {
+  const response = await apiClient.get('/security/settings/');
+  return response.data;
+}
+
+/**
+ * Set panic button keyboard shortcut
+ */
+export async function setPanicShortcut(keys: string[]): Promise<{ panic_shortcut: string[] }> {
+  const response = await apiClient.post('/security/settings/', {
+    action: 'set_panic_shortcut',
+    shortcut: keys
+  });
+  return response.data;
+}
+
+/**
+ * Clear panic button shortcut
+ */
+export async function clearPanicShortcut(): Promise<void> {
+  await apiClient.post('/security/settings/', {
+    action: 'clear_panic_shortcut'
+  });
+}
+
+/**
+ * Set duress password and SOS email
+ */
+export async function setDuressPassword(
+  masterPassword: string,
+  duressPassword: string,
+  sosEmail: string
+): Promise<{ has_duress_password: boolean }> {
+  const response = await apiClient.post('/security/settings/', {
+    action: 'set_duress_password',
+    master_password: masterPassword,
+    duress_password: duressPassword,
+    sos_email: sosEmail
+  });
+  return response.data;
+}
+
+/**
+ * Clear duress password
+ */
+export async function clearDuressPassword(masterPassword: string): Promise<void> {
+  await apiClient.post('/security/settings/', {
+    action: 'clear_duress_password',
+    master_password: masterPassword
+  });
+}
+
+/**
+ * Verify user password (for panic mode unlock)
+ */
+export async function verifyPassword(password: string): Promise<boolean> {
+  try {
+    const response = await apiClient.post('/security/settings/', {
+      action: 'verify_password',
+      password
+    });
+    return response.data.valid;
+  } catch (error) {
+    return false;
+  }
+}

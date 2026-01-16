@@ -33,27 +33,49 @@ export const formatRelativeTime = (timestamp: string | null | undefined): string
 
 /**
  * Format date and time separately for login records
+ * Now uses the time string from backend which includes timezone
  */
 export const formatLoginDateTime = (date: string, time: string): { 
   relative: string; 
   formatted: string;
+  timeOnly: string;
   fullDate: string;
 } => {
   try {
-    const dateTimeStr = `${date} ${time}`;
-    const parsedDate = new Date(dateTimeStr);
+    // Parse the full timestamp
+    const parsedDate = new Date(date);
     
     if (!isValid(parsedDate)) {
-      return { relative: 'Unknown', formatted: `${date} ${time}`, fullDate: `${date} ${time}` };
+      return { 
+        relative: 'Unknown', 
+        formatted: time,
+        timeOnly: time,
+        fullDate: `${date} ${time}` 
+      };
     }
     
+    // Get relative time (e.g., "less than a minute ago")
+    const relativeTime = formatDistanceToNow(parsedDate, { addSuffix: true });
+    
+    // Format time in 12-hour format (e.g., "9:09 PM")
+    const timeOnly = format(parsedDate, 'h:mm a');
+    
+    // Format full date
+    const formattedDate = format(parsedDate, 'MMM d, yyyy');
+    
     return {
-      relative: formatDistanceToNow(parsedDate, { addSuffix: true }),
-      formatted: format(parsedDate, 'h:mm a'),
-      fullDate: format(parsedDate, 'MMM d, yyyy \'at\' h:mm a')
+      relative: relativeTime,
+      formatted: time, // Backend timezone format
+      timeOnly: timeOnly,
+      fullDate: `${formattedDate} at ${timeOnly}`
     };
   } catch {
-    return { relative: 'Unknown', formatted: `${date} ${time}`, fullDate: `${date} ${time}` };
+    return { 
+      relative: 'Unknown', 
+      formatted: time,
+      timeOnly: time,
+      fullDate: `${date} ${time}` 
+    };
   }
 };
 

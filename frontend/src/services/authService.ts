@@ -23,6 +23,7 @@ export const login = async (username: string, password: string, turnstileToken?:
     const token = response.data.key;
     
     localStorage.setItem('authToken', token);
+    localStorage.setItem('username', username); // Store username for panic lock screen
     
     // Store master password in session for encryption key derivation
     storeMasterPasswordForSession(password);
@@ -92,6 +93,32 @@ export const logout = () => {
   localStorage.removeItem('authToken');
   // Clear encryption keys from session
   sessionStorage.removeItem('accountsafe_master_key');
+};
+
+/**
+ * Re-login with username and password (used after panic mode)
+ * This will update the auth token and works with both master and duress passwords
+ */
+export const relogin = async (username: string, password: string): Promise<{ success: boolean }> => {
+  try {
+    const response = await apiClient.post('/auth/login/', { 
+      username, 
+      password,
+      is_relogin: true  // Flag to indicate this is a panic mode unlock, not initial login
+    });
+    const token = response.data.key;
+    
+    // Update the auth token
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('username', username);
+    
+    // Store password for encryption key derivation
+    storeMasterPasswordForSession(password);
+    
+    return { success: true };
+  } catch (error) {
+    return { success: false };
+  }
 };
 
 export const deleteAccount = async (password: string) => {

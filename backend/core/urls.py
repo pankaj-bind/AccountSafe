@@ -32,6 +32,7 @@ from api.views import (
     UpdateBreachStatusView,
     UpdatePasswordHashView,
     BatchUpdateSecurityMetricsView,
+    SecuritySettingsView,
 )
 
 # Shared secret views
@@ -87,6 +88,9 @@ urlpatterns = [
     path('api/security/profiles/<int:profile_id>/breach/', UpdateBreachStatusView.as_view(), name='update-breach-status'),
     path('api/security/profiles/<int:profile_id>/hash/', UpdatePasswordHashView.as_view(), name='update-password-hash'),
     path('api/security/batch-update/', BatchUpdateSecurityMetricsView.as_view(), name='batch-update-security-metrics'),
+    
+    # Panic & Duress Security Settings
+    path('api/security/settings/', SecuritySettingsView.as_view(), name='security-settings'),
 
     # Shared Secret endpoints (Secure Link Sharing)
     path('api/shared-secrets/create/', create_shared_secret, name='create-shared-secret'),

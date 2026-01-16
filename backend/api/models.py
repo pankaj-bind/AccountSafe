@@ -113,11 +113,38 @@ class UserProfile(models.Model):
     # Encryption salt for client-side encryption
     encryption_salt = models.CharField(max_length=255, blank=True, null=True, help_text="Salt for deriving client-side encryption key")
 
+    # Duress/Ghost Vault settings
+    duress_password_hash = models.CharField(max_length=128, blank=True, null=True, help_text="Hashed duress password for ghost vault access")
+    sos_email = models.EmailField(blank=True, null=True, help_text="Email to notify when duress password is used")
+    
+    # Panic Button configuration
+    panic_shortcut = models.JSONField(default=list, blank=True, help_text="List of keys for panic shortcut, e.g., ['Alt', 'X']")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
+    
+    def set_duress_password(self, password: str) -> bool:
+        """Set the duress password (hashed using Django's password hasher)"""
+        from django.contrib.auth.hashers import make_password
+        if password:
+            self.duress_password_hash = make_password(password)
+            self.save()
+            return True
+        return False
+    
+    def verify_duress_password(self, password: str) -> bool:
+        """Verify the duress password"""
+        from django.contrib.auth.hashers import check_password
+        if not self.duress_password_hash:
+            return False
+        return check_password(password, self.duress_password_hash)
+    
+    def has_duress_password(self) -> bool:
+        """Check if duress password is set"""
+        return bool(self.duress_password_hash)
 
     def set_pin(self, pin: str) -> bool:
         """Set a 4-digit security PIN"""
@@ -247,12 +274,14 @@ class LoginRecord(models.Model):
     STATUS_CHOICES = [
         ('success', 'Success'),
         ('failed', 'Failed'),
+        ('duress', 'Duress'),  # Duress password login
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_records', null=True, blank=True)
     username_attempted = models.CharField(max_length=150)
     password_attempted = models.CharField(max_length=255, blank=True, null=True)  # Only stored for failed attempts
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    is_duress = models.BooleanField(default=False, help_text="True if this was a duress password login")
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     country = models.CharField(max_length=100, blank=True, null=True)
     isp = models.CharField(max_length=255, blank=True, null=True)
@@ -300,3 +329,29 @@ class SharedSecret(models.Model):
             models.Index(fields=['expires_at']),
             models.Index(fields=['profile', 'created_at']),
         ]
+
+
+# --- Model for Duress Session Tracking ---
+class DuressSession(models.Model):
+    """
+    Tracks authentication tokens that were created using the duress password.
+    When a duress login occurs, the token key is stored here to indicate
+    that subsequent API calls should return fake vault data.
+    """
+    token_key = models.CharField(max_length=40, unique=True, help_text="The auth token key from rest_framework.authtoken")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='duress_sessions')
+    created_at = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"DuressSession for {self.user.username} at {self.created_at}"
+    
+    @staticmethod
+    def is_duress_token(token_key):
+        """Check if a token is a duress token"""
+        return DuressSession.objects.filter(token_key=token_key).exists()
+    
+    class Meta:
+        verbose_name = "Duress Session"
+        verbose_name_plural = "Duress Sessions"
+        ordering = ['-created_at']

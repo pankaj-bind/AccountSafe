@@ -231,7 +231,7 @@ class LoginRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoginRecord
         fields = [
-            'id', 'username_attempted', 'password_attempted', 'status',
+            'id', 'username_attempted', 'password_attempted', 'status', 'is_duress',
             'ip_address', 'country', 'isp', 'latitude', 'longitude',
             'date', 'time', 'location', 'user_agent', 'timestamp', 'timezone'
         ]
@@ -266,8 +266,23 @@ class LoginRecordSerializer(serializers.ModelSerializer):
     def get_time(self, obj):
         """Return formatted time in local timezone with timezone abbreviation"""
         local_time = self.get_local_datetime(obj)
-        # Get timezone abbreviation
-        tz_abbr = local_time.strftime('%Z') if obj.timezone else 'UTC'
+        # Get timezone abbreviation from the timezone string
+        if obj.timezone:
+            # Extract common timezone abbreviations
+            tz_map = {
+                'Asia/Kolkata': 'IST',
+                'Asia/Calcutta': 'IST',
+                'America/New_York': 'EST',
+                'America/Chicago': 'CST',
+                'America/Denver': 'MST',
+                'America/Los_Angeles': 'PST',
+                'Europe/London': 'GMT',
+                'Europe/Paris': 'CET',
+                'Australia/Sydney': 'AEDT',
+            }
+            tz_abbr = tz_map.get(obj.timezone, obj.timezone.split('/')[-1][:3].upper())
+        else:
+            tz_abbr = 'UTC'
         return f"{local_time.strftime('%H:%M:%S')} ({tz_abbr})"
     
     def get_location(self, obj):
@@ -277,8 +292,21 @@ class LoginRecordSerializer(serializers.ModelSerializer):
         return None
     
     def to_representation(self, instance):
-        """Hide password_attempted if login was successful"""
+        """Hide password_attempted if login was successful and hide is_duress in duress mode"""
         data = super().to_representation(instance)
-        if instance.status == 'success':
-            data['password_attempted'] = None
+        
+        # Hide password for successful logins
+        if instance.status in ['success', 'duress']:
+            data.pop('password_attempted', None)
+        
+        # Check if current request is from a duress session
+        request = self.context.get('request')
+        if request:
+            from api.views import is_duress_session
+            if is_duress_session(request):
+                # In duress mode: hide the duress flag (show all as 'success')
+                data['is_duress'] = False
+                if data['status'] == 'duress':
+                    data['status'] = 'success'
+        
         return data

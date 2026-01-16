@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -14,6 +15,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 
 from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile, LoginRecord
+from .email_utils import parse_user_agent, get_alert_context
 from .serializers import (
     OTPRequestSerializer,
     OTPVerifySerializer,
@@ -47,10 +49,13 @@ class CustomLoginView(APIView):
     def post(self, request):
         from django.contrib.auth import authenticate, login
         from rest_framework.authtoken.models import Token
+        from .models import DuressSession
+        import threading
         
         username = request.data.get('username')
         password = request.data.get('password')
         turnstile_token = request.data.get('turnstile_token')
+        is_relogin = request.data.get('is_relogin', False)  # True when unlocking from panic mode
         
         if not username or not password:
             return Response(
@@ -68,16 +73,26 @@ class CustomLoginView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
-        # Authenticate user
+        # Authenticate user with master password
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            # Successful login
+            # Successful login with MASTER password
             login(request, user)
-            token, created = Token.objects.get_or_create(user=user)
+            
+            # Delete any existing token and duress session to start fresh
+            Token.objects.filter(user=user).delete()
+            DuressSession.objects.filter(user=user).delete()
+            
+            # Create a new clean token
+            token = Token.objects.create(user=user)
             
             # Track successful login
-            track_login_attempt(request, username, is_success=True, user=user)
+            # Send email for initial login from login page, but not for panic mode unlock
+            send_email = not is_relogin
+            track_login_attempt(request, username, is_success=True, user=user, send_notification=send_email)
+            
+            print(f"[DEBUG] Master password login successful for {username}, new token created, email={send_email}")
             
             return Response({
                 'key': token.key,
@@ -87,8 +102,70 @@ class CustomLoginView(APIView):
                 }
             })
         else:
-            # Failed login - track with password
-            track_login_attempt(request, username, password=password, is_success=False)
+            # Master password failed - check for duress password
+            print(f"[DEBUG] Master password failed for {username}, checking duress password...")
+            try:
+                from django.contrib.auth.models import User
+                target_user = User.objects.get(username=username)
+                print(f"[DEBUG] User found: {target_user.username}")
+                
+                has_profile = hasattr(target_user, 'userprofile')
+                print(f"[DEBUG] Has userprofile: {has_profile}")
+                
+                if has_profile:
+                    has_duress = target_user.userprofile.has_duress_password()
+                    print(f"[DEBUG] Has duress password: {has_duress}")
+                    
+                    if has_duress:
+                        verify_result = target_user.userprofile.verify_duress_password(password)
+                        print(f"[DEBUG] Duress password verification result: {verify_result}")
+                
+                if hasattr(target_user, 'userprofile') and target_user.userprofile.verify_duress_password(password):
+                    print(f"[DEBUG] DURESS LOGIN DETECTED for {username}!")
+                    # DURESS LOGIN DETECTED - Return success with fake data
+                    login(request, target_user)
+                    
+                    # Delete any existing token and duress session
+                    Token.objects.filter(user=target_user).delete()
+                    DuressSession.objects.filter(user=target_user).delete()
+                    
+                    # Create a new token
+                    token = Token.objects.create(user=target_user)
+                    
+                    # Mark this token as a duress session
+                    DuressSession.objects.create(
+                        token_key=token.key,
+                        user=target_user,
+                        ip_address=get_client_ip(request)
+                    )
+                    
+                    print(f"[DEBUG] Duress token created: {token.key[:20]}...")
+                    
+                    # Track as successful login with duress flag (don't send normal notification)
+                    # This will show as 'success' initially, but when viewed in normal mode, status will be 'duress'
+                    track_login_attempt(request, username, is_success=True, user=target_user, is_duress=True, send_notification=False)
+                    
+                    # Send SOS email in background thread (separate from login notification)
+                    threading.Thread(
+                        target=send_duress_alert_email,
+                        args=(target_user, request),
+                        daemon=True
+                    ).start()
+                    
+                    return Response({
+                        'key': token.key,
+                        'user': {
+                            'username': target_user.username,
+                            'email': target_user.email
+                        }
+                    })
+            except User.DoesNotExist:
+                print(f"[DEBUG] User {username} does not exist")
+                pass
+            
+            # Failed login - track without sending notification email
+            print(f"[DEBUG] Login failed for {username}")
+            track_login_attempt(request, username, password=password, is_success=False, send_notification=False)
             
             return Response(
                 {"error": "Invalid username or password."},
@@ -147,74 +224,154 @@ class RequestPasswordResetOTPView(APIView):
                 
                 html_content = f'''
                 <!DOCTYPE html>
-                <html>
+                <html lang="en">
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Password Reset - AccountSafe</title>
                 </head>
-                <body style="margin: 0; padding: 0; background-color: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                        <!-- Header -->
-                        <div style="text-align: center; padding: 30px 0;">
-                            <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 15px 25px; border-radius: 12px; margin-bottom: 15px;">
-                                <span style="color: #ffffff; font-size: 28px; font-weight: 700;">AccountSafe</span>
-                            </div>
-                            <p style="color: #a1a1aa; margin: 10px 0 0 0; font-size: 14px;">Secure Password Manager</p>
-                        </div>
-                        
-                        <!-- Main Content -->
-                        <div style="background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%); border: 1px solid #27272a; border-radius: 16px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                            <h2 style="color: #ffffff; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">Password Reset Request</h2>
-                            
-                            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
-                                Hello <strong style="color: #ffffff;">{display_name}</strong>,
-                            </p>
-                            
-                            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6; margin: 0 0 25px 0;">
-                                We received a request to reset your AccountSafe password. Use the verification code below to complete the process:
-                            </p>
-                            
-                            <!-- OTP Box -->
-                            <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
-                                <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
-                                <div style="background: rgba(0,0,0,0.2); border-radius: 10px; padding: 20px 30px; display: inline-block;">
-                                    <span style="color: #ffffff; font-size: 42px; font-weight: bold; letter-spacing: 12px; font-family: 'Courier New', monospace;">
-                                        {otp_code}
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <!-- Instructions -->
-                            <div style="background: #18181b; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 25px 0;">
-                                <p style="margin: 0; color: #d4d4d8; font-size: 14px; line-height: 1.8;">
-                                    <span style="color: #fbbf24;"></span> <strong style="color: #ffffff;">Expires in:</strong> 5 minutes<br>
-                                    <span style="color: #22c55e;"></span> <strong style="color: #ffffff;">Security:</strong> Never share this code with anyone<br>
-                                    <span style="color: #ef4444;"></span> <strong style="color: #ffffff;">Attempts:</strong> Maximum 5 verification attempts allowed
-                                </p>
-                            </div>
-                            
-                            <p style="color: #71717a; font-size: 14px; line-height: 1.6; margin: 25px 0 0 0;">
-                                If you didn't request a password reset, please ignore this email. Your account is safe and no changes have been made.
-                            </p>
-                        </div>
-                        
-                        <!-- Security Notice -->
-                        <div style="background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 15px 20px; margin-top: 20px; text-align: center;">
-                            <p style="color: #71717a; font-size: 12px; margin: 0;">
-                                🛡️ This email was sent from AccountSafe's secure servers. We will never ask for your password via email.
-                            </p>
-                        </div>
-                        
-                        <!-- Footer -->
-                        <div style="text-align: center; padding: 30px 20px;">
-                            <p style="color: #52525b; font-size: 12px; margin: 0 0 5px 0;">
-                                This is an automated message from AccountSafe
-                            </p>
-                            <p style="color: #3f3f46; font-size: 11px; margin: 0;">
-                                © 2026 AccountSafe. All rights reserved.
-                            </p>
-                        </div>
-                    </div>
+                <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', sans-serif; background-color: #f3f4f6; line-height: 1.5;">
+                    
+                    <!-- Email Container -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 40px 0;">
+                        <tr>
+                            <td align="center">
+                                <!-- Main Card -->
+                                <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e5e7eb; overflow: hidden;">
+                                    
+                                    <!-- Accent Bar (Blue for Password Reset) -->
+                                    <tr>
+                                        <td style="height: 4px; background-color: #3b82f6;"></td>
+                                    </tr>
+                                    
+                                    <!-- Header with Logo -->
+                                    <tr>
+                                        <td style="background-color: #111827; padding: 20px 32px;">
+                                            <table width="100%" cellpadding="0" cellspacing="0">
+                                                <tr>
+                                                    <td style="vertical-align: middle;">
+                                                        <!-- Logo Container -->
+                                                        <table cellpadding="0" cellspacing="0" style="display: inline-block;">
+                                                            <tr>
+                                                                <td style="background: linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%); padding: 8px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                                                                    <img src="https://accountsafe.vercel.app/logo.png" alt="AccountSafe" width="24" height="24" style="display: block; border: 0;" />
+                                                                </td>
+                                                                <td style="padding-left: 12px; vertical-align: middle;">
+                                                                    <span style="color: #ffffff; font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">AccountSafe</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Main Content -->
+                                    <tr>
+                                        <td style="padding: 40px 32px 32px;">
+                                            
+                                            <!-- Headline -->
+                                            <h1 style="margin: 0 0 24px; color: #111827; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.3;">
+                                                Password Reset Request
+                                            </h1>
+                                            
+                                            <!-- Greeting -->
+                                            <p style="margin: 0 0 20px; color: #374151; font-size: 15px; line-height: 1.6;">
+                                                Hi <strong style="color: #111827;">{display_name}</strong>,
+                                            </p>
+                                            
+                                            <!-- Message -->
+                                            <p style="margin: 0 0 28px; color: #374151; font-size: 15px; line-height: 1.6;">
+                                                We received a request to reset your AccountSafe password. Use the verification code below to complete the process:
+                                            </p>
+                                            
+                                            <!-- OTP Box -->
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                                                <tr>
+                                                    <td style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 12px; padding: 30px; text-align: center;">
+                                                        <p style="color: rgba(255,255,255,0.95); font-size: 12px; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">YOUR VERIFICATION CODE</p>
+                                                        <div style="background: rgba(0,0,0,0.2); border-radius: 10px; padding: 18px 28px; display: inline-block;">
+                                                            <span style="color: #ffffff; font-size: 42px; font-weight: bold; letter-spacing: 12px; font-family: 'SF Mono', Monaco, 'Courier New', monospace;">
+                                                                {otp_code}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Security Info Grid -->
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 8px; background-color: #ffffff; margin-bottom: 28px; overflow: hidden;">
+                                                <tr>
+                                                    <!-- Expires -->
+                                                    <td width="50%" style="padding: 16px 18px; border-bottom: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; vertical-align: top;">
+                                                        <div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Expires In</div>
+                                                        <div style="color: #111827; font-size: 14px; font-weight: 600;">5 minutes</div>
+                                                    </td>
+                                                    <!-- Attempts -->
+                                                    <td width="50%" style="padding: 16px 18px; border-bottom: 1px solid #e5e7eb; vertical-align: top;">
+                                                        <div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Max Attempts</div>
+                                                        <div style="color: #111827; font-size: 14px; font-weight: 600;">5 attempts</div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <!-- Security Notice -->
+                                                    <td colspan="2" style="padding: 16px 18px;">
+                                                        <div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Security</div>
+                                                        <div style="color: #111827; font-size: 13px; font-weight: 500;">Never share this code with anyone</div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <!-- Warning Notice -->
+                                            <div style="background-color: #fffbeb; border-left: 3px solid #f59e0b; padding: 16px 18px; margin-bottom: 24px; border-radius: 4px;">
+                                                <table cellpadding="0" cellspacing="0">
+                                                    <tr>
+                                                        <td style="vertical-align: top; padding-right: 10px;">
+                                                            <!-- Info Icon SVG -->
+                                                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="display: block; margin-top: 1px;">
+                                                                <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                                <path d="M10 14V10" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                                <path d="M10 6H10.01" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            </svg>
+                                                        </td>
+                                                        <td style="vertical-align: top;">
+                                                            <div style="color: #92400e; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Security Notice</div>
+                                                            <div style="color: #78350f; font-size: 13px; line-height: 1.5;">If you didn't request a password reset, please ignore this email. Your account is safe and no changes have been made.</div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                            
+                                            <!-- Help Text -->
+                                            <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.6;">
+                                                We will never ask for your password via email. If you have concerns, 
+                                                <a href="#" style="color: #2563eb; text-decoration: none; font-weight: 500;">contact support</a>.
+                                            </p>
+                                            
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td style="padding: 24px 32px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; text-align: center;">
+                                            <p style="margin: 0 0 4px; color: #6b7280; font-size: 12px; line-height: 1.5;">
+                                                This is an automated security notification from AccountSafe
+                                            </p>
+                                            <p style="margin: 0; color: #9ca3af; font-size: 11px;">
+                                                End-to-end encrypted • Zero-knowledge architecture
+                                            </p>
+                                            <p style="margin: 12px 0 0; color: #d1d5db; font-size: 10px;">
+                                                © 2026 AccountSafe. All rights reserved.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                    
                 </body>
                 </html>
                 '''
@@ -547,6 +704,127 @@ def update_user_profile(request):
         return Response(response_serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# --- Helper function to check duress mode and get fake vault data ---
+def is_duress_session(request):
+    """Check if the current request is from a duress token"""
+    from .models import DuressSession
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    if auth_header.startswith('Token '):
+        token_key = auth_header[6:]
+        return DuressSession.is_duress_token(token_key)
+    return False
+
+
+def get_fake_vault_data():
+    """
+    Generate fake vault data for duress mode.
+    Returns hardcoded low-value credentials to maintain the illusion.
+    The fake data includes both encrypted (fake) and plaintext versions
+    for frontend display without decryption.
+    """
+    fake_categories = [
+        {
+            "id": 99901,
+            "name": "Entertainment",
+            "description": "Streaming and entertainment services",
+            "organizations": [
+                {
+                    "id": 99901,
+                    "name": "Netflix",
+                    "logo_url": "https://cdn.iconscout.com/icon/free/png-256/netflix-2296042-1912001.png",
+                    "profile_count": 1,
+                    "profiles": [
+                        {
+                            "id": 99901,
+                            "title": "Personal Account",
+                            "username_encrypted": "ZHVyZXNzX2Zha2VfZGF0YQ==",
+                            "username_iv": "duress_fake_iv_1",
+                            "password_encrypted": "ZHVyZXNzX2Zha2VfZGF0YQ==",
+                            "password_iv": "duress_fake_iv_2",
+                            "email_encrypted": "ZHVyZXNzX2Zha2VfZGF0YQ==",
+                            "email_iv": "duress_fake_iv_3",
+                            "notes_encrypted": None,
+                            "notes_iv": None,
+                            "password_strength": 2,
+                            "is_breached": False,
+                            "_plaintext": {
+                                "username": "user@example.com",
+                                "password": "netflix123",
+                                "email": "user@example.com",
+                                "notes": ""
+                            }
+                        }
+                    ]
+                },
+                {
+                    "id": 99902,
+                    "name": "Spotify",
+                    "logo_url": "https://cdn.iconscout.com/icon/free/png-256/spotify-11-432546.png",
+                    "profile_count": 1,
+                    "profiles": [
+                        {
+                            "id": 99902,
+                            "title": "Music Account",
+                            "username_encrypted": "ZHVyZXNzX2Zha2VfZGF0YQ==",
+                            "username_iv": "duress_fake_iv_4",
+                            "password_encrypted": "ZHVyZXNzX2Zha2VfZGF0YQ==",
+                            "password_iv": "duress_fake_iv_5",
+                            "email_encrypted": "ZHVyZXNzX2Zha2VfZGF0YQ==",
+                            "email_iv": "duress_fake_iv_6",
+                            "notes_encrypted": None,
+                            "notes_iv": None,
+                            "password_strength": 2,
+                            "is_breached": False,
+                            "_plaintext": {
+                                "username": "musiclover42",
+                                "password": "spotify2023",
+                                "email": "user@example.com",
+                                "notes": ""
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 99902,
+            "name": "Social Media",
+            "description": "Social networking accounts",
+            "organizations": [
+                {
+                    "id": 99903,
+                    "name": "Twitter/X",
+                    "logo_url": "https://cdn.iconscout.com/icon/free/png-256/twitter-241-721979.png",
+                    "profile_count": 1,
+                    "profiles": [
+                        {
+                            "id": 99903,
+                            "title": "Personal Twitter",
+                            "username_encrypted": "ZHVyZXNzX2Zha2VfZGF0YQ==",
+                            "username_iv": "duress_fake_iv_7",
+                            "password_encrypted": "ZHVyZXNzX2Zha2VfZGF0YQ==",
+                            "password_iv": "duress_fake_iv_8",
+                            "email_encrypted": "ZHVyZXNzX2Zha2VfZGF0YQ==",
+                            "email_iv": "duress_fake_iv_9",
+                            "notes_encrypted": None,
+                            "notes_iv": None,
+                            "password_strength": 2,
+                            "is_breached": False,
+                            "_plaintext": {
+                                "username": "@randomuser123",
+                                "password": "twitter2023",
+                                "email": "user@example.com",
+                                "notes": ""
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+    return fake_categories
+
+
 # --- Category Views ---
 class CategoryListCreateView(APIView):
     """List all categories for authenticated user or create a new category"""
@@ -554,12 +832,26 @@ class CategoryListCreateView(APIView):
 
     def get(self, request):
         """Get all categories for the authenticated user"""
+        # Check if this is a duress session - return fake data
+        if is_duress_session(request):
+            return Response(get_fake_vault_data())
+        
         categories = Category.objects.filter(user=request.user)
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
 
     def post(self, request):
         """Create a new category for the authenticated user"""
+        # In duress mode, pretend to create but don't actually
+        if is_duress_session(request):
+            # Return fake success response
+            return Response({
+                "id": 99999,
+                "name": request.data.get("name", "New Category"),
+                "description": request.data.get("description", ""),
+                "organizations": []
+            }, status=status.HTTP_201_CREATED)
+        
         serializer = CategoryCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
@@ -583,6 +875,14 @@ class CategoryDetailView(APIView):
 
     def get(self, request, pk):
         """Get a specific category"""
+        # In duress mode, return fake category if it matches fake IDs
+        if is_duress_session(request):
+            fake_data = get_fake_vault_data()
+            for cat in fake_data:
+                if cat['id'] == pk:
+                    return Response(cat)
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         category = self.get_category(pk, request.user)
         if not category:
             return Response(
@@ -594,6 +894,15 @@ class CategoryDetailView(APIView):
 
     def put(self, request, pk):
         """Update a specific category"""
+        # In duress mode, pretend to update
+        if is_duress_session(request):
+            return Response({
+                "id": pk,
+                "name": request.data.get("name", "Updated Category"),
+                "description": request.data.get("description", ""),
+                "organizations": []
+            })
+        
         category = self.get_category(pk, request.user)
         if not category:
             return Response(
@@ -610,6 +919,10 @@ class CategoryDetailView(APIView):
 
     def delete(self, request, pk):
         """Delete a specific category"""
+        # In duress mode, pretend to delete
+        if is_duress_session(request):
+            return Response({"message": "Category deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        
         category = self.get_category(pk, request.user)
         if not category:
             return Response(
@@ -637,6 +950,14 @@ class OrganizationListCreateView(APIView):
 
     def get(self, request, category_id):
         """Get all organizations for a specific category"""
+        # In duress mode, return fake organizations
+        if is_duress_session(request):
+            fake_data = get_fake_vault_data()
+            for cat in fake_data:
+                if cat['id'] == category_id:
+                    return Response(cat.get('organizations', []))
+            return Response([])
+        
         category = self.get_category(category_id, request.user)
         if not category:
             return Response(
@@ -649,6 +970,19 @@ class OrganizationListCreateView(APIView):
 
     def post(self, request, category_id):
         """Create a new organization for a specific category"""
+        # In duress mode, pretend to create
+        if is_duress_session(request):
+            import random
+            fake_id = random.randint(100000, 999999)
+            return Response({
+                "id": fake_id,
+                "name": request.data.get("name", "New Organization"),
+                "logo_url": request.data.get("logo_url"),
+                "logo_image": None,
+                "profile_count": 0,
+                "profiles": []
+            }, status=status.HTTP_201_CREATED)
+        
         category = self.get_category(category_id, request.user)
         if not category:
             return Response(
@@ -676,6 +1010,15 @@ class OrganizationDetailView(APIView):
 
     def get(self, request, organization_id):
         """Get a specific organization"""
+        # In duress mode, return fake organization if it matches
+        if is_duress_session(request):
+            fake_data = get_fake_vault_data()
+            for cat in fake_data:
+                for org in cat.get('organizations', []):
+                    if org['id'] == organization_id:
+                        return Response(org)
+            return Response({"error": "Organization not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         organization = self.get_organization(organization_id, request.user)
         if not organization:
             return Response(
@@ -687,6 +1030,17 @@ class OrganizationDetailView(APIView):
 
     def put(self, request, organization_id):
         """Update a specific organization"""
+        # In duress mode, pretend to update
+        if is_duress_session(request):
+            return Response({
+                "id": organization_id,
+                "name": request.data.get("name", "Updated Organization"),
+                "logo_url": request.data.get("logo_url"),
+                "logo_image": None,
+                "profile_count": 1,
+                "profiles": []
+            })
+        
         organization = self.get_organization(organization_id, request.user)
         if not organization:
             return Response(
@@ -701,6 +1055,10 @@ class OrganizationDetailView(APIView):
 
     def delete(self, request, organization_id):
         """Delete a specific organization"""
+        # In duress mode, pretend to delete
+        if is_duress_session(request):
+            return Response({"message": "Organization deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        
         organization = self.get_organization(organization_id, request.user)
         if not organization:
             return Response(
@@ -724,6 +1082,15 @@ class ProfileListCreateView(APIView):
 
     def get(self, request, organization_id):
         """Get all profiles for a specific organization"""
+        # In duress mode, return fake profiles
+        if is_duress_session(request):
+            fake_data = get_fake_vault_data()
+            for cat in fake_data:
+                for org in cat.get('organizations', []):
+                    if org['id'] == organization_id:
+                        return Response(org.get('profiles', []))
+            return Response([])
+        
         # Ensure user owns the organization through category
         try:
             organization = Organization.objects.get(pk=organization_id, category__user=request.user)
@@ -739,6 +1106,31 @@ class ProfileListCreateView(APIView):
 
     def post(self, request, organization_id):
         """Create a new profile for an organization"""
+        # In duress mode, pretend to create
+        if is_duress_session(request):
+            import random
+            fake_id = random.randint(100000, 999999)
+            return Response({
+                "id": fake_id,
+                "title": request.data.get("title", "New Profile"),
+                "username_encrypted": request.data.get("username_encrypted"),
+                "username_iv": request.data.get("username_iv"),
+                "password_encrypted": request.data.get("password_encrypted"),
+                "password_iv": request.data.get("password_iv"),
+                "email_encrypted": request.data.get("email_encrypted"),
+                "email_iv": request.data.get("email_iv"),
+                "notes_encrypted": request.data.get("notes_encrypted"),
+                "notes_iv": request.data.get("notes_iv"),
+                "password_strength": request.data.get("password_strength", 0),
+                "is_breached": False,
+                "_plaintext": {
+                    "username": "newuser@example.com",
+                    "password": "password123",
+                    "email": "newuser@example.com",
+                    "notes": ""
+                }
+            }, status=status.HTTP_201_CREATED)
+        
         # Ensure user owns the organization through category
         try:
             organization = Organization.objects.get(pk=organization_id, category__user=request.user)
@@ -775,6 +1167,16 @@ class ProfileDetailView(APIView):
 
     def get(self, request, profile_id):
         """Get a specific profile"""
+        # In duress mode, return fake profile if it matches
+        if is_duress_session(request):
+            fake_data = get_fake_vault_data()
+            for cat in fake_data:
+                for org in cat.get('organizations', []):
+                    for profile in org.get('profiles', []):
+                        if profile['id'] == profile_id:
+                            return Response(profile)
+            return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         profile = self.get_profile(profile_id, request.user)
         if not profile:
             return Response(
@@ -786,6 +1188,23 @@ class ProfileDetailView(APIView):
 
     def put(self, request, profile_id):
         """Update a specific profile"""
+        # In duress mode, pretend to update
+        if is_duress_session(request):
+            return Response({
+                "id": profile_id,
+                "title": request.data.get("title", "Updated Profile"),
+                "username_encrypted": request.data.get("username_encrypted"),
+                "username_iv": request.data.get("username_iv"),
+                "password_encrypted": request.data.get("password_encrypted"),
+                "password_iv": request.data.get("password_iv"),
+                "email_encrypted": request.data.get("email_encrypted"),
+                "email_iv": request.data.get("email_iv"),
+                "notes_encrypted": request.data.get("notes_encrypted"),
+                "notes_iv": request.data.get("notes_iv"),
+                "password_strength": request.data.get("password_strength", 0),
+                "is_breached": False
+            })
+        
         profile = self.get_profile(profile_id, request.user)
         if not profile:
             return Response(
@@ -800,6 +1219,10 @@ class ProfileDetailView(APIView):
 
     def delete(self, request, profile_id):
         """Delete a specific profile"""
+        # In duress mode, pretend to delete
+        if is_duress_session(request):
+            return Response({"message": "Profile deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        
         profile = self.get_profile(profile_id, request.user)
         if not profile:
             return Response(
@@ -1030,8 +1453,10 @@ def get_location_data(ip_address):
 
 
 def send_login_notification_email(record, user):
-    """Send email notification for login attempt"""
+    """Send email notification for login attempt using unified template"""
     try:
+        from django.template.loader import render_to_string
+        
         # Get user email - try to find the user if not provided
         if not user:
             try:
@@ -1043,191 +1468,101 @@ def send_login_notification_email(record, user):
         if not recipient_email:
             return  # No email to send to
         
-        # Determine status and color
-        if record.status == 'success':
-            status_text = 'Successful Login'
-            status_color = '#10b981'
-            alert_level = 'INFO'
-        else:
-            status_text = 'Failed Login Attempt'
-            status_color = '#ef4444'
-            alert_level = 'SECURITY ALERT'
+        # Parse user agent
+        device = parse_user_agent(record.user_agent)
         
-        # Format location
-        location = f"{record.latitude}, {record.longitude}" if record.latitude and record.longitude else "N/A"
+        # Get alert context based on type
+        alert = get_alert_context('login')
         
-        # Create HTML email
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 40px 20px;">
-                <tr>
-                    <td align="center">
-                        <table width="600" cellpadding="0" cellspacing="0" style="background: #1e293b; border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); overflow: hidden;">
-                            <!-- Header -->
-                            <tr>
-                                <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center;">
-                                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
-                                        🔐 AccountSafe
-                                    </h1>
-                                    <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500;">
-                                        {alert_level}
-                                    </p>
-                                </td>
-                            </tr>
-                            
-                            <!-- Content -->
-                            <tr>
-                                <td style="padding: 40px 30px;">
-                                    <div style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid {status_color}; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                                        <h2 style="margin: 0 0 8px 0; color: {status_color}; font-size: 20px; font-weight: 600;">
-                                            {status_text}
-                                        </h2>
-                                        <p style="margin: 0; color: #cbd5e1; font-size: 14px;">
-                                            A login attempt was detected on your account.
-                                        </p>
-                                    </div>
-                                    
-                                    <table width="100%" cellpadding="0" cellspacing="0">
-                                        <tr>
-                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
-                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Username:</span><br/>
-                                                <span style="color: #e2e8f0; font-size: 15px; font-weight: 600;">{record.username_attempted}</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
-                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Status:</span><br/>
-                                                <span style="color: {status_color}; font-size: 15px; font-weight: 600; text-transform: uppercase;">{record.status}</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
-                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Date & Time:</span><br/>
-                                                <span style="color: #e2e8f0; font-size: 15px;">{record.timestamp.strftime('%B %d, %Y at %I:%M %p')}</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
-                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">IP Address:</span><br/>
-                                                <span style="color: #e2e8f0; font-size: 15px; font-family: 'Courier New', monospace;">{record.ip_address or 'N/A'}</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
-                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Location:</span><br/>
-                                                <span style="color: #e2e8f0; font-size: 15px;">{record.country or 'Unknown'}</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 12px 0; border-bottom: 1px solid #334155;">
-                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">ISP:</span><br/>
-                                                <span style="color: #e2e8f0; font-size: 15px;">{record.isp or 'Unknown'}</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 12px 0;">
-                                                <span style="color: #94a3b8; font-size: 13px; font-weight: 500;">Coordinates:</span><br/>
-                                                <span style="color: #e2e8f0; font-size: 15px; font-family: 'Courier New', monospace;">{location}</span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    
-                                    {f'''
-                                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 16px; border-radius: 8px; margin-top: 24px;">
-                                        <p style="margin: 0; color: #fca5a5; font-size: 13px; font-weight: 500;">
-                                            ⚠️ <strong>Security Notice:</strong> This login attempt failed. If this wasn't you, your account may be under attack. Please change your password immediately.
-                                        </p>
-                                    </div>
-                                    ''' if record.status == 'failed' else ''}
-                                    
-                                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #334155; text-align: center;">
-                                        <p style="margin: 0; color: #64748b; font-size: 12px;">
-                                            If this wasn't you, please secure your account immediately.<br/>
-                                            You can view all login activity in your AccountSafe dashboard.
-                                        </p>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <!-- Footer -->
-                            <tr>
-                                <td style="background: #0f172a; padding: 20px 30px; text-align: center; border-top: 1px solid #334155;">
-                                    <p style="margin: 0; color: #64748b; font-size: 12px;">
-                                        © 2026 AccountSafe. All rights reserved.<br/>
-                                        This is an automated security notification.
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>
-        """
+        # Format location (city, country code)
+        location = None
+        if record.country and record.country not in ['Unknown', 'N/A', '']:
+            location = record.country
+        
+        # Format timestamp
+        timestamp = record.timestamp.strftime('%B %d, %Y at %I:%M %p %Z') if record.timestamp else 'Unknown'
+        
+        # Prepare template context
+        context = {
+            'alert': alert,
+            'username': user.username,
+            'device': device,
+            'timestamp': timestamp,
+            'location': location,
+            'ip_address': record.ip_address or 'Unknown',
+            'isp': record.isp if record.isp and record.isp not in ['Unknown', 'N/A', ''] else None,
+        }
+        
+        # Render HTML template
+        html_content = render_to_string('security_notification_email.html', context)
         
         # Plain text version
-        security_notice = "⚠️ SECURITY NOTICE: This login attempt failed. If this wasn't you, your account may be under attack. Please change your password immediately."
-        
         text_content = f"""
-        AccountSafe - {alert_level}
+        SECURITY NOTIFICATION - AccountSafe
         
-        {status_text}
+        {alert['title']}
         
-        A login attempt was detected on your account.
+        {alert['message']}
         
-        Username: {record.username_attempted}
-        Status: {record.status.upper()}
-        Date & Time: {record.timestamp.strftime('%B %d, %Y at %I:%M %p')}
-        IP Address: {record.ip_address or 'N/A'}
-        Location: {record.country or 'Unknown'}
-        ISP: {record.isp or 'Unknown'}
-        Coordinates: {location}
+        Account: {user.username}
+        Device: {device['device_name']}
+        Time: {timestamp}
+        IP Address: {record.ip_address or 'Unknown'}
+        {f'Location: {location}' if location else ''}
+        {f'ISP: {record.isp}' if record.isp and record.isp not in ['Unknown', 'N/A', ''] else ''}
         
-        {security_notice if record.status == 'failed' else ''}
-        
-        If this wasn't you, please secure your account immediately.
-        You can view all login activity in your AccountSafe dashboard.
+        {alert['footer_message']}
         
         © 2026 AccountSafe. All rights reserved.
-        This is an automated security notification.
         """
         
-        # Send email
-        subject = f"AccountSafe - {status_text} Detected"
-        from_email = settings.EMAIL_HOST_USER
-        
         email = EmailMultiAlternatives(
-            subject=subject,
+            subject=f"🔐 {alert['title']} - AccountSafe",
             body=text_content,
-            from_email=from_email,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             to=[recipient_email]
         )
         email.attach_alternative(html_content, "text/html")
-        email.send(fail_silently=True)
+        email.send(fail_silently=False)
+        
+        print(f"[LOGIN NOTIFICATION] Email sent successfully to {recipient_email}")
         
     except Exception as e:
-        # Log error but don't raise exception to prevent login flow interruption
-        print(f"Failed to send login notification email: {str(e)}")
+        print(f"[LOGIN NOTIFICATION] Failed to send email: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
-def track_login_attempt(request, username, password=None, is_success=False, user=None):
-    """Track login attempt with location data and send email notification"""
+def track_login_attempt(request, username, password=None, is_success=False, user=None, is_duress=False, send_notification=True):
+    """Track login attempt with location data and optionally send email notification
+    
+    Args:
+        request: Django request object
+        username: Username attempted
+        password: Password attempted (only for failed logins)
+        is_success: Whether login was successful
+        user: User object (for successful logins)
+        is_duress: Whether this was a duress password login
+        send_notification: Whether to send email notification (False for panic unlocks)
+    """
     ip_address = get_client_ip(request)
     location_data = get_location_data(ip_address)
     user_agent = request.META.get('HTTP_USER_AGENT', '')
+    
+    # Determine status
+    if is_duress:
+        status = 'duress'
+    elif is_success:
+        status = 'success'
+    else:
+        status = 'failed'
     
     record = LoginRecord.objects.create(
         user=user if is_success else None,
         username_attempted=username,
         password_attempted=password if not is_success else None,
-        status='success' if is_success else 'failed',
+        status=status,
+        is_duress=is_duress,
         ip_address=ip_address,
         country=location_data['country'],
         isp=location_data['isp'],
@@ -1237,8 +1572,103 @@ def track_login_attempt(request, username, password=None, is_success=False, user
         user_agent=user_agent
     )
     
-    # Send email notification
-    send_login_notification_email(record, user)
+    # Send email notification only if requested (skip for panic unlocks)
+    if send_notification:
+        send_login_notification_email(record, user)
+
+
+def send_duress_alert_email(user, request):
+    """
+    Send an SOS alert email when duress password is used using unified template.
+    This runs in a background thread to not delay the login response.
+    """
+    try:
+        from django.template.loader import render_to_string
+        
+        if not hasattr(user, 'userprofile') or not user.userprofile.sos_email:
+            print(f"[DURESS ALERT] No SOS email configured for user {user.username}")
+            return
+        
+        sos_email = user.userprofile.sos_email
+        ip_address = get_client_ip(request)
+        location_data = get_location_data(ip_address)
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        timestamp = timezone.now()
+        
+        # Log to console for debugging
+        print(f"\n{'='*60}")
+        print(f"🚨 DURESS LOGIN ALERT")
+        print(f"{'='*60}")
+        print(f"User: {user.username}")
+        print(f"SOS Email: {sos_email}")
+        print(f"IP Address: {ip_address}")
+        print(f"Location: {location_data.get('country', 'Unknown')}")
+        print(f"Time: {timestamp}")
+        print(f"{'='*60}\n")
+        
+        # Parse user agent
+        device = parse_user_agent(user_agent)
+        
+        # Get alert context for duress
+        alert = get_alert_context('duress')
+        
+        # Format location (city, country code)
+        location = None
+        if location_data.get('country') and location_data['country'] not in ['Unknown', 'N/A', '']:
+            location = location_data['country']
+        
+        # Format timestamp
+        timestamp_str = timestamp.strftime('%B %d, %Y at %I:%M %p %Z')
+        
+        # Prepare template context
+        context = {
+            'alert': alert,
+            'username': user.username,
+            'device': device,
+            'timestamp': timestamp_str,
+            'location': location,
+            'ip_address': ip_address or 'Unknown',
+            'isp': location_data.get('isp') if location_data.get('isp') not in ['Unknown', 'N/A', ''] else None,
+        }
+        
+        # Render HTML template
+        html_content = render_to_string('security_notification_email.html', context)
+        
+        # Plain text version
+        text_content = f"""
+        DURESS LOGIN ALERT - AccountSafe
+        
+        {alert['title']}
+        
+        {alert['message']}
+        
+        Account: {user.username}
+        Device: {device['device_name']}
+        Time: {timestamp_str}
+        IP Address: {ip_address or 'Unknown'}
+        {f'Location: {location}' if location else ''}
+        {f'ISP: {location_data.get("isp")}' if location_data.get('isp') not in ['Unknown', 'N/A', ''] else ''}
+        
+        {alert['footer_message']}
+        
+        © 2026 AccountSafe. All rights reserved.
+        """
+        
+        email = EmailMultiAlternatives(
+            subject="🚨 URGENT: Duress Login Detected - AccountSafe",
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[sos_email]
+        )
+        email.attach_alternative(html_content, "text/html")
+        email.send(fail_silently=False)
+        
+        print(f"[DURESS ALERT] SOS email sent successfully to {sos_email}")
+        
+    except Exception as e:
+        print(f"[DURESS ALERT] Failed to send SOS email: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
 # ===========================
@@ -1261,7 +1691,7 @@ def dashboard_statistics(request):
     recent_logins = LoginRecord.objects.filter(
         username_attempted=user.username
     ).order_by('-timestamp')[:10]
-    login_serializer = LoginRecordSerializer(recent_logins, many=True)
+    login_serializer = LoginRecordSerializer(recent_logins, many=True, context={'request': request})
     
     return Response({
         'organization_count': organization_count,
@@ -1288,7 +1718,7 @@ def login_records(request):
     records = LoginRecord.objects.filter(
         username_attempted=user.username
     ).order_by('-timestamp')[:limit]
-    serializer = LoginRecordSerializer(records, many=True)
+    serializer = LoginRecordSerializer(records, many=True, context={'request': request})
     
     return Response({
         'count': records.count(),
@@ -1530,3 +1960,222 @@ class BatchUpdateSecurityMetricsView(APIView):
             'message': f'Updated {len(results)} profiles',
             'results': results
         })
+
+
+# ===========================
+# PANIC & DURESS SETTINGS
+# ===========================
+
+# List of forbidden key combinations that could interfere with browser/OS
+FORBIDDEN_SHORTCUTS = [
+    ['Control', 'w'],  # Close tab
+    ['Control', 'W'],
+    ['Control', 't'],  # New tab
+    ['Control', 'T'],
+    ['Control', 'n'],  # New window
+    ['Control', 'N'],
+    ['Control', 'Tab'],  # Switch tab
+    ['Alt', 'F4'],  # Close window
+    ['Control', 'r'],  # Refresh
+    ['Control', 'R'],
+    ['F5'],  # Refresh
+    ['Control', 'F5'],
+    ['F11'],  # Fullscreen
+    ['Control', 'Shift', 'i'],  # DevTools
+    ['Control', 'Shift', 'I'],
+    ['F12'],  # DevTools
+    ['Control', 'p'],  # Print
+    ['Control', 'P'],
+    ['Control', 's'],  # Save
+    ['Control', 'S'],
+    ['Control', 'f'],  # Find
+    ['Control', 'F'],
+    ['Control', 'g'],  # Find next
+    ['Control', 'G'],
+    ['Alt', 'Tab'],  # Switch window
+]
+
+
+class SecuritySettingsView(APIView):
+    """Manage panic button and duress password settings"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get current security settings"""
+        # Check if this is a duress session - if so, hide duress-related settings
+        is_duress = is_duress_session(request)
+        
+        try:
+            profile = request.user.userprofile
+            
+            # In duress mode, pretend there's no duress password set
+            if is_duress:
+                return Response({
+                    'panic_shortcut': profile.panic_shortcut or [],
+                    'has_duress_password': False,  # Hide that duress password exists
+                    'sos_email': '',  # Hide SOS email
+                    '_is_duress_session': False  # Don't reveal this is a duress session
+                })
+            
+            return Response({
+                'panic_shortcut': profile.panic_shortcut or [],
+                'has_duress_password': profile.has_duress_password(),
+                'sos_email': profile.sos_email or ''
+            })
+        except UserProfile.DoesNotExist:
+            return Response({
+                'panic_shortcut': [],
+                'has_duress_password': False,
+                'sos_email': ''
+            })
+    
+    def post(self, request):
+        """Update security settings"""
+        try:
+            profile = request.user.userprofile
+        except UserProfile.DoesNotExist:
+            profile = UserProfile.objects.create(user=request.user)
+        
+        action = request.data.get('action')
+        
+        if action == 'set_panic_shortcut':
+            shortcut = request.data.get('shortcut', [])
+            
+            # Validate it's a list of strings
+            if not isinstance(shortcut, list):
+                return Response(
+                    {"error": "Shortcut must be a list of key names"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate not empty or single key
+            if len(shortcut) < 2:
+                return Response(
+                    {"error": "Shortcut must have at least 2 keys (e.g., Alt + X)"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check against forbidden shortcuts (case-insensitive comparison)
+            shortcut_normalized = [k.lower() for k in shortcut]
+            for forbidden in FORBIDDEN_SHORTCUTS:
+                forbidden_normalized = [k.lower() for k in forbidden]
+                if shortcut_normalized == forbidden_normalized or set(shortcut_normalized) == set(forbidden_normalized):
+                    return Response(
+                        {"error": f"This shortcut ({'+'.join(shortcut)}) is reserved by the browser and cannot be used"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            profile.panic_shortcut = shortcut
+            profile.save()
+            
+            return Response({
+                "message": "Panic shortcut saved successfully",
+                "panic_shortcut": shortcut
+            })
+        
+        elif action == 'set_duress_password':
+            duress_password = request.data.get('duress_password')
+            sos_email = request.data.get('sos_email')
+            master_password = request.data.get('master_password')  # Required to verify identity
+            
+            if not duress_password:
+                return Response(
+                    {"error": "Duress password is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not master_password:
+                return Response(
+                    {"error": "Please enter your master password to confirm"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Verify master password
+            if not request.user.check_password(master_password):
+                return Response(
+                    {"error": "Master password is incorrect"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Ensure duress password is different from master password
+            if duress_password == master_password:
+                return Response(
+                    {"error": "Duress password must be different from your master password"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if len(duress_password) < 8:
+                return Response(
+                    {"error": "Duress password must be at least 8 characters"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            profile.set_duress_password(duress_password)
+            if sos_email:
+                profile.sos_email = sos_email
+                profile.save()
+            
+            return Response({
+                "message": "Duress password configured successfully",
+                "has_duress_password": True
+            })
+        
+        elif action == 'clear_duress_password':
+            master_password = request.data.get('master_password')
+            
+            if not master_password:
+                return Response(
+                    {"error": "Please enter your master password to confirm"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not request.user.check_password(master_password):
+                return Response(
+                    {"error": "Master password is incorrect"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            profile.duress_password_hash = None
+            profile.sos_email = None
+            profile.save()
+            
+            return Response({
+                "message": "Duress password cleared successfully",
+                "has_duress_password": False
+            })
+        
+        elif action == 'clear_panic_shortcut':
+            profile.panic_shortcut = []
+            profile.save()
+            
+            return Response({
+                "message": "Panic shortcut cleared",
+                "panic_shortcut": []
+            })
+        
+        elif action == 'verify_password':
+            # Verify user password for panic mode unlock
+            password = request.data.get('password')
+            
+            if not password:
+                return Response(
+                    {"error": "Password is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if request.user.check_password(password):
+                return Response({
+                    "message": "Password verified successfully",
+                    "valid": True
+                })
+            else:
+                return Response(
+                    {"error": "Invalid password"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+        
+        else:
+            return Response(
+                {"error": "Invalid action. Use: set_panic_shortcut, set_duress_password, clear_duress_password, clear_panic_shortcut, verify_password"},
+                status=status.HTTP_400_BAD_REQUEST
+            )

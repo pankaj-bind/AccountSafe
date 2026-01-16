@@ -19,3 +19,5 @@ Pillow
 
 # Encryption
 cryptography
+# User-Agent parsing for emails
+user-agents

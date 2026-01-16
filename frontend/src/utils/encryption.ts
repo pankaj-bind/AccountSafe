@@ -230,6 +230,7 @@ export async function encryptCredentialFields(
 
 /**
  * Decrypt an object's encrypted fields
+ * If the data contains a _plaintext field (for duress mode), use that directly
  */
 export async function decryptCredentialFields(
   encryptedData: any,
@@ -241,6 +242,18 @@ export async function decryptCredentialFields(
   notes?: string;
   recovery_codes?: string;
 }> {
+  // Check for plaintext data (used in duress mode with fake vault)
+  // The frontend is unaware it's in duress mode - it just sees data
+  if (encryptedData._plaintext) {
+    return {
+      username: encryptedData._plaintext.username || null,
+      password: encryptedData._plaintext.password || null,
+      email: encryptedData._plaintext.email || null,
+      notes: encryptedData._plaintext.notes || null,
+      recovery_codes: encryptedData._plaintext.recovery_codes || null,
+    };
+  }
+
   const result: any = {};
 
   const fieldNames = ['username', 'password', 'email', 'notes', 'recovery_codes'];
