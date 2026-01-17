@@ -8,6 +8,7 @@ import { maskSensitiveData } from '../utils/formatters';
 import { encryptCredentialFields, decryptCredentialFields } from '../utils/encryption';
 import { getSessionEncryptionKey } from '../services/encryptionService';
 import { checkPasswordBreach, updatePasswordStrength, updateBreachStatus, updatePasswordHash } from '../services/securityService';
+import { useClipboard } from '../hooks/useClipboard';
 import PasswordReentryModal from './PasswordReentryModal';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -838,13 +839,17 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     setError(null);
   };
 
-  const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text).then(() => {
+  // Use secure clipboard hook with auto-clear
+  const { copy: secureCopy } = useClipboard({ clearAfter: 30000 });
+
+  const copyToClipboard = async (text: string, field: string) => {
+    const success = await secureCopy(text);
+    if (success) {
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
-    }).catch(() => {
+    } else {
       setCopiedField(null);
-    });
+    }
   };
 
   const togglePasswordVisibility = (profileId: number) => {
@@ -876,8 +881,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   };
 
   const handleCopyRecoveryCode = async (profileId: number, code: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(code);
+    const success = await secureCopy(code);
+    if (success) {
       setCopiedField(`recovery-${profileId}-${index}`);
       setTimeout(() => setCopiedField(null), 1000);
       
@@ -893,8 +898,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         }
         return updated;
       });
-    } catch (err) {
-      console.error('Failed to copy recovery code:', err);
+    } else {
+      console.error('Failed to copy recovery code');
     }
   };
 
@@ -1002,21 +1007,23 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
   const handleCopyShareLink = async () => {
     if (shareUrl) {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopiedShare(true);
-      setSuccess('Link copied to clipboard!');
-      // Quick visual feedback for the button
-      setTimeout(() => {
-        setCopiedShare(false);
-      }, 1200);
-      // Close modal and clear share state after success message
-      setTimeout(() => {
-        setSuccess(null);
-        setShowShareModal(false);
-        setShareUrl(null);
-        setShareProfileId(null);
-        setShareExpiryHours(24);
-      }, 2000);
+      const success = await secureCopy(shareUrl);
+      if (success) {
+        setCopiedShare(true);
+        setSuccess('Link copied to clipboard!');
+        // Quick visual feedback for the button
+        setTimeout(() => {
+          setCopiedShare(false);
+        }, 1200);
+        // Close modal and clear share state after success message
+        setTimeout(() => {
+          setSuccess(null);
+          setShowShareModal(false);
+          setShareUrl(null);
+          setShareProfileId(null);
+          setShareExpiryHours(24);
+        }, 2000);
+      }
     }
   };
 

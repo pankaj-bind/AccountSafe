@@ -2,6 +2,7 @@ import React, { useState, useLayoutEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FileLock, Copy, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { useClipboard } from '../hooks/useClipboard';
 import apiClient from '../api/apiClient';
 
 // Hide navbar on this page for cleaner mobile experience
@@ -91,10 +92,15 @@ const SharedSecretPage: React.FC = () => {
     }
   };
 
+  // Use secure clipboard hook with auto-clear
+  const { copy: secureCopy } = useClipboard({ clearAfter: 30000 });
+
   const copyToClipboard = async (text: string, field: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
+    const success = await secureCopy(text);
+    if (success) {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    }
   };
 
   // Loading State
