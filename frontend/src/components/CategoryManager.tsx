@@ -7,6 +7,8 @@ import { getPinStatus } from '../services/pinService';
 import PinVerificationModal from './PinVerificationModal';
 import { VaultGridSkeleton, EmptyState } from './Skeleton';
 import { formatCredentialCount } from '../utils/formatters';
+import BrandSearchInput from './BrandSearchInput';
+import { BrandSearchResult, getBrandLogoUrl, getFallbackLogoUrl } from '../services/brandService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -17,6 +19,7 @@ interface Organization {
   name: string;
   logo_url: string | null;
   logo_image: string | null;
+  website_link?: string | null;
   profile_count: number;
 }
 
@@ -97,6 +100,12 @@ const PencilIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
+const ExternalLinkIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+  </svg>
+);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Organization Card Component
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -134,6 +143,21 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onEdit, onCli
           {/* Dropdown Menu */}
           {showMenu && (
             <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden z-10 animate-fadeIn">
+              {org.website_link && (
+                <button
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (org.website_link) {
+                      window.open(org.website_link, '_blank', 'noopener,noreferrer');
+                    }
+                    setShowMenu(false); 
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  <ExternalLinkIcon className="w-4 h-4 text-emerald-500" />
+                  Visit Link
+                </button>
+              )}
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
@@ -330,7 +354,7 @@ const CategoryManager: React.FC = () => {
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState({ name: '', description: '' });
-  const [newOrg, setNewOrg] = useState({ name: '', logo_url: '' });
+  const [newOrg, setNewOrg] = useState({ name: '', logo_url: '', website_link: '' });
   const [editingOrgId, setEditingOrgId] = useState<number | null>(null);
   
   // PIN verification state
@@ -416,7 +440,11 @@ const CategoryManager: React.FC = () => {
         // Update existing organization
         const response = await apiClient.put(
           `organizations/${editingOrgId}/`,
-          { name: newOrg.name, logo_url: newOrg.logo_url || null }
+          { 
+            name: newOrg.name, 
+            logo_url: newOrg.logo_url || null,
+            website_link: newOrg.website_link || null
+          }
         );
         
         setCategories(categories.map(cat => 
@@ -433,7 +461,11 @@ const CategoryManager: React.FC = () => {
         // Create new organization
         const response = await apiClient.post(
           `categories/${selectedCategoryId}/organizations/`,
-          { name: newOrg.name, logo_url: newOrg.logo_url || null }
+          { 
+            name: newOrg.name, 
+            logo_url: newOrg.logo_url || null,
+            website_link: newOrg.website_link || null
+          }
         );
         
         setCategories(categories.map(cat => 
@@ -443,7 +475,7 @@ const CategoryManager: React.FC = () => {
         ));
       }
       
-      setNewOrg({ name: '', logo_url: '' });
+      setNewOrg({ name: '', logo_url: '', website_link: '' });
       setShowOrgModal(false);
       setSelectedCategoryId(null);
       setEditingOrgId(null);
@@ -456,9 +488,23 @@ const CategoryManager: React.FC = () => {
   const handleEditOrganization = (org: Organization, categoryId: number) => {
     setEditingOrgId(org.id);
     setSelectedCategoryId(categoryId);
-    setNewOrg({ name: org.name, logo_url: org.logo_url || '' });
+    setNewOrg({ name: org.name, logo_url: org.logo_url || '', website_link: org.website_link || '' });
     setShowOrgModal(true);
     setError(null);
+  };
+
+  const handleBrandSelect = (brand: BrandSearchResult) => {
+    // Auto-fill organization name, logo URL, and website link from selected brand
+    // Use the logo from API response if available, otherwise generate one
+    const logoUrl = brand.logo || (brand.isFallback 
+      ? getFallbackLogoUrl(brand.domain)
+      : getBrandLogoUrl(brand.domain, 512));
+    
+    setNewOrg({ 
+      name: brand.name, 
+      logo_url: logoUrl,
+      website_link: brand.website_link || `https://${brand.domain}`
+    });
   };
 
   const handleDeleteCategory = async (id: number) => {
@@ -670,7 +716,7 @@ const CategoryManager: React.FC = () => {
                 key={category.id}
                 category={category}
                 searchQuery={searchQuery}
-                onAddOrg={() => { setSelectedCategoryId(category.id); setShowOrgModal(true); setError(null); setEditingOrgId(null); setNewOrg({ name: '', logo_url: '' }); }}
+                onAddOrg={() => { setSelectedCategoryId(category.id); setShowOrgModal(true); setError(null); setEditingOrgId(null); setNewOrg({ name: '', logo_url: '', website_link: '' }); }}
                 onEditOrg={(org) => handleEditOrganization(org, category.id)}
                 onDeleteCategory={() => handleDeleteCategory(category.id)}
                 onOrgClick={handleOrganizationClick}
@@ -808,15 +854,16 @@ const CategoryManager: React.FC = () => {
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Organization Name <span className="text-red-500 dark:text-red-400">*</span>
                 </label>
-                <input
-                  type="text"
+                <BrandSearchInput
                   value={newOrg.name}
-                  onChange={(e) => setNewOrg({ ...newOrg, name: e.target.value })}
+                  onChange={(value) => setNewOrg({ ...newOrg, name: value })}
+                  onBrandSelect={handleBrandSelect}
                   placeholder="e.g., Google, GitHub, Netflix"
                   className="as-input w-full text-sm sm:text-base"
-                  autoFocus
-                  required
                 />
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                  Start typing to see brand suggestions with logos
+                </p>
               </div>
               
               <div>
@@ -830,16 +877,55 @@ const CategoryManager: React.FC = () => {
                   placeholder="https://example.com/logo.png"
                   className="as-input w-full text-sm sm:text-base"
                 />
-                <p className="text-xs text-zinc-500 mt-2">
-                  Provide a direct link to the organization's logo image
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                  Auto-filled from brand selection or add manually
                 </p>
               </div>
+
+              {/* Logo Preview */}
+              {(newOrg.name || newOrg.logo_url) && (
+                <div className={`
+                  p-4 rounded-xl border-2 flex items-center gap-4 transition-all
+                  ${newOrg.logo_url 
+                    ? 'border-blue-500 dark:border-blue-500 bg-blue-50 dark:bg-blue-500/5' 
+                    : 'border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/30 opacity-60'
+                  }
+                `}>
+                  <div className="w-16 h-16 flex-shrink-0 bg-white dark:bg-zinc-900 rounded-xl p-2 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden">
+                    {newOrg.logo_url ? (
+                      <img
+                        src={newOrg.logo_url}
+                        alt={newOrg.name}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 rounded-lg flex items-center justify-center">
+                        <span className="text-zinc-500 dark:text-zinc-400 font-bold text-2xl">
+                          {newOrg.name ? newOrg.name.charAt(0).toUpperCase() : '?'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-zinc-900 dark:text-white truncate">
+                      {newOrg.name || 'Organization Name'}
+                    </div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+                      {newOrg.logo_url ? 'Logo loaded' : 'No logo - will use initial'}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Modal Actions */}
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => { setShowOrgModal(false); setNewOrg({ name: '', logo_url: '' }); setSelectedCategoryId(null); setEditingOrgId(null); }}
+                  onClick={() => { setShowOrgModal(false); setNewOrg({ name: '', logo_url: '', website_link: '' }); setSelectedCategoryId(null); setEditingOrgId(null); }}
                   className="as-btn-secondary w-full sm:flex-1 text-sm sm:text-base"
                 >
                   Cancel

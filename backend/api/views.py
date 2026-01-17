@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 
-from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile, LoginRecord
+from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile, LoginRecord, CuratedOrganization
 from .email_utils import parse_user_agent, get_alert_context
 from .serializers import (
     OTPRequestSerializer,
@@ -2179,3 +2179,94 @@ class SecuritySettingsView(APIView):
                 {"error": "Invalid action. Use: set_panic_shortcut, set_duress_password, clear_duress_password, clear_panic_shortcut, verify_password"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Hybrid Organization Search API (Local + Clearbit)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def search_organizations(request):
+    """
+    Hybrid organization search: Local database first, then Clearbit API fallback.
+    
+    Query Parameters:
+        q (str): Search query
+    
+    Returns:
+        JSON array of organizations with name, domain, logo, source
+    """
+    from django.db.models import Case, When, Value, IntegerField
+    
+    query = request.GET.get('q', '').strip()
+    
+    if not query or len(query) < 2:
+        return Response(
+            {"error": "Query must be at least 2 characters"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    results = []
+    seen_domains = set()
+    
+    # Step 1: Search Local Database with relevance-based sorting
+    # Priority: Exact match > Starts with > Contains
+    local_orgs = CuratedOrganization.objects.filter(
+        name__icontains=query
+    ).annotate(
+        relevance=Case(
+            When(name__iexact=query, then=Value(3)),  # Exact match
+            When(name__istartswith=query, then=Value(2)),  # Starts with
+            default=Value(1),  # Contains
+            output_field=IntegerField()
+        )
+    ).order_by('-relevance', '-priority', 'name')[:10]
+    
+    for org in local_orgs:
+        # Get the appropriate logo based on logo_type
+        logo = org.get_logo()
+        
+        results.append({
+            'name': org.name,
+            'domain': org.domain,
+            'logo': logo,
+            'website_link': org.website_link or f'https://{org.domain}',
+            'source': 'local',
+            'is_verified': org.is_verified
+        })
+        seen_domains.add(org.domain.lower())
+    
+    # Step 2: Clearbit API Fallback (if we have fewer than 3 results)
+    if len(results) < 3:
+        try:
+            clearbit_url = f'https://autocomplete.clearbit.com/v1/companies/suggest?query={query}'
+            response = requests.get(clearbit_url, timeout=3)
+            
+            if response.status_code == 200:
+                clearbit_data = response.json()
+                
+                for item in clearbit_data[:6]:  # Limit to 6 from API
+                    domain = item.get('domain', '').lower()
+                    
+                    # Skip duplicates
+                    if domain and domain not in seen_domains:
+                        results.append({
+                            'name': item.get('name', ''),
+                            'domain': domain,
+                            'logo': item.get('logo', f'https://www.google.com/s2/favicons?domain={domain}&sz=128'),
+                            'website_link': f'https://{domain}',
+                            'source': 'clearbit',
+                            'is_verified': False
+                        })
+                        seen_domains.add(domain)
+                        
+                        # Stop if we have enough results
+                        if len(results) >= 6:
+                            break
+        
+        except requests.RequestException as e:
+            # If Clearbit fails, just return local results
+            print(f"Clearbit API error: {e}")
+    
+    return Response(results)

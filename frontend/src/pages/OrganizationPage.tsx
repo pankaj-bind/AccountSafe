@@ -7,6 +7,7 @@ interface Organization {
   name: string;
   logo_url: string | null;
   logo_image: string | null;
+  website_link?: string | null;
 }
 
 const OrganizationPage: React.FC = () => {
@@ -20,10 +21,11 @@ const OrganizationPage: React.FC = () => {
     name: '', // Will be loaded by ProfileManager
     logo_url: null,
     logo_image: null,
+    website_link: null,
   };
 
   const handleBack = () => {
-    navigate('/dashboard');
+    navigate('/');
   };
 
   return (

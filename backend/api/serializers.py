@@ -125,7 +125,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ['id', 'category', 'name', 'logo_url', 'logo_image', 'profile_count', 'created_at', 'updated_at']
+        fields = ['id', 'category', 'name', 'logo_url', 'website_link', 'logo_image', 'profile_count', 'created_at', 'updated_at']
         read_only_fields = ['category', 'created_at', 'updated_at']
     
     def get_profile_count(self, obj):

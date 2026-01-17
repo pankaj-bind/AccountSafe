@@ -33,6 +33,7 @@ from api.views import (
     UpdatePasswordHashView,
     BatchUpdateSecurityMetricsView,
     SecuritySettingsView,
+    search_organizations,
 )
 
 # Shared secret views
@@ -91,6 +92,9 @@ urlpatterns = [
     
     # Panic & Duress Security Settings
     path('api/security/settings/', SecuritySettingsView.as_view(), name='security-settings'),
+
+    # Hybrid Organization Search (Local + Clearbit API)
+    path('api/organizations/search/', search_organizations, name='search-organizations'),
 
     # Shared Secret endpoints (Secure Link Sharing)
     path('api/shared-secrets/create/', create_shared_secret, name='create-shared-secret'),

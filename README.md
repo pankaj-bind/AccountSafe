@@ -22,6 +22,7 @@
 - 🔑 **Secure Credential Storage** - Store usernames, passwords, recovery codes, and documents
 - 📁 **Category Organization** - Organize credentials by categories (Social Media, Finance, Work, etc.)
 - 🏢 **Organization Management** - Group credentials by service/platform
+- 🎨 **Smart Brand Search** - Auto-complete with brand logos when creating organizations
 - 📱 **Responsive Design** - Optimized for desktop, tablet, and mobile devices
 
 ### Security Features

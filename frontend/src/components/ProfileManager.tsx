@@ -133,6 +133,7 @@ interface Organization {
   name: string;
   logo_url: string | null;
   logo_image: string | null;
+  website_link?: string | null;
 }
 
 interface Profile {

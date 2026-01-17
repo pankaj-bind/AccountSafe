@@ -196,6 +196,7 @@ class Organization(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='organizations')
     name = models.CharField(max_length=100)
     logo_url = models.URLField(blank=True, null=True)
+    website_link = models.URLField(blank=True, null=True, help_text="Organization website URL")
     logo_image = models.ImageField(
         upload_to='organization_logos/',
         blank=True,
@@ -212,6 +213,58 @@ class Organization(models.Model):
         verbose_name = "Organization"
         verbose_name_plural = "Organizations"
         ordering = ['-created_at']
+
+
+# --- Curated Brand Directory Model ---
+class CuratedOrganization(models.Model):
+    """
+    Manually curated organization directory for brand search.
+    Managed via Django Admin, provides local-first search results.
+    """
+    LOGO_TYPE_CHOICES = [
+        ('url', 'External URL'),
+        ('upload', 'Upload Image'),
+        ('svg', 'SVG Code'),
+    ]
+    
+    name = models.CharField(max_length=200, db_index=True, help_text="Organization name")
+    domain = models.CharField(max_length=255, unique=True, db_index=True, help_text="Primary domain (e.g., google.com)")
+    
+    # Logo options
+    logo_type = models.CharField(max_length=10, choices=LOGO_TYPE_CHOICES, default='url', help_text="How the logo is provided")
+    logo_url = models.URLField(blank=True, null=True, help_text="External logo URL (e.g., from CDN)")
+    logo_image = models.ImageField(upload_to='curated_org_logos/', blank=True, null=True, help_text="Upload logo image from local system")
+    logo_svg = models.TextField(blank=True, null=True, help_text="SVG code (paste raw SVG)")
+    
+    is_verified = models.BooleanField(default=True, help_text="Verified/trusted organization")
+    priority = models.IntegerField(default=0, help_text="Sort priority (higher = shown first)")
+    website_link = models.URLField(blank=True, null=True, help_text="Official website URL")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def get_logo(self):
+        """Get the appropriate logo based on logo_type"""
+        if self.logo_type == 'upload' and self.logo_image:
+            return self.logo_image.url
+        elif self.logo_type == 'svg' and self.logo_svg:
+            return f'data:image/svg+xml;base64,{self.logo_svg}'
+        elif self.logo_type == 'url' and self.logo_url:
+            return self.logo_url
+        else:
+            # Fallback to Brandfetch CDN
+            return f'https://cdn.brandfetch.io/{self.domain}/w/256/h/256'
+
+    def __str__(self):
+        return f"{self.name} ({self.domain})"
+
+    class Meta:
+        verbose_name = "Curated Organization"
+        verbose_name_plural = "Curated Organizations"
+        ordering = ['-priority', 'name']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['domain']),
+        ]
 
 
 # --- Profile Model (Client-Side Encrypted) ---
