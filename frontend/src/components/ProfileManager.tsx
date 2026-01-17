@@ -1409,7 +1409,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         <button
           onClick={onBack}
-          className="mb-2 sm:mb-4 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors group"
+          aria-label="Back to Vault"
+          className="mb-2 sm:mb-4 flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md group"
         >
           <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium text-sm sm:text-base">Back to Vault</span>
