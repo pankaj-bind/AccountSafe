@@ -62,6 +62,7 @@ const RegisterPage: React.FC = () => {
 
     // Turnstile
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [widgetId, setWidgetId] = useState<string | null>(null);
     const turnstileRef = useRef<HTMLDivElement>(null);
 
     const { setToken } = useAuth();
@@ -82,11 +83,11 @@ const RegisterPage: React.FC = () => {
 
     // Render Turnstile widget
     useEffect(() => {
-        if (!turnstileRef.current) return;
+        if (!turnstileRef.current || widgetId) return;
 
         const renderWidget = () => {
-            if (window.turnstile && turnstileRef.current) {
-                window.turnstile.render(turnstileRef.current, {
+            if (window.turnstile && turnstileRef.current && !widgetId) {
+                const id = window.turnstile.render(turnstileRef.current, {
                     sitekey: process.env.REACT_APP_TURNSTILE_SITE_KEY || '',
                     callback: (token: string) => {
                         setTurnstileToken(token);
@@ -94,9 +95,10 @@ const RegisterPage: React.FC = () => {
                     'error-callback': () => {
                         setTurnstileToken(null);
                     },
-                    theme: 'light',
+                    theme: 'dark',
                     size: 'normal',
                 });
+                setWidgetId(id);
             }
         };
 
@@ -112,7 +114,13 @@ const RegisterPage: React.FC = () => {
 
             return () => clearInterval(interval);
         }
-    }, []);
+
+        return () => {
+            if (widgetId && window.turnstile) {
+                window.turnstile.remove(widgetId);
+            }
+        };
+    }, [widgetId]);
     
     useEffect(() => {
         if (!username) {
@@ -269,7 +277,7 @@ const RegisterPage: React.FC = () => {
                 </div>
 
                 {/* Card */}
-                <div className="as-card p-5 sm:p-8">
+                <div className="w-full bg-transparent p-0 md:bg-white md:dark:bg-zinc-900/40 md:backdrop-blur-md md:border md:border-zinc-200 md:dark:border-zinc-800/50 md:rounded-2xl md:shadow-xl md:dark:shadow-2xl md:dark:shadow-black/20 md:p-8">
                     {success && (
                         <div className="as-alert-success mb-6">
                             <CheckIcon />
@@ -286,7 +294,7 @@ const RegisterPage: React.FC = () => {
 
                     <form onSubmit={handleSubmit} noValidate className="space-y-4">
                         <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-zinc-300 mb-2">Username</label>
+                            <label htmlFor="username" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Username</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <UserIcon />
@@ -296,7 +304,7 @@ const RegisterPage: React.FC = () => {
                                     id="username"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="as-input pl-10"
+                                    className="as-input pl-10 h-11 md:h-12"
                                     placeholder="Choose a username"
                                     required
                                 />
@@ -305,7 +313,7 @@ const RegisterPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
+                            <label htmlFor="email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Email</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <EmailIcon />
@@ -315,7 +323,7 @@ const RegisterPage: React.FC = () => {
                                     id="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="as-input pl-10"
+                                    className="as-input pl-10 h-11 md:h-12"
                                     placeholder="Enter your email"
                                     required
                                 />
@@ -323,7 +331,7 @@ const RegisterPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
+                            <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Password</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <LockIcon />
@@ -333,7 +341,7 @@ const RegisterPage: React.FC = () => {
                                     id="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="as-input pl-10"
+                                    className="as-input pl-10 h-11 md:h-12"
                                     placeholder="Create a password"
                                     required
                                 />
@@ -342,7 +350,7 @@ const RegisterPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label htmlFor="password2" className="block text-sm font-medium text-zinc-300 mb-2">Confirm Password</label>
+                            <label htmlFor="password2" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Confirm Password</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <LockIcon />
@@ -352,7 +360,7 @@ const RegisterPage: React.FC = () => {
                                     id="password2"
                                     value={password2}
                                     onChange={(e) => setPassword2(e.target.value)}
-                                    className="as-input pl-10"
+                                    className="as-input pl-10 h-11 md:h-12"
                                     placeholder="Confirm your password"
                                     required
                                 />
@@ -363,8 +371,8 @@ const RegisterPage: React.FC = () => {
                         </div>
 
                         {/* Cloudflare Turnstile */}
-                        <div className="flex justify-center py-3">
-                            <div ref={turnstileRef} className="transform scale-95 sm:scale-100"></div>
+                        <div className="flex justify-center py-2">
+                            <div ref={turnstileRef} className="transform scale-90 sm:scale-100"></div>
                         </div>
 
                         <button 

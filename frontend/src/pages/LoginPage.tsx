@@ -38,6 +38,7 @@ const LoginPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPinSetup, setShowPinSetup] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [widgetId, setWidgetId] = useState<string | null>(null);
     const turnstileRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
     const { setToken } = useAuth();
@@ -59,11 +60,11 @@ const LoginPage: React.FC = () => {
 
     // Render Turnstile widget
     useEffect(() => {
-        if (!turnstileRef.current) return;
+        if (!turnstileRef.current || widgetId) return;
 
         const renderWidget = () => {
-            if (window.turnstile && turnstileRef.current) {
-                window.turnstile.render(turnstileRef.current, {
+            if (window.turnstile && turnstileRef.current && !widgetId) {
+                const id = window.turnstile.render(turnstileRef.current, {
                     sitekey: process.env.REACT_APP_TURNSTILE_SITE_KEY || '',
                     callback: (token: string) => {
                         setTurnstileToken(token);
@@ -71,9 +72,10 @@ const LoginPage: React.FC = () => {
                     'error-callback': () => {
                         setTurnstileToken(null);
                     },
-                    theme: 'light',
+                    theme: 'dark',
                     size: 'normal',
                 });
+                setWidgetId(id);
             }
         };
 
@@ -89,7 +91,13 @@ const LoginPage: React.FC = () => {
 
             return () => clearInterval(interval);
         }
-    }, []);
+
+        return () => {
+            if (widgetId && window.turnstile) {
+                window.turnstile.remove(widgetId);
+            }
+        };
+    }, [widgetId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -142,7 +150,7 @@ const LoginPage: React.FC = () => {
                 </div>
 
                 {/* Card */}
-                <div className="as-card p-5 sm:p-8">
+                <div className="w-full bg-transparent p-0 md:bg-white md:dark:bg-zinc-900/40 md:backdrop-blur-md md:border md:border-zinc-200 md:dark:border-zinc-800/50 md:rounded-2xl md:shadow-xl md:dark:shadow-2xl md:dark:shadow-black/20 md:p-8">
                     {message && (
                         <div className="as-alert-success mb-6">
                             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -163,7 +171,7 @@ const LoginPage: React.FC = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-zinc-300 mb-2">
+                            <label htmlFor="username" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                                 Username
                             </label>
                             <div className="relative">
@@ -175,7 +183,7 @@ const LoginPage: React.FC = () => {
                                     id="username"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="as-input pl-10"
+                                    className="as-input pl-10 h-11 md:h-12"
                                     placeholder="Enter your username"
                                     required
                                 />
@@ -183,8 +191,8 @@ const LoginPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <div className="flex justify-between items-center mb-2">
-                                <label htmlFor="password" className="block text-sm font-medium text-zinc-300">
+                            <div className="flex justify-between items-center mb-1.5">
+                                <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                     Password
                                 </label>
                                 <Link to="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
@@ -200,7 +208,7 @@ const LoginPage: React.FC = () => {
                                     id="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="as-input pl-10"
+                                    className="as-input pl-10 h-11 md:h-12"
                                     placeholder="Enter your password"
                                     required
                                 />
@@ -208,8 +216,8 @@ const LoginPage: React.FC = () => {
                         </div>
 
                         {/* Cloudflare Turnstile */}
-                        <div className="flex justify-center py-3">
-                            <div ref={turnstileRef} className="transform scale-95 sm:scale-100"></div>
+                        <div className="flex justify-center py-2">
+                            <div ref={turnstileRef} className="transform scale-90 sm:scale-100"></div>
                         </div>
 
                         <button
