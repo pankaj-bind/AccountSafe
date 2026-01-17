@@ -319,9 +319,9 @@ const SecuritySettingsPanel: React.FC = () => {
 
         {/* Keyboard Shortcut Configuration - Hidden on Mobile */}
         <div className="hidden md:block">
-          <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex-1 min-w-[200px]">
-            {isRecordingShortcut ? (
+          {/* State-Based: Show recording input OR display current shortcut */}
+          {isRecordingShortcut ? (
+            <div className="space-y-3">
               <div className="relative">
                 <input
                   type="text"
@@ -337,46 +337,53 @@ const SecuritySettingsPanel: React.FC = () => {
                   ×
                 </button>
               </div>
-            ) : (
-              <div
-                onClick={startRecording}
-                className="as-input cursor-pointer text-center font-mono hover:border-blue-500 transition-colors"
-              >
-                {settings?.panic_shortcut && Array.isArray(settings.panic_shortcut) && settings.panic_shortcut.length > 0
-                  ? formatKeyCombo(settings.panic_shortcut)
-                  : 'Click to record shortcut'}
-              </div>
-            )}
-            {shortcutError && (
-              <p className="text-xs text-red-400 mt-1">{shortcutError}</p>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            {!isRecordingShortcut && (
-              <>
-                <button
-                  onClick={startRecording}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
-                >
-                  {settings?.panic_shortcut && Array.isArray(settings.panic_shortcut) && settings.panic_shortcut.length > 0 ? 'Change' : 'Set'}
-                </button>
-                {settings?.panic_shortcut && Array.isArray(settings.panic_shortcut) && settings.panic_shortcut.length > 0 && (
+              {shortcutError && (
+                <p className="text-xs text-red-400">{shortcutError}</p>
+              )}
+              <p className="text-xs text-zinc-500 dark:text-zinc-500">
+                💡 Tip: Use a combination like <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Alt + X</code> or <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Ctrl + Shift + L</code>
+              </p>
+            </div>
+          ) : settings?.panic_shortcut && Array.isArray(settings.panic_shortcut) && settings.panic_shortcut.length > 0 ? (
+            // Has shortcut - show Change & Clear
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 as-input text-center font-mono bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white cursor-default">
+                  {formatKeyCombo(settings.panic_shortcut)}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={startRecording}
+                    className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    Change
+                  </button>
                   <button
                     onClick={handleClearShortcut}
-                    className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-700 rounded-lg hover:bg-zinc-600 transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-red-500 hover:text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/10 transition-colors"
                   >
                     Clear
                   </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-          <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-3">
-            💡 Tip: Use a combination like <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Alt + X</code> or <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Ctrl + Shift + L</code>
-          </p>
+                </div>
+              </div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-500">
+                Your shortcut is active. Press it anytime to trigger panic mode.
+              </p>
+            </div>
+          ) : (
+            // No shortcut - show recording button
+            <div className="space-y-3">
+              <button
+                onClick={startRecording}
+                className="w-full px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
+              >
+                Record Keyboard Shortcut
+              </button>
+              <p className="text-xs text-zinc-500 dark:text-zinc-500">
+                💡 Tip: Use a combination like <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Alt + X</code> or <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Ctrl + Shift + L</code>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -391,42 +398,46 @@ const SecuritySettingsPanel: React.FC = () => {
           An alert email will be sent to your SOS contact immediately.
         </p>
 
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${settings?.has_duress_password ? 'bg-green-500' : 'bg-zinc-600'}`}></div>
-              <span className="text-sm text-zinc-300">
-                {settings?.has_duress_password
-                  ? `Active • SOS Email: ${settings.sos_email || 'Not set'}`
-                  : 'Not configured'}
-              </span>
+        {/* State-Based UI */}
+        {!settings?.has_duress_password ? (
+          // Not configured - Show setup button
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-3 h-3 rounded-full bg-zinc-600"></div>
+              <span className="text-sm text-zinc-400">Not configured</span>
             </div>
-          </div>
-
-          <div className="flex gap-2">
             <button
               onClick={() => setShowDuressModal(true)}
-              className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-500 transition-colors"
+              className="w-full sm:w-auto px-6 py-3 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-500 transition-colors"
             >
-              {settings?.has_duress_password ? 'Update' : 'Configure'}
+              Configure Ghost Vault
             </button>
-            {settings?.has_duress_password && (
-              <button
-                onClick={() => setShowClearDuressModal(true)}
-                className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-700 rounded-lg hover:bg-zinc-600 transition-colors"
-              >
-                Disable
-              </button>
-            )}
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <p className="text-sm text-yellow-800 dark:text-yellow-400">
+                ⚠️ <strong>Important:</strong> The duress password must be different from your master password. 
+                When used, you'll see fake accounts (Netflix, Spotify, etc.) while your real vault stays hidden.
+              </p>
+            </div>
           </div>
-        </div>
-
-        <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-          <p className="text-sm text-amber-200">
-            ⚠️ <strong>Important:</strong> The duress password must be different from your master password. 
-            When used, you'll see fake accounts (Netflix, Spotify, etc.) while your real vault stays hidden.
-          </p>
-        </div>
+        ) : (
+          // Configured - Show status and delete option
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <span className="text-sm text-green-400">Active</span>
+              <span className="text-xs text-zinc-500">• SOS Email: {settings.sos_email || 'Not set'}</span>
+            </div>
+            <button
+              onClick={() => setShowClearDuressModal(true)}
+              className="w-full px-6 py-3 text-sm font-medium text-red-500 hover:text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/10 transition-colors"
+            >
+              Delete Duress Password
+            </button>
+            <p className="text-xs text-zinc-500">
+              Disable Ghost Vault by removing the duress password. This will deactivate the decoy vault feature.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Duress Password Modal */}
