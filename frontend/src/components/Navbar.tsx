@@ -147,6 +147,19 @@ const Navbar: React.FC = () => {
                   >
                     Dashboard
                   </Link>
+                  <Link 
+                    to="/security" 
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
+                      isActiveRoute('/security') 
+                        ? 'bg-white dark:bg-zinc-800 text-red-400 shadow-sm' 
+                        : 'text-red-400 hover:text-red-500 dark:hover:text-red-300 hover:bg-white/50 dark:hover:bg-zinc-800/50'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                    Security
+                  </Link>
                 </>
               )}
             </div>
@@ -198,10 +211,11 @@ const Navbar: React.FC = () => {
                       
                       {/* Menu Items */}
                       <div className="py-2">
+                        {/* Vault & Dashboard - Hidden on Desktop (already in top bar) */}
                         <Link 
                           to="/" 
                           onClick={() => setIsUserDropdownOpen(false)} 
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="md:hidden flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         >
                           <VaultIcon />
                           Secure Vault
@@ -209,11 +223,13 @@ const Navbar: React.FC = () => {
                         <Link 
                           to="/dashboard" 
                           onClick={() => setIsUserDropdownOpen(false)} 
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="md:hidden flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         >
                           <DashboardIcon />
                           Dashboard
                         </Link>
+                        
+                        {/* Profile & Security - Always Visible */}
                         <Link 
                           to="/profile" 
                           onClick={() => setIsUserDropdownOpen(false)} 
@@ -221,6 +237,16 @@ const Navbar: React.FC = () => {
                         >
                           <UserIcon />
                           Profile Settings
+                        </Link>
+                        <Link 
+                          to="/security" 
+                          onClick={() => setIsUserDropdownOpen(false)} 
+                          className="md:hidden flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                          </svg>
+                          Security Settings
                         </Link>
                         
                         <div className="my-2 border-t border-zinc-200 dark:border-zinc-800"></div>
@@ -345,6 +371,16 @@ const Navbar: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                     </svg>
                     Profile Settings
+                  </Link>
+                  <Link 
+                    to="/security" 
+                    onClick={closeMenus} 
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                    Security Settings
                   </Link>
                   
                   <div className="my-2 border-t border-zinc-200 dark:border-zinc-800"></div>

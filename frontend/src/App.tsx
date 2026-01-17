@@ -23,6 +23,7 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import SecuritySettingsPage from './pages/SecuritySettingsPage';
 import OrganizationPage from './pages/OrganizationPage';
 import SharedSecretPage from './pages/SharedSecretPage';
 import './App.css';
@@ -52,6 +53,7 @@ const App: React.FC = () => {
                     <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                     <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                     <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                    <Route path="/security" element={<ProtectedRoute><SecuritySettingsPage /></ProtectedRoute>} />
                     <Route path="/organization/:id" element={<ProtectedRoute><OrganizationPage /></ProtectedRoute>} />
                   </Routes>
                 </main>

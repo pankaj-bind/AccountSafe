@@ -256,7 +256,7 @@ const SecuritySettingsPanel: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="as-card p-6">
+      <div className="as-card p-4 md:p-6">
         <div className="flex items-center justify-center py-8">
           <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
@@ -265,7 +265,7 @@ const SecuritySettingsPanel: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Success/Error Messages */}
       {success && (
         <div className="as-alert-success flex items-center gap-3">
@@ -286,7 +286,7 @@ const SecuritySettingsPanel: React.FC = () => {
       )}
 
       {/* Panic Button Section */}
-      <div className="as-card p-6">
+      <div className="as-card p-4 md:p-6">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
           <span className="text-red-500 dark:text-red-400"><KeyboardIcon /></span>
           Panic Button Shortcut
@@ -317,7 +317,9 @@ const SecuritySettingsPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 flex-wrap">
+        {/* Keyboard Shortcut Configuration - Hidden on Mobile */}
+        <div className="hidden md:block">
+          <div className="flex items-center gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px]">
             {isRecordingShortcut ? (
               <div className="relative">
@@ -372,13 +374,14 @@ const SecuritySettingsPanel: React.FC = () => {
           </div>
         </div>
 
-        <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-3">
-          💡 Tip: Use a combination like <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Alt + X</code> or <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Ctrl + Shift + L</code>
-        </p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-3">
+            💡 Tip: Use a combination like <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Alt + X</code> or <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded text-zinc-900 dark:text-zinc-100">Ctrl + Shift + L</code>
+          </p>
+        </div>
       </div>
 
       {/* Ghost Vault (Duress Password) Section */}
-      <div className="as-card p-6 border-amber-500/30">
+      <div className="as-card p-4 md:p-6 border-amber-500/30">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
           <span className="text-amber-500 dark:text-amber-400"><EyeSlashIcon /></span>
           Ghost Vault (Duress Password)
@@ -419,7 +422,7 @@ const SecuritySettingsPanel: React.FC = () => {
         </div>
 
         <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-          <p className="text-xs text-amber-200">
+          <p className="text-sm text-amber-200">
             ⚠️ <strong>Important:</strong> The duress password must be different from your master password. 
             When used, you'll see fake accounts (Netflix, Spotify, etc.) while your real vault stays hidden.
           </p>
