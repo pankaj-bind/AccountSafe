@@ -3,7 +3,10 @@ import os
 import requests
 from django.conf import settings
 
-TURNSTILE_SECRET_KEY = os.getenv('TURNSTILE_SECRET_KEY', '')
+# Read key dynamically to ensure .env is loaded
+def get_turnstile_secret_key():
+    return os.getenv('TURNSTILE_SECRET_KEY', '')
+
 TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 
 
@@ -25,7 +28,7 @@ def verify_turnstile_token(token: str, remote_ip: str = None) -> dict:
         }
     
     payload = {
-        'secret': TURNSTILE_SECRET_KEY,
+        'secret': get_turnstile_secret_key(),
         'response': token,
     }
     
