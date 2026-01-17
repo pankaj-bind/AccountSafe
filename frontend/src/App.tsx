@@ -41,7 +41,8 @@ const App: React.FC = () => {
                 <Navbar />
                 <main>
                   <Routes>
-                    {/* Public Routes */}
+                    {/* Public/Mixed Routes */}
+                    <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
                     <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -50,7 +51,6 @@ const App: React.FC = () => {
                     <Route path="/shared/:secretId" element={<SharedSecretPage />} />
                     
                     {/* Protected Routes */}
-                    <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                     <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                     <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                     <Route path="/security" element={<ProtectedRoute><SecuritySettingsPage /></ProtectedRoute>} />
