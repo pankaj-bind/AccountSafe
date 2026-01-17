@@ -319,7 +319,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
                 <ClockIcon className="w-3 h-3 text-zinc-400 dark:text-zinc-600" />
-                <span className="text-xs text-zinc-500 dark:text-zinc-500">
+                <span className="text-xs text-zinc-500 dark:text-zinc-500 whitespace-nowrap">
                   {new Date(profile.created_at).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
