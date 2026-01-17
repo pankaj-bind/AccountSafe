@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clearEncryptionKeys } from '../services/encryptionService';
+import { useProfile } from '../contexts/ProfileContext';
 
 interface PanicLockScreenProps {
   isOpen: boolean;
@@ -17,7 +18,8 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock }) =
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
-  const username = localStorage.getItem('username') || 'User';
+  const { profilePicture, displayName } = useProfile();
+  const username = displayName || localStorage.getItem('username') || 'User';
   const navigate = useNavigate();
 
   // Reset state when modal opens
@@ -119,9 +121,17 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock }) =
           {/* User Info */}
           <div className="mb-5 md:mb-6 pb-5 md:pb-6 border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-base md:text-lg">
-                {username.charAt(0).toUpperCase()}
-              </div>
+              {profilePicture ? (
+                <img 
+                  src={profilePicture} 
+                  alt={username}
+                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover ring-2 ring-blue-500/50"
+                />
+              ) : (
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-base md:text-lg">
+                  {username.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
                 <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-400">Locked vault for</p>
                 <p className="text-sm md:text-base font-medium text-zinc-900 dark:text-white">{username}</p>
