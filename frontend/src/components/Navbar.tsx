@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useProfile } from '../contexts/ProfileContext';
@@ -52,7 +53,7 @@ const Navbar: React.FC = () => {
   const { token, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { profilePicture, displayName } = useProfile();
-  const { isPanicLocked } = usePanic();
+  const { isPanicLocked, triggerPanic } = usePanic();
   const navigate = useNavigate();
   const location = useLocation();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -64,6 +65,11 @@ const Navbar: React.FC = () => {
     setIsMobileMenuOpen(false);
     setIsUserDropdownOpen(false);
     navigate('/login');
+  };
+
+  const handlePanic = () => {
+    // Trigger panic mode using the context (same as keyboard shortcut)
+    triggerPanic();
   };
 
   const closeMenus = () => {
@@ -166,6 +172,17 @@ const Navbar: React.FC = () => {
             
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
+              {/* Panic/Lock Button */}
+              {token && (
+                <button 
+                  onClick={handlePanic}
+                  className="p-2.5 rounded-full text-red-500 hover:text-red-600 hover:bg-red-500/10 transition-all"
+                  title="Emergency Lock - Clear all data and reload"
+                >
+                  <Lock className="w-5 h-5" />
+                </button>
+              )}
+              
               {/* Theme Toggle */}
               <button 
                 onClick={toggleTheme} 
@@ -284,6 +301,16 @@ const Navbar: React.FC = () => {
           
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-2">
+            {/* Panic/Lock Button for Mobile */}
+            {token && (
+              <button 
+                onClick={handlePanic}
+                className="p-2 rounded-full text-red-500 hover:text-red-600 hover:bg-red-500/10 transition-all"
+                title="Emergency Lock"
+              >
+                <Lock className="w-5 h-5" />
+              </button>
+            )}
             <button 
               onClick={toggleTheme} 
               className="p-2 rounded-lg text-zinc-400 hover:text-white dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
