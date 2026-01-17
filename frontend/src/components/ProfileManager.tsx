@@ -223,7 +223,7 @@ const CredentialField: React.FC<CredentialFieldProps> = ({
         {/* Sensitive badge removed per design */}
       </div>
       <div className="flex items-center gap-2">
-        <div className={`flex-1 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 flex items-center gap-2 min-h-[42px] ${mono ? 'font-mono' : ''}`}>
+        <div className={`flex-1 bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 h-[42px] flex items-center gap-2 ${mono ? 'font-mono' : ''}`}>
           <span className={`flex-1 text-sm text-zinc-700 dark:text-zinc-200 break-all transition-all ${(isPassword && !showPassword) || (isSensitive && !showSensitive) ? 'tracking-wider' : ''}`}>
             {getDisplayValue()}
           </span>
@@ -241,7 +241,7 @@ const CredentialField: React.FC<CredentialFieldProps> = ({
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={onCopy}
-          className={`p-2.5 rounded-lg transition-all ${
+          className={`h-[42px] px-3 flex items-center justify-center rounded-lg transition-all ${
             isCopied
               ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30'
               : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700'
@@ -307,9 +307,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   return (
     <div className="as-card p-0 overflow-hidden group hover:border-zinc-400 dark:hover:border-zinc-700 transition-all">
       {/* Card Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+      <div className="border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30 pb-0 sm:pb-0">
+        <div className="px-0 py-0 sm:px-4 sm:py-3 mb-1 sm:mb-2 flex items-start justify-between gap-4 ">
+          <div className="flex items-center gap-3 min-w-0 ">
             <div className="p-2 bg-blue-500/10 rounded-lg flex-shrink-0">
               <KeyIcon className="w-4 h-4 text-blue-400" />
             </div>
@@ -334,21 +334,21 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={onShare}
-              className="p-2 text-zinc-400 dark:text-zinc-400 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
+              className="p-2 flex items-center justify-center text-zinc-400 dark:text-zinc-400 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
               title="Share securely"
             >
               <ShareIcon />
             </button>
             <button
               onClick={onEdit}
-              className="p-2 text-zinc-400 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+              className="p-2 flex items-center justify-center text-zinc-400 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
               title="Edit"
             >
               <PencilIcon />
             </button>
             <button
               onClick={onDelete}
-              className="p-2 text-zinc-400 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+              className="p-2 flex items-center justify-center text-zinc-400 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
               title="Delete"
             >
               <TrashIcon />
@@ -358,7 +358,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       </div>
       
       {/* Card Body */}
-      <div className="p-4 space-y-3">
+      <div className="px-0 pt-3 pb-0 sm:p-4 space-y-3">
         {/* Primary Credentials - Always Visible */}
         {hasCredentials && (
           <div className="space-y-3">
@@ -512,7 +512,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         {hasSecondaryFields && (
           <button
             onClick={onToggleExpand}
-            className="w-full mt-3 py-2.5 flex items-center justify-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 border-t border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-all group"
+            className="w-full py-2.5 flex items-center justify-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 border-t border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-all group"
           >
             <span>{isExpanded ? 'Show Less' : 'View Details'}</span>
             <svg
