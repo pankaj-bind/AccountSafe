@@ -98,7 +98,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock }) =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md flex items-start md:items-center justify-center p-4 md:p-6 overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 z-[9999] bg-white dark:bg-zinc-950 flex items-start md:items-center justify-center p-4 md:p-6 overflow-y-auto animate-in fade-in duration-200">
       <div className="w-full max-w-md my-auto py-4 md:py-0">
         {/* Logo and Title */}
         <div className="text-center mb-6 md:mb-8">

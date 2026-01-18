@@ -4,6 +4,7 @@ import { useProfile } from '../contexts/ProfileContext';
 import apiClient from '../api/apiClient';
 import { formatLoginDateTime, formatNullableValue } from '../utils/formatters';
 import { DashboardSkeleton } from '../components/Skeleton';
+import { SecurityStatsGrid } from '../components/SecurityStatsGrid';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -52,12 +53,6 @@ interface LoginRecord {
 // Icons
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ShieldCheckIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-  </svg>
-);
-
 const ActivityIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
@@ -81,69 +76,6 @@ const GlobeIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
   </svg>
 );
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Security Score Ring Component
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface SecurityScoreProps {
-  score: number;
-  size?: number;
-}
-
-const SecurityScoreRing: React.FC<SecurityScoreProps> = ({ score, size = 140 }) => {
-  const strokeWidth = 10;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const progress = (score / 100) * circumference;
-  const offset = circumference - progress;
-
-  const getScoreColor = () => {
-    if (score >= 80) return { color: '#22c55e', label: 'Excellent', class: 'text-green-400' };
-    if (score >= 60) return { color: '#3b82f6', label: 'Good', class: 'text-blue-400' };
-    if (score >= 40) return { color: '#f59e0b', label: 'Fair', class: 'text-yellow-400' };
-    return { color: '#ef4444', label: 'Needs Attention', class: 'text-red-400' };
-  };
-
-  const scoreInfo = getScoreColor();
-
-  return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Background ring */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          className="text-zinc-800"
-        />
-        {/* Progress ring */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={scoreInfo.color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-all duration-1000 ease-out"
-          style={{
-            filter: `drop-shadow(0 0 8px ${scoreInfo.color}40)`
-          }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-zinc-900 dark:text-white">{score}</span>
-        <span className={`text-xs font-medium ${scoreInfo.class}`}>{scoreInfo.label}</span>
-      </div>
-    </div>
-  );
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -322,138 +254,19 @@ const DashboardPage: React.FC = () => {
         </header>
 
         {/* ═══════════════════════════════════════════════════════════════════════
-            Security Health Score
+            Security Stats Grid
             ═══════════════════════════════════════════════════════════════════════ */}
-        <section className="mb-6 sm:mb-8">
-          <div className="as-card overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-            <div className="px-4 sm:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
-              <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
-                Security Health Score
-              </h2>
-              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-500 mt-1">
-                Based on password strength, uniqueness, breach status, and hygiene
-              </p>
-            </div>
-
-            <div className="p-6 sm:p-8">
-              {healthScore ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Left: Score Ring */}
-                  <div className="flex flex-col items-center justify-center space-y-4">
-                    <SecurityScoreRing score={Math.round(healthScore.overall_score)} />
-                    <div className="text-center">
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Based on {healthScore.total_passwords} password{healthScore.total_passwords !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right: Score Breakdown */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-3">Score Breakdown</h3>
-                    
-                    {/* Strength */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                          Password Strength
-                          <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">(40%)</span>
-                        </span>
-                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                          {healthScore.strength_score.toFixed(1)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${healthScore.strength_score}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-                        {healthScore.breakdown.weak_passwords} weak password{healthScore.breakdown.weak_passwords !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-
-                    {/* Uniqueness */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                          Password Uniqueness
-                          <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">(30%)</span>
-                        </span>
-                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                          {healthScore.uniqueness_score.toFixed(1)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${healthScore.uniqueness_score}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-                        {healthScore.breakdown.reused_passwords} reused password{healthScore.breakdown.reused_passwords !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-
-                    {/* Integrity */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                          Password Integrity
-                          <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">(20%)</span>
-                        </span>
-                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                          {healthScore.integrity_score.toFixed(1)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${healthScore.integrity_score}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-                        {healthScore.breakdown.breached_passwords} breached password{healthScore.breakdown.breached_passwords !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-
-                    {/* Hygiene */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                          Password Hygiene
-                          <span className="text-xs text-zinc-500 dark:text-zinc-500 ml-1">(10%)</span>
-                        </span>
-                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                          {healthScore.hygiene_score.toFixed(1)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${healthScore.hygiene_score}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-                        {healthScore.breakdown.outdated_passwords} outdated password{healthScore.breakdown.outdated_passwords !== 1 ? 's' : ''} (&gt;1 year)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center">
-                    <ShieldCheckIcon className="w-6 h-6 text-zinc-400 dark:text-zinc-500" />
-                  </div>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Loading security health score...
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+        {healthScore && (
+          <section className="mb-6 sm:mb-8">
+            <SecurityStatsGrid
+              healthScore={Math.round(healthScore.overall_score)}
+              weakPasswords={healthScore.breakdown.weak_passwords}
+              reusedPasswords={healthScore.breakdown.reused_passwords}
+              breachedPasswords={healthScore.breakdown.breached_passwords}
+              totalCredentials={healthScore.total_passwords}
+            />
+          </section>
+        )}
 
         {/* ═══════════════════════════════════════════════════════════════════════
             Login Records Table
