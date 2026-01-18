@@ -43,6 +43,9 @@ export const useClipboard = (options: UseClipboardOptions = {}): UseClipboardRet
   // Refs for timer management
   const clearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Track when clipboard should be cleared (absolute timestamp)
+  const clearAtRef = useRef<number | null>(null);
 
   // Check if Clipboard API is supported
   const isSupported = typeof navigator !== 'undefined' && 
@@ -61,12 +64,55 @@ export const useClipboard = (options: UseClipboardOptions = {}): UseClipboardRet
       clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = null;
     }
+    clearAtRef.current = null;
   }, []);
+
+  /**
+   * Actually clear the clipboard
+   */
+  const performClear = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText('');
+      
+      // Show info toast
+      if (typeof window !== 'undefined' && (window as any).toast) {
+        (window as any).toast.info('Clipboard cleared.', { duration: 2000 });
+      }
+
+      // Fire onClear callback
+      if (onClear) {
+        onClear();
+      }
+      
+      clearAtRef.current = null;
+    } catch (clearError) {
+      console.warn('[useClipboard] Failed to clear clipboard:', clearError);
+    }
+  }, [onClear]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => cleanup();
   }, [cleanup]);
+
+  // Handle visibility change - clear clipboard when tab regains focus if time has passed
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && clearAtRef.current) {
+        // Check if we have a pending clear that should have happened
+        if (Date.now() >= clearAtRef.current) {
+          // Time has passed, clear the clipboard now
+          await performClear();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [performClear]);
 
   /**
    * Copy text to clipboard with auto-clear
@@ -112,26 +158,18 @@ export const useClipboard = (options: UseClipboardOptions = {}): UseClipboardRet
         onCopy();
       }
 
-      // Step 4 & 5: Start the auto-clear timer
+      // Step 4: Set the absolute time when clipboard should be cleared
+      const clearTime = Date.now() + clearAfter;
+      clearAtRef.current = clearTime;
+
+      // Step 5: Start the auto-clear timer
       clearTimeoutRef.current = setTimeout(async () => {
-        try {
-          // Blind clear - write empty string
-          await navigator.clipboard.writeText('');
-
-          // Show info toast
-          if (typeof window !== 'undefined' && (window as any).toast) {
-            (window as any).toast.info('Clipboard cleared.', { duration: 2000 });
-          }
-
-          // Fire onClear callback
-          if (onClear) {
-            onClear();
-          }
-        } catch (clearError) {
-          console.warn('[useClipboard] Failed to clear clipboard:', clearError);
-        } finally {
-          clearTimeoutRef.current = null;
+        // Only clear if document is focused, otherwise let visibilitychange handle it
+        if (document.hasFocus()) {
+          await performClear();
         }
+        // Note: If not focused, clearAtRef is still set, so visibilitychange will handle it
+        clearTimeoutRef.current = null;
       }, clearAfter);
 
       return true;
@@ -146,7 +184,7 @@ export const useClipboard = (options: UseClipboardOptions = {}): UseClipboardRet
       
       return false;
     }
-  }, [isSupported, clearAfter, feedbackDuration, onCopy, onClear, cleanup]);
+  }, [isSupported, clearAfter, feedbackDuration, onCopy, performClear, cleanup]);
 
   return {
     copy,
