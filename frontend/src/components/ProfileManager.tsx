@@ -124,6 +124,18 @@ const ShareIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
+const StarIcon = ({ className = "w-4 h-4", filled = false }: { className?: string; filled?: boolean }) => (
+  <svg className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+  </svg>
+);
+
+const DotsVerticalIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+  </svg>
+);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -165,6 +177,8 @@ interface Profile {
   password_strength?: number | null;
   password_hash?: string | null;
   last_password_update?: string | null;
+  // User preferences
+  is_pinned?: boolean;
 }
 
 interface ProfileManagerProps {
@@ -271,9 +285,11 @@ interface ProfileCardProps {
   expandedNotes: boolean;
   isExpanded: boolean;
   copiedField: string | null;
+  isPinned: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onShare: () => void;
+  onTogglePin: () => void;
   onCopy: (text: string, field: string) => void;
   onTogglePassword: () => void;
   onToggleUsername: () => void;
@@ -292,9 +308,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   expandedNotes,
   isExpanded,
   copiedField,
+  isPinned,
   onEdit,
   onDelete,
   onShare,
+  onTogglePin,
   onCopy,
   onTogglePassword,
   onToggleUsername,
@@ -303,16 +321,48 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   onToggleExpand,
   onCopyRecoveryCode
 }) => {
+  const [showMenu, setShowMenu] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const cardRef = React.useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showMenu]);
+
+  // Close expanded card when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node) && isExpanded) {
+        onToggleExpand();
+      }
+    };
+
+    if (isExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isExpanded, onToggleExpand]);
+
   const hasCredentials = profile.username || profile.password || profile.email;
   const hasSecondaryFields = profile.email || profile.notes || profile.document_url || (recoveryCodes && recoveryCodes.length > 0);
   
   return (
-    <div className="as-card p-0 overflow-hidden group hover:border-zinc-400 dark:hover:border-zinc-700 transition-all">
+    <div ref={cardRef} className="as-card p-0 rounded-lg relative sm:overflow-hidden overflow-visible group hover:border-zinc-400 dark:hover:border-zinc-700 transition-all">
       {/* Card Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30 pb-0 sm:pb-0">
-        <div className="px-0 py-0 sm:px-4 sm:py-3 mb-1 sm:mb-2 flex items-start justify-between gap-4 ">
-          <div className="flex items-center gap-3 min-w-0 ">
-            <div className="p-2 bg-blue-500/10 rounded-lg flex-shrink-0">
+      <div className="border-b border-zinc-200 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-900/30 rounded-t-lg overflow-visible">
+        <div className="py-2.5 sm:px-4 sm:py-3 -mt-2 sm:mt-0 flex items-center justify-between gap-2 rounded-t-lg">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg flex-shrink-0">
               <KeyIcon className="w-4 h-4 text-blue-400" />
             </div>
             <div className="min-w-0">
@@ -332,41 +382,85 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             </div>
           </div>
           
-          {/* Actions */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Pin/Favorite Star and Kebab Menu */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {/* Pin/Favorite Star */}
             <button
-              onClick={onShare}
-              className="p-2 flex items-center justify-center text-zinc-400 dark:text-zinc-400 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
-              title="Share securely"
+              onClick={onTogglePin}
+              className={`p-1.5 flex items-center justify-center rounded-lg transition-colors ${
+                isPinned
+                  ? 'text-yellow-500 dark:text-yellow-400 hover:text-yellow-600 dark:hover:text-yellow-500'
+                  : 'text-zinc-400 dark:text-zinc-600 hover:text-yellow-500 dark:hover:text-yellow-400'
+              }`}
+              title={isPinned ? 'Unpin' : 'Pin'}
             >
-              <ShareIcon />
+              <StarIcon filled={isPinned} />
             </button>
-            <button
-              onClick={onEdit}
-              className="p-2 flex items-center justify-center text-zinc-400 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
-              title="Edit"
-            >
-              <PencilIcon />
-            </button>
-            <button
-              onClick={onDelete}
-              className="p-2 flex items-center justify-center text-zinc-400 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-              title="Delete"
-            >
-              <TrashIcon />
-            </button>
+            
+            {/* Kebab Menu - Always visible on mobile, hover-only on desktop */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-1 sm:p-1.5 flex items-center justify-center text-zinc-400 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md sm:rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+                title="More options"
+              >
+                <DotsVerticalIcon />
+              </button>
+
+              {/* Dropdown Menu */}
+              {showMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                transition={{ duration: 0.1 }}
+                className="absolute right-0 mt-2 w-40 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 py-1 z-50"
+              >
+                <button
+                  onClick={() => {
+                    onShare();
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <ShareIcon className="w-4 h-4 text-green-500" />
+                  <span>Share</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onEdit();
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <PencilIcon className="w-4 h-4 text-blue-500" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onDelete();
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <TrashIcon className="w-4 h-4 text-red-500" />
+                  <span>Delete</span>
+                </button>
+              </motion.div>
+            )}
+            </div>
           </div>
         </div>
       </div>
       
-      {/* Card Body */}
-      <div className="px-0 pt-3 pb-0 sm:p-4 space-y-3">
+      {/* Card Body - Content with padding */}
+      <div className="pt-3 pb-10 sm:pb-4 sm:px-4 sm:py-4 space-y-3">
         {/* Primary Credentials - Always Visible */}
         {hasCredentials && (
           <div className="space-y-3">
             {profile.username && (
               <CredentialField
-                label="Username"
+                label="USERNAME"
                 value={profile.username}
                 icon={<UserIcon className="w-4 h-4" />}
                 isCopied={copiedField === `username-${profile.id}`}
@@ -379,7 +473,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             
             {profile.password && (
               <CredentialField
-                label="Password"
+                label="PASSWORD"
                 value={profile.password}
                 icon={<KeyIcon className="w-4 h-4" />}
                 isCopied={copiedField === `password-${profile.id}`}
@@ -395,146 +489,144 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 
         {/* Expanded Section - Email, Notes, Documents, Recovery Codes */}
         {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-3 pt-2 border-t border-zinc-200 dark:border-zinc-800"
-          >
-            {profile.email && (
-              <CredentialField
-                label="Email"
-                value={profile.email}
-                icon={<MailIcon className="w-4 h-4" />}
-                isCopied={copiedField === `email-${profile.id}`}
-                onCopy={() => onCopy(profile.email!, `email-${profile.id}`)}
-                isSensitive
-                showSensitive={showEmail}
-                onToggleSensitive={onToggleEmail}
-              />
-            )}
-            
-            {/* Recovery Codes */}
-            {recoveryCodes && recoveryCodes.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-zinc-400 dark:text-zinc-500"><ShieldIcon className="w-4 h-4" /></span>
-                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Recovery Codes
-                  </span>
-                  <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded">
-                    {recoveryCodes.length} left
-                  </span>
-                  {/* Sensitive badge removed */}
-                </div>
-                <div className="relative">
-                  <div className="flex flex-wrap gap-2">
-                    {recoveryCodes.map((code, index) => (
-                      <button
-                        key={index}
-                        onClick={() => onCopyRecoveryCode(code, index)}
-                        className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
-                          copiedField === `recovery-${profile.id}-${index}`
-                            ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                            : 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30'
-                        } filter blur-sm hover:blur-none`}
-                        title="Click to copy & remove"
-                      >
-                        {code}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Blurred overlay retained for subtle background effect (non-blocking) */}
-                  <div className="absolute inset-0 backdrop-blur-[2px] bg-zinc-100/50 dark:bg-zinc-900/50 rounded-lg pointer-events-none" />
-                </div>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-2">
-                  Click a code to copy it. Codes are removed after copying.
-                </p>
-              </div>
-            )}
-            
-            {/* Document */}
-            {profile.document_url && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-zinc-400 dark:text-zinc-500"><DocumentIcon className="w-4 h-4" /></span>
-                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Document</span>
-                </div>
-                <a
-                  href={profile.document_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
-                >
-                  <DocumentIcon className="w-4 h-4" />
-                  <span>View Document</span>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              </div>
-            )}
-            
-            {/* Notes */}
-            {profile.notes && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-zinc-400 dark:text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
-                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Notes</span>
-                  {/* Sensitive badge removed */}
-                </div>
-                <div className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-3">
-                  <p className={`text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
-                    {profile.notes}
-                  </p>
-                  {profile.notes.length > 150 && (
-                    <button
-                      onClick={onToggleNotes}
-                      className="text-xs text-blue-400 hover:text-blue-300 mt-2 font-medium"
-                    >
-                      {expandedNotes ? 'Show less' : 'Show more'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
-        
-        {/* Empty State */}
-        {!hasCredentials && !profile.notes && !profile.document_url && recoveryCodes.length === 0 && (
-          <div className="text-center py-4 text-zinc-400 dark:text-zinc-500 text-sm">
-            No credentials or data stored yet
-          </div>
-        )}
-
-        {/* Expand/Collapse Button */}
-        {hasSecondaryFields && (
-          <button
-            onClick={onToggleExpand}
-            className="w-full py-2.5 flex items-center justify-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 border-t border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-all group"
-          >
-            <span>{isExpanded ? 'Show Less' : 'View Details'}</span>
-            <svg
-              className={`w-4 h-4 transition-transform ${
-                isExpanded ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-3 pt-2 border-t border-zinc-200 dark:border-zinc-800"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-        )}
+              {profile.email && (
+                <CredentialField
+                  label="Email"
+                  value={profile.email}
+                  icon={<MailIcon className="w-4 h-4" />}
+                  isCopied={copiedField === `email-${profile.id}`}
+                  onCopy={() => onCopy(profile.email!, `email-${profile.id}`)}
+                  isSensitive
+                  showSensitive={showEmail}
+                  onToggleSensitive={onToggleEmail}
+                />
+              )}
+              
+              {/* Recovery Codes */}
+              {recoveryCodes && recoveryCodes.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-zinc-400 dark:text-zinc-500"><ShieldIcon className="w-4 h-4" /></span>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                      Recovery Codes
+                    </span>
+                    <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded">
+                      {recoveryCodes.length} left
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <div className="flex flex-wrap gap-2">
+                      {recoveryCodes.map((code, index) => (
+                        <button
+                          key={index}
+                          onClick={() => onCopyRecoveryCode(code, index)}
+                          className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
+                            copiedField === `recovery-${profile.id}-${index}`
+                              ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                              : 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30'
+                          } filter blur-sm hover:blur-none`}
+                          title="Click to copy & remove"
+                        >
+                          {code}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Blurred overlay retained for subtle background effect (non-blocking) */}
+                    <div className="absolute inset-0 backdrop-blur-[2px] bg-zinc-100/50 dark:bg-zinc-900/50 rounded-lg pointer-events-none" />
+                  </div>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-2">
+                    Click a code to copy it. Codes are removed after copying.
+                  </p>
+                </div>
+              )}
+              
+              {/* Document */}
+              {profile.document_url && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-zinc-400 dark:text-zinc-500"><DocumentIcon className="w-4 h-4" /></span>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Document</span>
+                  </div>
+                  <a
+                    href={profile.document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
+                  >
+                    <DocumentIcon className="w-4 h-4" />
+                    <span>View Document</span>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </div>
+              )}
+              
+              {/* Notes */}
+              {profile.notes && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-zinc-400 dark:text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Notes</span>
+                  </div>
+                  <div className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-3">
+                    <p className={`text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
+                      {profile.notes}
+                    </p>
+                    {profile.notes.length > 150 && (
+                      <button
+                        onClick={onToggleNotes}
+                        className="text-xs text-blue-400 hover:text-blue-300 mt-2 font-medium"
+                      >
+                        {expandedNotes ? 'Show less' : 'Show more'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+          
+          {/* Empty State */}
+          {!hasCredentials && !profile.notes && !profile.document_url && recoveryCodes.length === 0 && (
+            <div className="text-center py-4 text-zinc-400 dark:text-zinc-500 text-sm">
+              No credentials or data stored yet
+            </div>
+          )}
       </div>
+
+      {/* Footer Section - Full Bleed (directly inside outer card, no wrapper) */}
+      {hasSecondaryFields && (
+        <button
+          onClick={onToggleExpand}
+          className={`w-full py-2.5 sm:py-2 flex items-center justify-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 border-t-0 sm:border-t border-zinc-200 dark:border-zinc-800 sm:relative absolute left-0 right-0 bottom-0 h-15 sm:h-12 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-all cursor-pointer sm:mt-1 rounded-b-lg ${!isExpanded ? 'rounded-t-lg' : ''}`}
+        >
+          <span>{isExpanded ? 'Show Less' : 'View Details'}</span>
+          <svg
+            className={`w-4 h-4 transition-transform ${
+              isExpanded ? 'rotate-180' : ''
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+      )}
     </div>
   );
 };
@@ -879,6 +971,29 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
       ...prev,
       [profileId]: !prev[profileId]
     }));
+  };
+
+  const togglePinProfile = async (profileId: number) => {
+    try {
+      const profile = profiles.find(p => p.id === profileId);
+      if (!profile) return;
+
+      const formData = new FormData();
+      formData.append('is_pinned', String(!profile.is_pinned));
+      
+      await apiClient.patch(`profiles/${profileId}/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Update local state
+      setProfiles(prev => prev.map(p => 
+        p.id === profileId ? { ...p, is_pinned: !p.is_pinned } : p
+      ));
+    } catch (err: any) {
+      console.error('Error toggling pin status:', err);
+    }
   };
 
   const handleCopyRecoveryCode = async (profileId: number, code: string, index: number) => {
@@ -1542,7 +1657,13 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {/* Profiles Grid */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {!loading && profiles.length > 0 && (
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">{profiles.map((profile) => (
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 items-start">{[...profiles].sort((a, b) => {
+              const aPinned = a.is_pinned || false;
+              const bPinned = b.is_pinned || false;
+              if (aPinned && !bPinned) return -1;
+              if (!aPinned && bPinned) return 1;
+              return 0;
+            }).map((profile) => (
               <ProfileCard
                 key={profile.id}
                 profile={profile}
@@ -1553,9 +1674,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                 expandedNotes={expandedNotes[profile.id] || false}
                 isExpanded={expandedCard[profile.id] || false}
                 copiedField={copiedField}
+                isPinned={profile.is_pinned || false}
                 onEdit={() => handleEditProfile(profile)}
                 onDelete={() => handleDeleteProfile(profile.id)}
                 onShare={() => handleShareProfile(profile.id)}
+                onTogglePin={() => togglePinProfile(profile.id)}
                 onCopy={copyToClipboard}
                 onTogglePassword={() => togglePasswordVisibility(profile.id)}
                 onToggleUsername={() => toggleUsernameVisibility(profile.id)}

@@ -1217,6 +1217,27 @@ class ProfileDetailView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def patch(self, request, profile_id):
+        """Partially update a specific profile (e.g., for toggling is_pinned)"""
+        # In duress mode, pretend to update
+        if is_duress_session(request):
+            return Response({
+                "id": profile_id,
+                "is_pinned": request.data.get("is_pinned", False)
+            })
+        
+        profile = self.get_profile(profile_id, request.user)
+        if not profile:
+            return Response(
+                {"error": "Profile not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = ProfileSerializer(profile, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def delete(self, request, profile_id):
         """Delete a specific profile"""
         # In duress mode, pretend to delete

@@ -310,6 +310,9 @@ class Profile(models.Model):
     password_hash = models.CharField(max_length=64, blank=True, null=True, help_text="SHA-256 hash of password for uniqueness checking (not for authentication)")
     last_password_update = models.DateTimeField(null=True, blank=True, help_text="Last time the password was changed")
     
+    # User preferences
+    is_pinned = models.BooleanField(default=False, help_text="Pin this profile to the top of the list")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
