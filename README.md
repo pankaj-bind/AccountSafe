@@ -1,4 +1,4 @@
-# 🔐 AccountSafe
+# AccountSafe
 
 <div align="center">
 
@@ -7,41 +7,49 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](./frontend)
 [![Django](https://img.shields.io/badge/Django-5.x-green?style=flat-square&logo=django)](./backend)
 [![React](https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react)](./frontend)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
 
-**A MAANG-grade secure credential management system with military-grade encryption**
+**Self-hosted password manager with AES-256 encryption and modern web interface**
 
-[Features](#-features) • [Security](#-security-architecture) • [Quick Start](#-quick-start) • [Demo](#-live-demo)
+[Features](#features) • [Security](#security-architecture) • [Installation](#installation) • [Contributing](./CONTRIBUTING.md)
 
 </div>
 
 ---
 
-## ✨ Features
+## Overview
+
+AccountSafe is a self-hosted credential management system built with security-first principles. It provides encrypted storage for passwords, recovery codes, and sensitive documents with a responsive React frontend and Django REST backend.
+
+## Features
 
 ### Core Functionality
-- 🔑 **Secure Credential Storage** - Store usernames, passwords, recovery codes, and documents
-- 📁 **Category Organization** - Organize credentials by categories (Social Media, Finance, Work, etc.)
-- 🏢 **Organization Management** - Group credentials by service/platform
-- 🎨 **Smart Brand Search** - Auto-complete with brand logos when creating organizations
-- 📱 **Responsive Design** - Optimized for desktop, tablet, and mobile devices
+- **Secure Credential Storage**: Store usernames, passwords, recovery codes, and document attachments
+- **Category Organization**: Organize credentials by custom categories (Social Media, Finance, Work, etc.)
+- **Organization Management**: Group credentials by service/platform with metadata
+- **Smart Brand Detection**: Auto-complete with brand logos using integrated search API
+- **Credential Pinning**: Pin frequently used credentials for quick access
+- **Responsive Layout**: Optimized grid layout for desktop, tablet, and mobile viewports
 
 ### Security Features
-- 🔒 **AES-256 Encryption** - All sensitive data encrypted at rest using Fernet (AES-256-CBC)
-- 🔐 **PIN Protection** - 4-digit PIN required to access the vault (server-side hashed)
-- 🛡️ **Token Authentication** - Secure JWT-based session management
-- 📊 **Login Activity Monitoring** - Track login attempts with IP geolocation
-- 🚫 **Rate Limiting** - Protection against brute-force attacks
+- **AES-256 Encryption**: All sensitive data encrypted at rest using Fernet (AES-256-CBC mode)
+- **PIN Protection**: 4-digit security PIN hashed with bcrypt (server-side validation)
+- **JWT Authentication**: Token-based session management with refresh mechanism
+- **Login Activity Monitoring**: Track authentication attempts with IP geolocation
+- **Rate Limiting**: API throttling to prevent brute-force attacks
+- **Security Health Score**: Automated password strength analysis and breach detection
+- **Clipboard Auto-Clear**: Automatic clipboard clearing after copy operations
 
-### User Experience
-- 🌓 **Dark/Light Mode** - Beautiful theme toggle with smooth transitions
-- ⚡ **Skeleton Loaders** - MAANG-grade loading states for slow networks
-- 🎭 **Micro-interactions** - Framer Motion animations throughout
-- ♿ **Accessibility** - Full keyboard navigation and ARIA labels
-- 📅 **Relative Timestamps** - "2 minutes ago" instead of raw dates
+### User Interface
+- **Dark/Light Mode**: System preference detection with manual override
+- **Skeleton Loading States**: Progressive loading indicators for improved perceived performance
+- **Framer Motion Animations**: Smooth page transitions and micro-interactions
+- **Keyboard Navigation**: Full accessibility support with ARIA labels
+- **Relative Timestamps**: Human-readable time formatting using date-fns
 
 ---
 
-## 🔐 Security Architecture
+## Security Architecture
 
 ### Encryption Implementation
 
@@ -82,7 +90,7 @@ def encrypt_data(plain_text):
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 | Technology | Purpose |
@@ -104,7 +112,7 @@ def encrypt_data(plain_text):
 
 ---
 
-## 🚀 Quick Start
+## Installation
 
 ### Prerequisites
 - Python 3.10+
@@ -138,40 +146,57 @@ Frontend: http://localhost:3000
 
 ---
 
-## 🌐 Live Demo
+## Live Demo
 
 - **Frontend:** [accountsafe.vercel.app](https://accountsafe.vercel.app)
 - **Backend API:** https://accountsafe.pythonanywhere.com/api/
 
+### Screenshots
+
+![Dashboard View](./screenshots/dashboard.png)
+*Main dashboard with category organization and credential grid*
+
+![Credential Detail](./screenshots/credential-detail.png)
+*Credential card with expandable fields and copy-to-clipboard functionality*
+
+![Mobile View](./screenshots/mobile-view.png)
+*Responsive mobile layout with touch-optimized controls*
+
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 AccountSafe/
 ├── backend/
 │   ├── api/
-│   │   ├── encryption.py    # 🔐 AES-256 encryption utilities
-│   │   ├── models.py        # Database models
-│   │   ├── views.py         # API endpoints
-│   │   └── serializers.py   # Data serialization
+│   │   ├── encryption.py    # AES-256 encryption utilities
+│   │   ├── models.py        # Database models (Profile, Category, Organization)
+│   │   ├── views.py         # REST API endpoints
+│   │   ├── serializers.py   # DRF serializers
+│   │   └── health_score.py  # Password strength analyzer
 │   ├── core/
-│   │   └── settings.py      # Django configuration
+│   │   ├── settings.py      # Django configuration
+│   │   └── urls.py          # URL routing
+│   ├── requirements.txt     # Python dependencies
 │   └── manage.py
 ├── frontend/
 │   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── pages/           # Page components
-│   │   ├── contexts/        # React contexts
-│   │   ├── utils/           # Utility functions
-│   │   └── services/        # API services
-│   └── public/
+│   │   ├── components/      # Reusable React components
+│   │   ├── pages/           # Page-level components
+│   │   ├── contexts/        # React Context providers
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── utils/           # Helper functions
+│   │   ├── api/             # API client configuration
+│   │   └── services/        # API service layer
+│   ├── package.json         # Node dependencies
+│   └── tailwind.config.js   # Tailwind CSS configuration
 └── tests/
 ```
 
 ---
 
-## 🔧 Environment Variables
+## Environment Variables
 
 ### Backend (.env)
 ```env
@@ -188,7 +213,7 @@ REACT_APP_API_URL=http://localhost:8000/api
 
 ---
 
-## 📊 API Endpoints
+## API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -202,12 +227,20 @@ REACT_APP_API_URL=http://localhost:8000/api
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
 ---
 
-## 📜 License
+## License
 
-MIT License - feel free to use for your own projects!
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+---
+
+## Support
+
+For bug reports and feature requests, please [open an issue](https://github.com/yourusername/accountsafe/issues).
+
+For security vulnerabilities, please email security@yourdomain.com instead of using the issue tracker.
