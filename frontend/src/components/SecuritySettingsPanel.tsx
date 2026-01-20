@@ -9,6 +9,7 @@ import {
   formatKeyCombo,
   PanicDuressSettings
 } from '../services/securityService';
+import { usePrivacyGuard } from '../contexts/PrivacyGuardContext';
 
 // Icons
 const KeyboardIcon = () => (
@@ -23,11 +24,20 @@ const EyeSlashIcon = () => (
   </svg>
 );
 
+const ShieldLockIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+  </svg>
+);
+
 const SecuritySettingsPanel: React.FC = () => {
   const [settings, setSettings] = useState<PanicDuressSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Privacy Guard
+  const { enablePrivacyBlur, togglePrivacyBlur } = usePrivacyGuard();
 
   // Panic shortcut states
   const [isRecordingShortcut, setIsRecordingShortcut] = useState(false);
@@ -438,6 +448,49 @@ const SecuritySettingsPanel: React.FC = () => {
             </p>
           </div>
         )}
+      </div>
+
+      {/* Privacy Blur Section */}
+      <div className="as-card p-4 md:p-6 border-blue-500/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-blue-500 dark:text-blue-400"><ShieldLockIcon /></span>
+            <div>
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
+                Privacy Blur
+              </h3>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
+                Blur screen when switching tabs or minimizing
+              </p>
+            </div>
+          </div>
+          
+          {/* Toggle Switch */}
+          <button
+            onClick={togglePrivacyBlur}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
+              enablePrivacyBlur ? 'bg-blue-600' : 'bg-zinc-600'
+            }`}
+            role="switch"
+            aria-checked={enablePrivacyBlur}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                enablePrivacyBlur ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+        
+        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-500">
+          When enabled, your vault will be hidden with a blur overlay whenever you switch to another tab, minimize the browser, or the window loses focus. This protects against shoulder surfing.
+        </p>
+        
+        {/* Status indicator */}
+        <div className={`mt-3 flex items-center gap-2 text-xs ${enablePrivacyBlur ? 'text-blue-400' : 'text-zinc-500'}`}>
+          <div className={`w-2 h-2 rounded-full ${enablePrivacyBlur ? 'bg-blue-500' : 'bg-zinc-500'}`} />
+          {enablePrivacyBlur ? 'Privacy protection active' : 'Privacy protection disabled'}
+        </div>
       </div>
 
       {/* Duress Password Modal */}
