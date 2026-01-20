@@ -142,36 +142,72 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onEdit, onCli
           
           {/* Dropdown Menu */}
           {showMenu && (
-            <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden z-10 animate-fadeIn">
-              {org.website_link && (
+            <div className="absolute right-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden z-10 animate-fadeIn sm:w-36 w-auto">
+              {/* Mobile: Icon-only horizontal layout */}
+              <div className="flex sm:hidden items-center gap-1 p-1.5">
+                {org.website_link && (
+                  <button
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      if (org.website_link) {
+                        window.open(org.website_link, '_blank', 'noopener,noreferrer');
+                      }
+                      setShowMenu(false); 
+                    }}
+                    className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                    title="Visit Link"
+                  >
+                    <ExternalLinkIcon className="w-5 h-5 text-emerald-500" />
+                  </button>
+                )}
                 <button
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    if (org.website_link) {
-                      window.open(org.website_link, '_blank', 'noopener,noreferrer');
-                    }
-                    setShowMenu(false); 
-                  }}
+                  onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
+                  className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                  title="Edit"
+                >
+                  <PencilIcon className="w-5 h-5 text-blue-500" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(); setShowMenu(false); }}
+                  className="p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                  title="Delete"
+                >
+                  <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                </button>
+              </div>
+
+              {/* Desktop: Text + Icon vertical layout */}
+              <div className="hidden sm:block">
+                {org.website_link && (
+                  <button
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      if (org.website_link) {
+                        window.open(org.website_link, '_blank', 'noopener,noreferrer');
+                      }
+                      setShowMenu(false); 
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                  >
+                    <ExternalLinkIcon className="w-4 h-4 text-emerald-500" />
+                    Visit Link
+                  </button>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                 >
-                  <ExternalLinkIcon className="w-4 h-4 text-emerald-500" />
-                  Visit Link
+                  <PencilIcon className="w-4 h-4 text-blue-500" />
+                  Edit
                 </button>
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); onEdit(); setShowMenu(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-              >
-                <PencilIcon className="w-4 h-4 text-blue-500" />
-                Edit
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(); setShowMenu(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-              >
-                <TrashIcon className="w-4 h-4" />
-                Delete
-              </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(); setShowMenu(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  Delete
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -414,38 +414,75 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ duration: 0.1 }}
-                className="absolute right-0 mt-2 w-40 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 py-1 z-50"
+                className="absolute right-0 mt-2 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 z-50 sm:w-40 w-auto sm:py-1"
               >
-                <button
-                  onClick={() => {
-                    onShare();
-                    setShowMenu(false);
-                  }}
-                  className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <ShareIcon className="w-4 h-4 text-green-500" />
-                  <span>Share</span>
-                </button>
-                <button
-                  onClick={() => {
-                    onEdit();
-                    setShowMenu(false);
-                  }}
-                  className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <PencilIcon className="w-4 h-4 text-blue-500" />
-                  <span>Edit</span>
-                </button>
-                <button
-                  onClick={() => {
-                    onDelete();
-                    setShowMenu(false);
-                  }}
-                  className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <TrashIcon className="w-4 h-4 text-red-500" />
-                  <span>Delete</span>
-                </button>
+                {/* Mobile: Icon-only horizontal layout */}
+                <div className="flex sm:hidden items-center gap-1 p-1.5">
+                  <button
+                    onClick={() => {
+                      onShare();
+                      setShowMenu(false);
+                    }}
+                    className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    title="Share"
+                  >
+                    <ShareIcon className="w-5 h-5 text-green-500" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      onEdit();
+                      setShowMenu(false);
+                    }}
+                    className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    title="Edit"
+                  >
+                    <PencilIcon className="w-5 h-5 text-blue-500" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      onDelete();
+                      setShowMenu(false);
+                    }}
+                    className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    title="Delete"
+                  >
+                    <TrashIcon className="w-5 h-5 text-red-500" />
+                  </button>
+                </div>
+
+                {/* Desktop: Text + Icon vertical layout */}
+                <div className="hidden sm:block">
+                  <button
+                    onClick={() => {
+                      onShare();
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <ShareIcon className="w-4 h-4 text-green-500" />
+                    <span>Share</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onEdit();
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <PencilIcon className="w-4 h-4 text-blue-500" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onDelete();
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <TrashIcon className="w-4 h-4 text-red-500" />
+                    <span>Delete</span>
+                  </button>
+                </div>
               </motion.div>
             )}
             </div>
