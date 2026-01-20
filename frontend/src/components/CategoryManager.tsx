@@ -9,6 +9,7 @@ import { VaultGridSkeleton, EmptyState } from './Skeleton';
 import { formatCredentialCount } from '../utils/formatters';
 import BrandSearchInput from './BrandSearchInput';
 import { BrandSearchResult, getBrandLogoUrl, getFallbackLogoUrl } from '../services/brandService';
+import { trackAccess, sortByFrequency } from '../utils/frequencyTracker';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -296,7 +297,10 @@ const CategorySection: React.FC<CategorySectionProps> = ({
     !searchQuery || org.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (searchQuery && filteredOrgs.length === 0) return null;
+  // Sort organizations by frequency (pinned items stay on top if implemented)
+  const sortedOrgs = sortByFrequency(filteredOrgs, 'org');
+
+  if (searchQuery && sortedOrgs.length === 0) return null;
 
   return (
     <div className="mb-6 sm:mb-8 md:mb-10 animate-fadeIn">
@@ -358,7 +362,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
-              {filteredOrgs.map((org) => (
+              {sortedOrgs.map((org) => (
                 <OrganizationCard
                   key={org.id}
                   org={org}
@@ -417,6 +421,9 @@ const CategoryManager: React.FC = () => {
   };
 
   const handleOrganizationClick = (org: Organization) => {
+    // Track organization access
+    trackAccess(org.id, 'org');
+    
     if (hasPin && !pinVerified) {
       setPendingOrgId(org.id);
       setPendingOrgName(org.name);

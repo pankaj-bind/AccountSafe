@@ -9,6 +9,7 @@ import { encryptCredentialFields, decryptCredentialFields } from '../utils/encry
 import { getSessionEncryptionKey } from '../services/encryptionService';
 import { checkPasswordBreach, updatePasswordStrength, updateBreachStatus, updatePasswordHash } from '../services/securityService';
 import { useClipboard } from '../hooks/useClipboard';
+import { trackAccess, sortByFrequency } from '../utils/frequencyTracker';
 import PasswordReentryModal from './PasswordReentryModal';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -973,6 +974,11 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   const { copy: secureCopy } = useClipboard({ clearAfter: 30000 });
 
   const copyToClipboard = async (text: string, field: string) => {
+    // Extract profile ID from field (format: "field-profileId")
+    const profileId = field.split('-').pop();
+    if (profileId) {
+      trackAccess(profileId, 'profile');
+    }
     const success = await secureCopy(text);
     if (success) {
       setCopiedField(field);
@@ -983,6 +989,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   };
 
   const togglePasswordVisibility = (profileId: number) => {
+    trackAccess(profileId, 'profile');
     setShowPassword(prev => ({
       ...prev,
       [profileId]: !prev[profileId]
@@ -990,6 +997,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   };
 
   const toggleUsernameVisibility = (profileId: number) => {
+    trackAccess(profileId, 'profile');
     setShowUsername(prev => ({
       ...prev,
       [profileId]: !prev[profileId]
@@ -997,6 +1005,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   };
 
   const toggleEmailVisibility = (profileId: number) => {
+    trackAccess(profileId, 'profile');
     setShowEmail(prev => ({
       ...prev,
       [profileId]: !prev[profileId]
@@ -1694,13 +1703,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {/* Profiles Grid */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {!loading && profiles.length > 0 && (
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 items-start">{[...profiles].sort((a, b) => {
-              const aPinned = a.is_pinned || false;
-              const bPinned = b.is_pinned || false;
-              if (aPinned && !bPinned) return -1;
-              if (!aPinned && bPinned) return 1;
-              return 0;
-            }).map((profile) => (
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 items-start">
+            {sortByFrequency(profiles, 'profile').map((profile) => (
               <ProfileCard
                 key={profile.id}
                 profile={profile}
