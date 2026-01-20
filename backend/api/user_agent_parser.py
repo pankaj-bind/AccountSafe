@@ -58,13 +58,23 @@ def parse_user_agent(user_agent_str):
     
     # Detect OS
     os_name = 'Unknown'
-    if 'windows nt 10' in user_agent_lower:
-        os_name = 'Windows 10'
-    elif 'windows nt 11' in user_agent_lower or 'windows nt 10.0' in user_agent_lower:
-        # Windows 11 also reports as NT 10.0, need more specific detection
+    # Prefer more specific checks first. Some Windows 11 user-agents report
+    # "Windows NT 10.0" (same as Windows 10), so we check for explicit
+    # Windows 11 tokens and the 10.0 case before matching a generic "windows nt 10".
+    if 'windows nt 11' in user_agent_lower or 'windows 11' in user_agent_lower:
         os_name = 'Windows 11'
-    elif 'windows' in user_agent_lower:
-        os_name = 'Windows'
+    elif 'windows nt 10.0' in user_agent_lower:
+        # Many Windows 11 builds still report NT 10.0 — treat as Windows 11
+        os_name = 'Windows 11'
+    elif 'windows nt 10' in user_agent_lower:
+        os_name = 'Windows 10'
+    elif 'windows nt' in user_agent_lower:
+        # Fallback: try to extract NT version and return it explicitly
+        try:
+            nt_version = user_agent_lower.split('windows nt ')[1].split(';')[0].split(')')[0].strip()
+            os_name = f'Windows NT {nt_version}'
+        except Exception:
+            os_name = 'Windows'
     elif 'mac os x' in user_agent_lower or 'macos' in user_agent_lower:
         os_name = 'macOS'
         try:
@@ -75,15 +85,26 @@ def parse_user_agent(user_agent_str):
     elif 'android' in user_agent_lower:
         os_name = 'Android'
         try:
-            version = user_agent_str.split('Android ')[1].split(';')[0]
-            os_name = f'Android {version}'
+            # Try multiple patterns for Android version extraction
+            if 'Android ' in user_agent_str:
+                version = user_agent_str.split('Android ')[1].split(';')[0].split(')')[0].strip()
+                os_name = f'Android {version}'
         except:
             pass
     elif 'iphone' in user_agent_lower or 'ipad' in user_agent_lower:
-        os_name = 'iOS'
+        if 'ipad' in user_agent_lower:
+            os_name = 'iPadOS'
+        else:
+            os_name = 'iOS'
         try:
-            version = user_agent_str.split('OS ')[1].split(' ')[0].replace('_', '.')
-            os_name = f'iOS {version}'
+            # Try to extract iOS/iPadOS version
+            if 'OS ' in user_agent_str:
+                # Pattern: "OS 15_0" or "OS 15_0_1"
+                version_part = user_agent_str.split('OS ')[1].split(' ')[0].replace('_', '.')
+                os_name = f'{os_name} {version_part}'
+            elif 'iPhone OS ' in user_agent_str:
+                version_part = user_agent_str.split('iPhone OS ')[1].split(' ')[0].replace('_', '.')
+                os_name = f'iOS {version_part}'
         except:
             pass
     elif 'linux' in user_agent_lower:
