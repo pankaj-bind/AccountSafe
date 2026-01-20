@@ -23,7 +23,7 @@ allowed_hosts_str = os.getenv('ALLOWED_HOSTS', '')
 if allowed_hosts_str:
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
 else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'accountsafe.pythonanywhere.com'] if DEBUG else ['accountsafe.pythonanywhere.com']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.236.183.183', 'accountsafe.pythonanywhere.com'] if DEBUG else ['accountsafe.pythonanywhere.com']
 
 # --- Application Definitions ---
 INSTALLED_APPS = [
@@ -118,7 +118,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # --- REST Framework Settings ---
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'api.authentication.MultiTokenAuthentication',
     ]
 }
 
@@ -145,7 +145,9 @@ CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',')
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
 
-# Allow all Vercel preview URLs
+# Allow all Vercel preview URLs and local network IPs for development
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://accountsafe.*\.vercel\.app$",
+    r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:3000$",  # Local network IPs (10.x.x.x)
+    r"^http://192\.168\.\d{1,3}\.\d{1,3}:3000$",     # Local network IPs (192.168.x.x)
 ]

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clearEncryptionKeys } from '../services/encryptionService';
+import { logoutEvent } from '../utils/logoutEvent';
 
 interface AuthContextType {
   token: string | null;
@@ -28,6 +29,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('authToken');
     }
   }, [token]);
+
+  // Listen for logout events from other parts of the app
+  useEffect(() => {
+    const unsubscribe = logoutEvent.subscribe(() => {
+      setToken(null);
+      clearEncryptionKeys();
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <AuthContext.Provider value={{ token, setToken, logout }}>

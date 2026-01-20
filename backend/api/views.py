@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 
-from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile, LoginRecord, CuratedOrganization
+from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile, LoginRecord, CuratedOrganization, UserSession, DuressSession
 from .email_utils import parse_user_agent, get_alert_context
 from .serializers import (
     OTPRequestSerializer,
@@ -48,8 +48,7 @@ class CustomLoginView(APIView):
 
     def post(self, request):
         from django.contrib.auth import authenticate, login
-        from rest_framework.authtoken.models import Token
-        from .models import DuressSession
+        from .models import DuressSession, MultiToken
         import threading
         
         username = request.data.get('username')
@@ -80,12 +79,34 @@ class CustomLoginView(APIView):
             # Successful login with MASTER password
             login(request, user)
             
-            # Delete any existing token and duress session to start fresh
-            Token.objects.filter(user=user).delete()
+            # Delete any existing duress sessions (but keep regular tokens for multi-device support)
             DuressSession.objects.filter(user=user).delete()
             
-            # Create a new clean token
-            token = Token.objects.create(user=user)
+            # Create a new token for this device/session (using MultiToken for multi-device support)
+            token = MultiToken.objects.create(user=user)
+            
+            # Create session record with device metadata
+            from .user_agent_parser import parse_user_agent
+            from .ip_location import get_ip_location
+            
+            user_agent_str = request.META.get('HTTP_USER_AGENT', '')
+            ua_data = parse_user_agent(user_agent_str)
+            ip_address = get_client_ip(request)
+            location_data = get_ip_location(ip_address)
+            
+            session = UserSession.objects.create(
+                user=user,
+                token=token,
+                ip_address=ip_address,
+                user_agent=user_agent_str,
+                device_type=ua_data['device_type'],
+                browser=ua_data['browser'],
+                os=ua_data['os'],
+                location=location_data.get('location', ''),
+                country_code=location_data.get('country_code', ''),
+                is_active=True
+            )
+            print(f"[DEBUG] Created UserSession {session.id}: {session.browser} on {session.os} ({session.device_type}) from {session.location}")
             
             # Track successful login
             # Send email for initial login from login page, but not for panic mode unlock
@@ -125,18 +146,39 @@ class CustomLoginView(APIView):
                     # DURESS LOGIN DETECTED - Return success with fake data
                     login(request, target_user)
                     
-                    # Delete any existing token and duress session
-                    Token.objects.filter(user=target_user).delete()
+                    # Delete any existing duress sessions (but keep regular tokens for multi-device support)
                     DuressSession.objects.filter(user=target_user).delete()
                     
-                    # Create a new token
-                    token = Token.objects.create(user=target_user)
+                    # Create a new token for this device/session (using MultiToken for multi-device support)
+                    token = MultiToken.objects.create(user=target_user)
                     
                     # Mark this token as a duress session
                     DuressSession.objects.create(
                         token_key=token.key,
                         user=target_user,
                         ip_address=get_client_ip(request)
+                    )
+                    
+                    # Create session record with device metadata
+                    from .user_agent_parser import parse_user_agent
+                    from .ip_location import get_ip_location
+                    
+                    user_agent_str = request.META.get('HTTP_USER_AGENT', '')
+                    ua_data = parse_user_agent(user_agent_str)
+                    ip_address = get_client_ip(request)
+                    location_data = get_ip_location(ip_address)
+                    
+                    UserSession.objects.create(
+                        user=target_user,
+                        token=token,
+                        ip_address=ip_address,
+                        user_agent=user_agent_str,
+                        device_type=ua_data['device_type'],
+                        browser=ua_data['browser'],
+                        os=ua_data['os'],
+                        location=location_data.get('location', ''),
+                        country_code=location_data.get('country_code', ''),
+                        is_active=True
                     )
                     
                     print(f"[DEBUG] Duress token created: {token.key[:20]}...")
@@ -2291,3 +2333,80 @@ def search_organizations(request):
             print(f"Clearbit API error: {e}")
     
     return Response(results)
+
+
+# Active Session Management Views
+class ActiveSessionsView(APIView):
+    """List all active sessions for the current user"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        from .serializers import UserSessionSerializer
+        
+        # Only show active sessions
+        sessions = UserSession.objects.filter(user=request.user, is_active=True).order_by('-last_active')
+        serializer = UserSessionSerializer(sessions, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class ValidateSessionView(APIView):
+    """Check if the current session is still active"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        # If authentication succeeded, session is valid
+        return Response({'is_active': True, 'message': 'Session is valid'})
+
+
+class RevokeSessionView(APIView):
+    """Revoke a specific session by marking it inactive and deleting its token"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, session_id):
+        try:
+            session = UserSession.objects.get(id=session_id, user=request.user, is_active=True)
+            
+            # Check if trying to revoke current session
+            if hasattr(request, 'auth') and session.token.key == request.auth.key:
+                return Response({'error': 'Cannot revoke current session'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Revoke the session (marks inactive and deletes token)
+            session.revoke()
+            
+            return Response({'message': 'Session revoked successfully'}, status=status.HTTP_200_OK)
+        except UserSession.DoesNotExist:
+            return Response({'error': 'Session not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Also support DELETE method for backward compatibility
+    def delete(self, request, session_id):
+        return self.post(request, session_id)
+
+
+class RevokeAllSessionsView(APIView):
+    """Revoke all sessions except the current one"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        # Get current token from request
+        current_token = request.auth
+        
+        # Get count of sessions to revoke
+        sessions_to_revoke = UserSession.objects.filter(
+            user=request.user, 
+            is_active=True
+        ).exclude(token__key=current_token.key)
+        
+        count = sessions_to_revoke.count()
+        
+        # Delete all other tokens (cascades to UserSession)
+        from .models import MultiToken
+        MultiToken.objects.filter(user=request.user).exclude(key=current_token.key).delete()
+        
+        return Response({
+            'message': f'Successfully revoked {count} session{"s" if count != 1 else ""}',
+            'revoked_count': count
+        }, status=status.HTTP_200_OK)
+    
+    # Also support DELETE method for backward compatibility
+    def delete(self, request):
+        return self.post(request)

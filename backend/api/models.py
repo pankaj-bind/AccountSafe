@@ -387,6 +387,72 @@ class SharedSecret(models.Model):
         ]
 
 
+# --- Model for User Session Tracking (Multi-Device Support) ---
+class UserSession(models.Model):
+    """
+    Tracks active sessions for multi-device login support.
+    Each login creates a new token and session, allowing users to be
+    logged in on multiple devices simultaneously.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sessions')
+    token = models.OneToOneField('MultiToken', on_delete=models.CASCADE, related_name='session')
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField(help_text="Raw User-Agent string")
+    device_type = models.CharField(max_length=20, default='desktop', help_text="mobile, desktop, tablet")
+    browser = models.CharField(max_length=100, blank=True, help_text="e.g., Chrome 120")
+    os = models.CharField(max_length=100, blank=True, help_text="e.g., Windows 11")
+    location = models.CharField(max_length=200, blank=True, help_text="e.g., Mumbai, India")
+    country_code = models.CharField(max_length=10, blank=True, help_text="ISO country code, e.g., IN")
+    is_active = models.BooleanField(default=True, help_text="Whether this session is active")
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_active = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.browser} on {self.os} ({self.device_type})"
+    
+    def revoke(self):
+        """Revoke this session by marking it inactive and deleting the token"""
+        self.is_active = False
+        self.save(update_fields=['is_active'])
+        if self.token:
+            self.token.delete()
+    
+    class Meta:
+        verbose_name = "User Session"
+        verbose_name_plural = "User Sessions"
+        ordering = ['-last_active']
+
+
+# --- Multi-Token Model for Multi-Device Login ---
+class MultiToken(models.Model):
+    """
+    Custom token model that allows multiple tokens per user.
+    Unlike rest_framework.authtoken.Token which uses OneToOneField,
+    this uses ForeignKey to allow multiple tokens per user.
+    """
+    key = models.CharField(max_length=40, primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='auth_tokens')
+    created = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.generate_key()
+        return super().save(*args, **kwargs)
+    
+    @classmethod
+    def generate_key(cls):
+        import binascii
+        import os
+        return binascii.hexlify(os.urandom(20)).decode()
+    
+    def __str__(self):
+        return self.key
+    
+    class Meta:
+        verbose_name = "Auth Token"
+        verbose_name_plural = "Auth Tokens"
+
+
 # --- Model for Duress Session Tracking ---
 class DuressSession(models.Model):
     """

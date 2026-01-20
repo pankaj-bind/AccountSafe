@@ -17,6 +17,7 @@ import PublicRoute from './components/PublicRoute';
 import ProfileUpdater from './components/ProfileUpdater';
 import PanicListener from './components/PanicListener';
 import PrivacyGuard from './components/PrivacyGuard';
+import SessionMonitor from './components/SessionMonitor';
 
 // Import Page Components
 import HomePage from './pages/HomePage';
@@ -41,6 +42,7 @@ const App: React.FC = () => {
                 <PrivacyGuard>
                   <ProfileUpdater />
                   <PanicListener />
+                  <SessionMonitor />
                   <div className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-200 font-sans">
                     <Navbar />
                     <main>

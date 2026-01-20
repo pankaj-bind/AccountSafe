@@ -4,6 +4,7 @@ import { getUserProfile, deleteAccount, requestPasswordResetOTP, verifyPasswordR
 import { getPinStatus, resetPin } from "../services/pinService";
 import { useAuth } from "../contexts/AuthContext";
 import SecuritySettingsPanel from "../components/SecuritySettingsPanel";
+import ActiveSessionsList from "../components/ActiveSessionsList";
 
 // Icons
 const LockIcon = () => (
@@ -421,6 +422,11 @@ const SecuritySettingsPage: React.FC = () => {
             <p className="text-sm text-zinc-500 mt-1">Advanced security features for emergency situations</p>
           </div>
           <SecuritySettingsPanel />
+        </div>
+
+        {/* Active Sessions Section */}
+        <div className="mb-6">
+          <ActiveSessionsList />
         </div>
 
         {/* Danger Zone - Delete Account */}

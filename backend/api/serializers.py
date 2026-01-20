@@ -3,7 +3,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from dj_rest_auth.registration.serializers import RegisterSerializer
-from .models import UserProfile, Category, Organization, Profile, LoginRecord
+from .models import UserProfile, Category, Organization, Profile, LoginRecord, UserSession
 from .turnstile import verify_turnstile_token, get_client_ip
 
 
@@ -311,3 +311,47 @@ class LoginRecordSerializer(serializers.ModelSerializer):
                     data['status'] = 'success'
         
         return data
+
+
+# --- User Session Serializer ---
+class UserSessionSerializer(serializers.ModelSerializer):
+    is_current = serializers.SerializerMethodField()
+    last_active_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = UserSession
+        fields = [
+            'id', 'device_type', 'browser', 'os', 'location', 'country_code',
+            'ip_address', 'created_at', 'last_active', 'last_active_display',
+            'is_current', 'is_active'
+        ]
+        read_only_fields = fields
+    
+    def get_is_current(self, obj):
+        """Check if this session is the current one"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'auth'):
+            return obj.token.key == request.auth.key
+        return False
+    
+    def get_last_active_display(self, obj):
+        """Return human-readable last active time"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        now = timezone.now()
+        diff = now - obj.last_active
+        
+        if diff < timedelta(minutes=1):
+            return "Just now"
+        elif diff < timedelta(hours=1):
+            minutes = int(diff.total_seconds() / 60)
+            return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+        elif diff < timedelta(days=1):
+            hours = int(diff.total_seconds() / 3600)
+            return f"{hours} hour{'s' if hours != 1 else ''} ago"
+        elif diff < timedelta(days=7):
+            days = diff.days
+            return f"{days} day{'s' if days != 1 else ''} ago"
+        else:
+            return obj.last_active.strftime('%b %d, %Y')

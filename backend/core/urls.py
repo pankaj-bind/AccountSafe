@@ -34,6 +34,10 @@ from api.views import (
     BatchUpdateSecurityMetricsView,
     SecuritySettingsView,
     search_organizations,
+    ActiveSessionsView,
+    ValidateSessionView,
+    RevokeSessionView,
+    RevokeAllSessionsView,
 )
 
 # Shared secret views
@@ -92,6 +96,12 @@ urlpatterns = [
     
     # Panic & Duress Security Settings
     path('api/security/settings/', SecuritySettingsView.as_view(), name='security-settings'),
+
+    # Session Management (Multi-Device)
+    path('api/sessions/', ActiveSessionsView.as_view(), name='active-sessions'),
+    path('api/sessions/validate/', ValidateSessionView.as_view(), name='validate-session'),
+    path('api/sessions/<int:session_id>/revoke/', RevokeSessionView.as_view(), name='revoke-session'),
+    path('api/sessions/revoke-all/', RevokeAllSessionsView.as_view(), name='revoke-all-sessions'),
 
     # Hybrid Organization Search (Local + Clearbit API)
     path('api/organizations/search/', search_organizations, name='search-organizations'),
