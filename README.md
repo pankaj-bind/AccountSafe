@@ -35,6 +35,7 @@ AccountSafe is a self-hosted credential management system built with security-fi
 - **AES-256 Encryption**: All sensitive data encrypted at rest using Fernet (AES-256-CBC mode)
 - **PIN Protection**: 4-digit security PIN hashed with bcrypt (server-side validation)
 - **JWT Authentication**: Token-based session management with refresh mechanism
+- **Cross-Tab Logout**: Instant synchronization across all browser tabs using Broadcast Channel API
 - **Login Activity Monitoring**: Track authentication attempts with IP geolocation
 - **Rate Limiting**: API throttling to prevent brute-force attacks
 - **Security Health Score**: Automated password strength analysis and breach detection

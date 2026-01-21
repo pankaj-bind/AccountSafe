@@ -3,6 +3,7 @@ import axios from 'axios';
 import apiClient from '../api/apiClient';
 import { storeMasterPasswordForSession, storeKeyData } from './encryptionService';
 import { generateSalt } from '../utils/encryption';
+import { broadcastLogout } from '../hooks/useGlobalLogout';
 
 // Ensure consistent API URL with trailing slash
 const API_URL = process.env.REACT_APP_API_URL 
@@ -93,6 +94,9 @@ export const logout = () => {
   localStorage.removeItem('authToken');
   // Clear encryption keys from session
   sessionStorage.removeItem('accountsafe_master_key');
+  
+  // 📡 Broadcast logout to all other tabs
+  broadcastLogout('USER_LOGOUT');
 };
 
 /**
