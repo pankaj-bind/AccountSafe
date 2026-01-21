@@ -9,8 +9,10 @@ import { encryptCredentialFields, decryptCredentialFields } from '../utils/encry
 import { getSessionEncryptionKey } from '../services/encryptionService';
 import { checkPasswordBreach, updatePasswordStrength, updateBreachStatus, updatePasswordHash } from '../services/securityService';
 import { useClipboard } from '../hooks/useClipboard';
+import { usePwnedCheck } from '../hooks/usePwnedCheck';
 import { trackAccess, sortByFrequency } from '../utils/frequencyTracker';
 import PasswordReentryModal from './PasswordReentryModal';
+import BreachWarning from './BreachWarning';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icon Components
@@ -706,6 +708,9 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     notes: '',
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // Real-time password breach detection
+  const { breachCount, isChecking, error: breachError } = usePwnedCheck(newProfile.password);
 
   useEffect(() => {
     fetchOrganizationData();
@@ -1908,6 +1913,15 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                         ))}
                       </div>
                     </div>
+                  )}
+                  
+                  {/* Real-Time Breach Warning */}
+                  {newProfile.password && (
+                    <BreachWarning
+                      breachCount={breachCount}
+                      isChecking={isChecking}
+                      error={breachError}
+                    />
                   )}
                 </div>
               </div>
