@@ -230,7 +230,7 @@ const CredentialField: React.FC<CredentialFieldProps> = ({
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="group/field"
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
@@ -260,11 +260,10 @@ const CredentialField: React.FC<CredentialFieldProps> = ({
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={onCopy}
-          className={`h-[42px] px-3 flex items-center justify-center rounded-lg transition-all ${
-            isCopied
+          className={`h-[42px] px-3 flex items-center justify-center rounded-lg transition-all ${isCopied
               ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30'
               : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700'
-          }`}
+            }`}
           title={isCopied ? 'Copied!' : 'Copy'}
           aria-label={isCopied ? 'Copied to clipboard' : 'Copy to clipboard'}
         >
@@ -358,7 +357,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 
   const hasCredentials = profile.username || profile.password || profile.email;
   const hasSecondaryFields = profile.email || profile.notes || profile.document_url || (recoveryCodes && recoveryCodes.length > 0);
-  
+
   return (
     <div ref={cardRef} className="as-card p-0 rounded-lg relative sm:overflow-hidden overflow-visible group hover:border-zinc-400 dark:hover:border-zinc-700 transition-all">
       {/* Card Header */}
@@ -384,22 +383,21 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               </div>
             </div>
           </div>
-          
+
           {/* Pin/Favorite Star and Kebab Menu */}
           <div className="flex items-center gap-1 flex-shrink-0">
             {/* Pin/Favorite Star */}
             <button
               onClick={onTogglePin}
-              className={`p-1.5 flex items-center justify-center rounded-lg transition-colors ${
-                isPinned
+              className={`p-1.5 flex items-center justify-center rounded-lg transition-colors ${isPinned
                   ? 'text-yellow-500 dark:text-yellow-400 hover:text-yellow-600 dark:hover:text-yellow-500'
                   : 'text-zinc-400 dark:text-zinc-600 hover:text-yellow-500 dark:hover:text-yellow-400'
-              }`}
+                }`}
               title={isPinned ? 'Unpin' : 'Pin'}
             >
               <StarIcon filled={isPinned} />
             </button>
-            
+
             {/* Kebab Menu - Always visible on mobile, hover-only on desktop */}
             <div className="relative" ref={menuRef}>
               <button
@@ -412,87 +410,87 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 
               {/* Dropdown Menu */}
               {showMenu && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                transition={{ duration: 0.1 }}
-                className="absolute right-0 mt-2 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 z-50 sm:w-40 w-auto sm:py-1"
-              >
-                {/* Mobile: Icon-only horizontal layout */}
-                <div className="flex sm:hidden items-center gap-1 p-1.5">
-                  <button
-                    onClick={() => {
-                      onShare();
-                      setShowMenu(false);
-                    }}
-                    className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                    title="Share"
-                  >
-                    <ShareIcon className="w-5 h-5 text-green-500" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      onEdit();
-                      setShowMenu(false);
-                    }}
-                    className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                    title="Edit"
-                  >
-                    <PencilIcon className="w-5 h-5 text-blue-500" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      onDelete();
-                      setShowMenu(false);
-                    }}
-                    className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                    title="Delete"
-                  >
-                    <TrashIcon className="w-5 h-5 text-red-500" />
-                  </button>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  transition={{ duration: 0.1 }}
+                  className="absolute right-0 mt-2 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 z-50 sm:w-40 w-auto sm:py-1"
+                >
+                  {/* Mobile: Icon-only horizontal layout */}
+                  <div className="flex sm:hidden items-center gap-1 p-1.5">
+                    <button
+                      onClick={() => {
+                        onShare();
+                        setShowMenu(false);
+                      }}
+                      className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                      title="Share"
+                    >
+                      <ShareIcon className="w-5 h-5 text-green-500" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        onEdit();
+                        setShowMenu(false);
+                      }}
+                      className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                      title="Edit"
+                    >
+                      <PencilIcon className="w-5 h-5 text-blue-500" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        onDelete();
+                        setShowMenu(false);
+                      }}
+                      className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                      title="Delete"
+                    >
+                      <TrashIcon className="w-5 h-5 text-red-500" />
+                    </button>
+                  </div>
 
-                {/* Desktop: Text + Icon vertical layout */}
-                <div className="hidden sm:block">
-                  <button
-                    onClick={() => {
-                      onShare();
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <ShareIcon className="w-4 h-4 text-green-500" />
-                    <span>Share</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      onEdit();
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <PencilIcon className="w-4 h-4 text-blue-500" />
-                    <span>Edit</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      onDelete();
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <TrashIcon className="w-4 h-4 text-red-500" />
-                    <span>Delete</span>
-                  </button>
-                </div>
-              </motion.div>
-            )}
+                  {/* Desktop: Text + Icon vertical layout */}
+                  <div className="hidden sm:block">
+                    <button
+                      onClick={() => {
+                        onShare();
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                      <ShareIcon className="w-4 h-4 text-green-500" />
+                      <span>Share</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        onEdit();
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                      <PencilIcon className="w-4 h-4 text-blue-500" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        onDelete();
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-3 py-2 text-left flex items-center gap-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                      <TrashIcon className="w-4 h-4 text-red-500" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Card Body - Content with padding */}
       <div className="pt-3 pb-10 sm:pb-4 sm:px-4 sm:py-4 space-y-3">
         {/* Primary Credentials - Always Visible */}
@@ -510,7 +508,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 onToggleSensitive={onToggleUsername}
               />
             )}
-            
+
             {profile.password && (
               <CredentialField
                 label="PASSWORD"
@@ -529,118 +527,117 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 
         {/* Expanded Section - Email, Notes, Documents, Recovery Codes */}
         {isExpanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-3 pt-2 border-t border-zinc-200 dark:border-zinc-800"
-            >
-              {profile.email && (
-                <CredentialField
-                  label="Email"
-                  value={profile.email}
-                  icon={<MailIcon className="w-4 h-4" />}
-                  isCopied={copiedField === `email-${profile.id}`}
-                  onCopy={() => onCopy(profile.email!, `email-${profile.id}`)}
-                  isSensitive
-                  showSensitive={showEmail}
-                  onToggleSensitive={onToggleEmail}
-                />
-              )}
-              
-              {/* Recovery Codes */}
-              {recoveryCodes && recoveryCodes.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-zinc-400 dark:text-zinc-500"><ShieldIcon className="w-4 h-4" /></span>
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                      Recovery Codes
-                    </span>
-                    <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded">
-                      {recoveryCodes.length} left
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <div className="flex flex-wrap gap-2">
-                      {recoveryCodes.map((code, index) => (
-                        <button
-                          key={index}
-                          onClick={() => onCopyRecoveryCode(code, index)}
-                          className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
-                            copiedField === `recovery-${profile.id}-${index}`
-                              ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                              : 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30'
-                          } filter blur-sm hover:blur-none`}
-                          title="Click to copy & remove"
-                        >
-                          {code}
-                        </button>
-                      ))}
-                    </div>
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-3 pt-2 border-t border-zinc-200 dark:border-zinc-800"
+          >
+            {profile.email && (
+              <CredentialField
+                label="Email"
+                value={profile.email}
+                icon={<MailIcon className="w-4 h-4" />}
+                isCopied={copiedField === `email-${profile.id}`}
+                onCopy={() => onCopy(profile.email!, `email-${profile.id}`)}
+                isSensitive
+                showSensitive={showEmail}
+                onToggleSensitive={onToggleEmail}
+              />
+            )}
 
-                    {/* Blurred overlay retained for subtle background effect (non-blocking) */}
-                    <div className="absolute inset-0 backdrop-blur-[2px] bg-zinc-100/50 dark:bg-zinc-900/50 rounded-lg pointer-events-none" />
-                  </div>
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-2">
-                    Click a code to copy it. Codes are removed after copying.
-                  </p>
+            {/* Recovery Codes */}
+            {recoveryCodes && recoveryCodes.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-zinc-400 dark:text-zinc-500"><ShieldIcon className="w-4 h-4" /></span>
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Recovery Codes
+                  </span>
+                  <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded">
+                    {recoveryCodes.length} left
+                  </span>
                 </div>
-              )}
-              
-              {/* Document */}
-              {profile.document_url && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-zinc-400 dark:text-zinc-500"><DocumentIcon className="w-4 h-4" /></span>
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Document</span>
-                  </div>
-                  <a
-                    href={profile.document_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
-                  >
-                    <DocumentIcon className="w-4 h-4" />
-                    <span>View Document</span>
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                </div>
-              )}
-              
-              {/* Notes */}
-              {profile.notes && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-zinc-400 dark:text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Notes</span>
-                  </div>
-                  <div className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-3">
-                    <p className={`text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
-                      {profile.notes}
-                    </p>
-                    {profile.notes.length > 150 && (
+                <div className="relative">
+                  <div className="flex flex-wrap gap-2">
+                    {recoveryCodes.map((code, index) => (
                       <button
-                        onClick={onToggleNotes}
-                        className="text-xs text-blue-400 hover:text-blue-300 mt-2 font-medium"
+                        key={index}
+                        onClick={() => onCopyRecoveryCode(code, index)}
+                        className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${copiedField === `recovery-${profile.id}-${index}`
+                            ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                            : 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30'
+                          } filter blur-sm hover:blur-none`}
+                        title="Click to copy & remove"
                       >
-                        {expandedNotes ? 'Show less' : 'Show more'}
+                        {code}
                       </button>
-                    )}
+                    ))}
                   </div>
+
+                  {/* Blurred overlay retained for subtle background effect (non-blocking) */}
+                  <div className="absolute inset-0 backdrop-blur-[2px] bg-zinc-100/50 dark:bg-zinc-900/50 rounded-lg pointer-events-none" />
                 </div>
-              )}
-            </motion.div>
-          )}
-          
-          {/* Empty State */}
-          {!hasCredentials && !profile.notes && !profile.document_url && recoveryCodes.length === 0 && (
-            <div className="text-center py-4 text-zinc-400 dark:text-zinc-500 text-sm">
-              No credentials or data stored yet
-            </div>
-          )}
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-2">
+                  Click a code to copy it. Codes are removed after copying.
+                </p>
+              </div>
+            )}
+
+            {/* Document */}
+            {profile.document_url && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-zinc-400 dark:text-zinc-500"><DocumentIcon className="w-4 h-4" /></span>
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Document</span>
+                </div>
+                <a
+                  href={profile.document_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
+                >
+                  <DocumentIcon className="w-4 h-4" />
+                  <span>View Document</span>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            )}
+
+            {/* Notes */}
+            {profile.notes && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-zinc-400 dark:text-zinc-500"><NotesIcon className="w-4 h-4" /></span>
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Notes</span>
+                </div>
+                <div className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-3">
+                  <p className={`text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap ${!expandedNotes ? 'line-clamp-3' : ''}`}>
+                    {profile.notes}
+                  </p>
+                  {profile.notes.length > 150 && (
+                    <button
+                      onClick={onToggleNotes}
+                      className="text-xs text-blue-400 hover:text-blue-300 mt-2 font-medium"
+                    >
+                      {expandedNotes ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {!hasCredentials && !profile.notes && !profile.document_url && recoveryCodes.length === 0 && (
+          <div className="text-center py-4 text-zinc-400 dark:text-zinc-500 text-sm">
+            No credentials or data stored yet
+          </div>
+        )}
       </div>
 
       {/* Footer Section - Full Bleed (directly inside outer card, no wrapper) */}
@@ -651,9 +648,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         >
           <span>{isExpanded ? 'Show Less' : 'View Details'}</span>
           <svg
-            className={`w-4 h-4 transition-transform ${
-              isExpanded ? 'rotate-180' : ''
-            }`}
+            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''
+              }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -683,13 +679,13 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   const [success, setSuccess] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
-  const [showPassword, setShowPassword] = useState<{[key: number]: boolean}>({});
-  const [showUsername, setShowUsername] = useState<{[key: number]: boolean}>({});
-  const [showEmail, setShowEmail] = useState<{[key: number]: boolean}>({});
-  const [expandedCard, setExpandedCard] = useState<{[key: number]: boolean}>({});
+  const [showPassword, setShowPassword] = useState<{ [key: number]: boolean }>({});
+  const [showUsername, setShowUsername] = useState<{ [key: number]: boolean }>({});
+  const [showEmail, setShowEmail] = useState<{ [key: number]: boolean }>({});
+  const [expandedCard, setExpandedCard] = useState<{ [key: number]: boolean }>({});
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [recoveryCodes, setRecoveryCodes] = useState<{[key: number]: string[]}>({});
-  const [expandedNotes, setExpandedNotes] = useState<{[key: number]: boolean}>({});
+  const [recoveryCodes, setRecoveryCodes] = useState<{ [key: number]: string[] }>({});
+  const [expandedNotes, setExpandedNotes] = useState<{ [key: number]: boolean }>({});
   const [showPasswordReentry, setShowPasswordReentry] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareProfileId, setShareProfileId] = useState<number | null>(null);
@@ -720,7 +716,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
   // Initialize recovery codes for each profile
   useEffect(() => {
-    const codes: {[key: number]: string[]} = {};
+    const codes: { [key: number]: string[] } = {};
     profiles.forEach(profile => {
       if (profile.recovery_codes) {
         // Split by whitespace and filter out empty strings
@@ -744,7 +740,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     setError(null);
     try {
       const response = await apiClient.get(`organizations/${organization.id}/profiles/`);
-      
+
       // Decrypt credentials client-side
       const encryptionKey = await getSessionEncryptionKey();
       if (!encryptionKey) {
@@ -843,7 +839,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
       const formData = new FormData();
       // Append non-encrypted fields
       formData.append('title', newProfile.title || '');
-      
+
       // Append encrypted fields
       if (encryptedFields.username_encrypted) {
         formData.append('username_encrypted', encryptedFields.username_encrypted);
@@ -865,7 +861,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         formData.append('recovery_codes_encrypted', encryptedFields.recovery_codes_encrypted);
         formData.append('recovery_codes_iv', encryptedFields.recovery_codes_iv!);
       }
-      
+
       if (selectedFile) formData.append('document', selectedFile);
 
       if (editingProfile) {
@@ -878,7 +874,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             },
           }
         );
-        
+
         // Decrypt the response data before updating state
         try {
           const decryptedFields = await decryptCredentialFields(response.data, encryptionKey);
@@ -891,7 +887,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             recovery_codes: decryptedFields.recovery_codes || null,
           };
           setProfiles(profiles.map(p => p.id === editingProfile.id ? decryptedProfile : p));
-          
+
           // Check password security metrics (strength + breach check)
           if (newProfile.password) {
             await checkPasswordSecurity(response.data.id, newProfile.password);
@@ -910,7 +906,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             },
           }
         );
-        
+
         // Decrypt the response data before adding to state
         try {
           const decryptedFields = await decryptCredentialFields(response.data, encryptionKey);
@@ -923,7 +919,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             recovery_codes: decryptedFields.recovery_codes || null,
           };
           setProfiles([...profiles, decryptedProfile]);
-          
+
           // Check password security metrics (strength + breach check)
           if (newProfile.password) {
             await checkPasswordSecurity(response.data.id, newProfile.password);
@@ -1031,15 +1027,15 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
       const formData = new FormData();
       formData.append('is_pinned', String(!profile.is_pinned));
-      
+
       await apiClient.patch(`profiles/${profileId}/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      
+
       // Update local state
-      setProfiles(prev => prev.map(p => 
+      setProfiles(prev => prev.map(p =>
         p.id === profileId ? { ...p, is_pinned: !p.is_pinned } : p
       ));
     } catch (err: any) {
@@ -1052,13 +1048,13 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     if (success) {
       setCopiedField(`recovery-${profileId}-${index}`);
       setTimeout(() => setCopiedField(null), 1000);
-      
+
       // Remove the copied code from the list
       setRecoveryCodes(prev => {
         const updated = { ...prev };
         if (updated[profileId]) {
           updated[profileId] = updated[profileId].filter((_, i) => i !== index);
-          
+
           // Update the profile with the new recovery codes
           const updatedCodes = updated[profileId].join(' ');
           updateProfileRecoveryCodes(profileId, updatedCodes);
@@ -1074,15 +1070,15 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     try {
       const formData = new FormData();
       formData.append('recovery_codes', newCodes);
-      
+
       await apiClient.put(`profiles/${profileId}/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      
+
       // Update the profiles list
-      setProfiles(profiles.map(p => 
+      setProfiles(profiles.map(p =>
         p.id === profileId ? { ...p, recovery_codes: newCodes } : p
       ));
     } catch (err) {
@@ -1161,7 +1157,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         setShareUrl(response.data.share_url);
         setError(null);
         setSuccess(`Secure share link created! Link expires in ${shareExpiryHours} hour${shareExpiryHours > 1 ? 's' : ''} and can only be viewed once.`);
-        
+
         // Clear success message after 5 seconds
         setTimeout(() => setSuccess(null), 5000);
       }
@@ -1291,9 +1287,9 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                       <h4 className="text-zinc-900 dark:text-white font-semibold text-lg mb-1">Scan QR Code</h4>
                       <p className="text-zinc-600 dark:text-zinc-400 text-sm">Quick access for mobile devices</p>
                     </div>
-                    
+
                     <div className="relative bg-white p-4 rounded-2xl shadow-2xl mb-4">
-                      <canvas 
+                      <canvas
                         ref={(canvas) => {
                           if (canvas && shareUrl) {
                             QRCode.toCanvas(canvas, shareUrl, {
@@ -1314,14 +1310,14 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                                   const logoSize = 50;
                                   const x = (canvas.width - logoSize) / 2;
                                   const y = (canvas.height - logoSize) / 2;
-                                  
+
                                   // Emerald rounded background with border (matching the style)
                                   const padding = 8;
                                   const bgSize = logoSize + (padding * 2);
                                   const bgX = x - padding;
                                   const bgY = y - padding;
                                   const radius = 8;
-                                  
+
                                   // Draw emerald-50 rounded background
                                   ctx.fillStyle = '#ecfdf5'; // emerald-50
                                   ctx.beginPath();
@@ -1336,12 +1332,12 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                                   ctx.quadraticCurveTo(bgX, bgY, bgX + radius, bgY);
                                   ctx.closePath();
                                   ctx.fill();
-                                  
+
                                   // Draw emerald-200 border
                                   ctx.strokeStyle = '#d1fae5'; // emerald-200
                                   ctx.lineWidth = 2;
                                   ctx.stroke();
-                                  
+
                                   // Draw logo image
                                   ctx.drawImage(logo, x, y, logoSize, logoSize);
                                 };
@@ -1473,9 +1469,9 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   <h4 className="text-zinc-900 dark:text-white font-semibold text-lg mb-1">Scan to Access</h4>
                   <p className="text-zinc-600 dark:text-zinc-400 text-sm">One-time secure link</p>
                 </div>
-                
+
                 <div className="relative bg-white p-4 rounded-2xl shadow-2xl mb-4">
-                  <canvas 
+                  <canvas
                     ref={(canvas) => {
                       if (canvas && qrCodeUrl) {
                         QRCode.toCanvas(canvas, qrCodeUrl, {
@@ -1495,14 +1491,14 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                               const logoSize = 60;
                               const x = (canvas.width - logoSize) / 2;
                               const y = (canvas.height - logoSize) / 2;
-                              
+
                               // Emerald rounded background with border (matching the style)
                               const padding = 8;
                               const bgSize = logoSize + (padding * 2);
                               const bgX = x - padding;
                               const bgY = y - padding;
                               const radius = 12;
-                              
+
                               // Draw emerald-50 rounded background
                               ctx.fillStyle = '#ecfdf5'; // emerald-50
                               ctx.beginPath();
@@ -1517,12 +1513,12 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                               ctx.quadraticCurveTo(bgX, bgY, bgX + radius, bgY);
                               ctx.closePath();
                               ctx.fill();
-                              
+
                               // Emerald border
                               ctx.strokeStyle = '#d1fae5'; // emerald-200
                               ctx.lineWidth = 2;
                               ctx.stroke();
-                              
+
                               // Draw logo
                               ctx.drawImage(logo, x, y, logoSize, logoSize);
                             };
@@ -1575,9 +1571,9 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
           </motion.div>
         </div>
       )}
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-6">
-        
+
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {/* Back Button & Header */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
@@ -1589,7 +1585,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
           <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium text-sm sm:text-base">Back to Vault</span>
         </button>
-        
+
         {/* Organization Header - Logo and Title with Button */}
         <div className="max-w-7xl mx-auto mb-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -1609,7 +1605,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                 </span>
               </div>
             )}
-            
+
             <div className="min-w-0 flex-1">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white truncate">
                 {orgData.name || 'Loading...'}
@@ -1619,7 +1615,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
               </span>
             </div>
           </div>
-          
+
           {/* Add Profile Button */}
           <button
             onClick={() => { setShowModal(true); setError(null); }}
@@ -1742,12 +1738,12 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
       {/* Create/Edit Profile Modal */}
       {/* ═══════════════════════════════════════════════════════════════════════════════ */}
       {showModal && (
-        <div 
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]" 
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]"
           onClick={() => setShowModal(false)}
         >
-          <div 
-            className="as-modal w-full max-w-lg max-h-[90vh] overflow-y-auto animate-[modalIn_0.3s_ease-out]" 
+          <div
+            className="as-modal w-full max-w-lg max-h-[90vh] overflow-y-auto animate-[modalIn_0.3s_ease-out]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -1843,28 +1839,26 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                       <span className="hidden sm:inline text-sm">Generate</span>
                     </button>
                   </div>
-                  
+
                   {/* Password Strength Indicator */}
                   {newProfile.password && (
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
                           <div
-                            className={`h-full transition-all duration-300 ${
-                              getPasswordStrength(newProfile.password).color === 'green' ? 'bg-emerald-500' :
-                              getPasswordStrength(newProfile.password).color === 'blue' ? 'bg-blue-500' :
-                              getPasswordStrength(newProfile.password).color === 'yellow' ? 'bg-yellow-500' :
-                              'bg-red-500'
-                            }`}
+                            className={`h-full transition-all duration-300 ${getPasswordStrength(newProfile.password).color === 'green' ? 'bg-emerald-500' :
+                                getPasswordStrength(newProfile.password).color === 'blue' ? 'bg-blue-500' :
+                                  getPasswordStrength(newProfile.password).color === 'yellow' ? 'bg-yellow-500' :
+                                    'bg-red-500'
+                              }`}
                             style={{ width: `${getPasswordStrength(newProfile.password).score}%` }}
                           />
                         </div>
-                        <span className={`text-xs font-medium ${
-                          getPasswordStrength(newProfile.password).color === 'green' ? 'text-emerald-400' :
-                          getPasswordStrength(newProfile.password).color === 'blue' ? 'text-blue-400' :
-                          getPasswordStrength(newProfile.password).color === 'yellow' ? 'text-yellow-400' :
-                          'text-red-400'
-                        }`}>
+                        <span className={`text-xs font-medium ${getPasswordStrength(newProfile.password).color === 'green' ? 'text-emerald-400' :
+                            getPasswordStrength(newProfile.password).color === 'blue' ? 'text-blue-400' :
+                              getPasswordStrength(newProfile.password).color === 'yellow' ? 'text-yellow-400' :
+                                'text-red-400'
+                          }`}>
                           {getPasswordStrength(newProfile.password).label}
                         </span>
                       </div>
@@ -1887,7 +1881,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Password Suggestions when field is empty */}
                   {!newProfile.password && (
                     <div className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg">
@@ -1914,7 +1908,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Real-Time Breach Warning */}
                   {newProfile.password && (
                     <BreachWarning

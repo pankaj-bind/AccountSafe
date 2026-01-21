@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface PwnedCheckResult {
   breachCount: number;
@@ -34,33 +34,6 @@ export const usePwnedCheck = (password: string): PwnedCheckResult => {
   const [error, setError] = useState<string | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    // Clear previous timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Reset state if password is empty
-    if (!password || password.length === 0) {
-      setBreachCount(0);
-      setIsChecking(false);
-      setError(null);
-      return;
-    }
-
-    // Debounce: Wait 500ms after user stops typing
-    debounceTimerRef.current = setTimeout(() => {
-      checkPassword(password);
-    }, 500);
-
-    // Cleanup function
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [password]);
-
   /**
    * Hash the password using SHA-1 and return as uppercase hex string
    */
@@ -82,7 +55,7 @@ export const usePwnedCheck = (password: string): PwnedCheckResult => {
   /**
    * Check password against HIBP database using k-Anonymity
    */
-  const checkPassword = async (pwd: string): Promise<void> => {
+  const checkPassword = useCallback(async (pwd: string): Promise<void> => {
     try {
       setIsChecking(true);
       setError(null);
@@ -141,7 +114,34 @@ export const usePwnedCheck = (password: string): PwnedCheckResult => {
       setBreachCount(0);
       setIsChecking(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Reset state if password is empty
+    if (!password || password.length === 0) {
+      setBreachCount(0);
+      setIsChecking(false);
+      setError(null);
+      return;
+    }
+
+    // Debounce: Wait 500ms after user stops typing
+    debounceTimerRef.current = setTimeout(() => {
+      checkPassword(password);
+    }, 500);
+
+    // Cleanup function
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [password, checkPassword]);
 
   return {
     breachCount,
