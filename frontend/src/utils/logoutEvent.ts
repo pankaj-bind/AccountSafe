@@ -1,4 +1,5 @@
 // utils/logoutEvent.ts
+import { broadcastLogout } from '../hooks/useGlobalLogout';
 
 /**
  * Simple event emitter for logout events.
@@ -32,6 +33,9 @@ export const forceLogout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('username');
   sessionStorage.clear();
+  
+  // 📡 Broadcast session expiry to all other tabs
+  broadcastLogout('SESSION_EXPIRED');
   
   // Emit logout event to all listeners
   logoutEvent.emit();

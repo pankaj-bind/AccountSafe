@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clearEncryptionKeys } from '../services/encryptionService';
 import { logoutEvent } from '../utils/logoutEvent';
+import { useGlobalLogout } from '../hooks/useGlobalLogout';
 
 interface AuthContextType {
   token: string | null;
@@ -21,6 +22,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearEncryptionKeys();
     navigate('/login');
   };
+
+  // 🔒 Cross-Tab Logout: Listen for logout broadcasts from other tabs
+  useGlobalLogout(() => {
+    setToken(null);
+    clearEncryptionKeys();
+    navigate('/login');
+  });
 
   useEffect(() => {
     if (token) {
