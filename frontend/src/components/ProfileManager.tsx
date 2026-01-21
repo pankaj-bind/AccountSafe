@@ -10,9 +10,11 @@ import { getSessionEncryptionKey } from '../services/encryptionService';
 import { checkPasswordBreach, updatePasswordStrength, updateBreachStatus, updatePasswordHash } from '../services/securityService';
 import { useClipboard } from '../hooks/useClipboard';
 import { usePwnedCheck } from '../hooks/usePwnedCheck';
+import { useDuplicatePasswordCheck } from '../hooks/useDuplicatePasswordCheck';
 import { trackAccess, sortByFrequency } from '../utils/frequencyTracker';
 import PasswordReentryModal from './PasswordReentryModal';
 import BreachWarning from './BreachWarning';
+import DuplicatePasswordWarning from './DuplicatePasswordWarning';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icon Components
@@ -707,6 +709,12 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
   // Real-time password breach detection
   const { breachCount, isChecking, error: breachError } = usePwnedCheck(newProfile.password);
+  
+  // Real-time duplicate password detection
+  const { duplicateCount, duplicates, isChecking: isDuplicateChecking, error: duplicateError } = useDuplicatePasswordCheck(
+    newProfile.password,
+    editingProfile?.id
+  );
 
   useEffect(() => {
     fetchOrganizationData();
@@ -1915,6 +1923,16 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                       breachCount={breachCount}
                       isChecking={isChecking}
                       error={breachError}
+                    />
+                  )}
+                  
+                  {/* Real-Time Duplicate Password Warning */}
+                  {newProfile.password && (
+                    <DuplicatePasswordWarning
+                      duplicateCount={duplicateCount}
+                      duplicates={duplicates}
+                      isChecking={isDuplicateChecking}
+                      error={duplicateError}
                     />
                   )}
                 </div>
