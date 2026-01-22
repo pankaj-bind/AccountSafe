@@ -28,12 +28,10 @@ import {
   deriveMasterKey,
   deriveAuthHash,
   deriveAllKeys,
-  secureWipeBuffer,
   VaultData,
   encryptVault,
   decryptVault,
   createEmptyVault,
-  DerivedKeys,
 } from './cryptoService';
 import apiClient from '../api/apiClient';
 import { broadcastLogout } from '../hooks/useGlobalLogout';
@@ -183,6 +181,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     console.log('  - isUnlocked:', isUnlocked);
     console.log('  - isLoading:', isLoading);
     console.log('  - masterKey exists:', masterKeyRef.current !== null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -220,7 +219,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (reason !== 'panic') {
       broadcastLogout('USER_LOGOUT');
     }
-  }, [navigate]);
+  }, []);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // INACTIVITY TIMER - DISABLED (Auto-lock removed per user request)
@@ -242,7 +241,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setTimeUntilLock(null);
     
     // DO NOT set new timer - auto-lock is disabled
-  }, [isUnlocked, lock]);
+  }, []);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // USER ACTIVITY LISTENERS

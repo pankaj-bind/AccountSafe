@@ -27,7 +27,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 const GlobalPanicHandler: React.FC = () => {
   const { token, logout: authLogout } = useAuth();
   const { isPanicLocked, previousLocation, unlock: unlockPanic } = usePanic();
-  const { fastUnlockForModeSwitch, setDuressMode } = useCrypto();
+  const { fastUnlockForModeSwitch } = useCrypto();
   const navigate = useNavigate();
 
   /**

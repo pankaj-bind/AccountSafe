@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { storeKeyData } from '../services/encryptionService';
 import { useCrypto } from '../services/CryptoContext';
-import apiClient from '../api/apiClient';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';

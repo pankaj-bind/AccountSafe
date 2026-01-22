@@ -8,7 +8,7 @@
 // - Salt is public and can be stored (needed for key derivation)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { deriveKeyFromPassword, generateSalt, generateRecoveryKey } from '../utils/encryption';
+import { generateSalt, generateRecoveryKey } from '../utils/encryption';
 
 interface KeyData {
   salt: string;

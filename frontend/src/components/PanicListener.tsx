@@ -20,7 +20,6 @@ interface PanicListenerProps {
  * The master key is wiped directly from memory.
  */
 const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
-  const [isLoaded, setIsLoaded] = React.useState(false);
   const shortcutRef = useRef<string[]>([]);
   const fetchCountRef = useRef(0);
   const { isPanicLocked, triggerPanic: triggerPanicContext } = usePanic();
