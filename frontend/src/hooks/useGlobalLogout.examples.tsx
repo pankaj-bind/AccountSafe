@@ -103,6 +103,7 @@ export const Example2 = () => {
 
 // USAGE EXAMPLE 3: Session expiry
 export const Example3 = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleSessionExpired = () => {
     // Clear session data
     sessionStorage.clear();

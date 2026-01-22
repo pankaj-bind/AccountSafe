@@ -153,7 +153,7 @@ export async function login(
     
     const token = response.data.key;
     const responseSalt = response.data.salt || salt;
-    const isDuress = response.data.is_duress || false;
+    const _isDuress = response.data.is_duress || false; // eslint-disable-line @typescript-eslint/no-unused-vars
     
     localStorage.setItem('authToken', token);
     localStorage.setItem('username', username);

@@ -173,7 +173,8 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const lastActivityRef = useRef<number>(Date.now());
   const tabHiddenTimeRef = useRef<number | null>(null);
   
-  const navigate = useNavigate();
+  // Navigate kept for future use - currently using lock screen modal
+  const _navigate = useNavigate(); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // Log initial state for debugging
   useEffect(() => {

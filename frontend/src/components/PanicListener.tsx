@@ -45,8 +45,6 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
       // Silently fail - use default shortcut
       console.debug('[PanicListener] Could not fetch panic settings, using default Escape key');
       shortcutRef.current = ['Escape'];
-    } finally {
-      setIsLoaded(true);
     }
   }, []);
 
