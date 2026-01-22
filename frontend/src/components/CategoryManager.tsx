@@ -411,6 +411,21 @@ const CategoryManager: React.FC = () => {
     }
   }, [token]);
 
+  // Listen for mode changes (normal ↔ duress) to refetch data
+  useEffect(() => {
+    const handleModeChange = () => {
+      console.log('🔄 Mode changed - refetching categories...');
+      if (token) {
+        fetchCategories();
+      }
+    };
+    
+    window.addEventListener('vault-mode-changed', handleModeChange);
+    return () => {
+      window.removeEventListener('vault-mode-changed', handleModeChange);
+    };
+  }, [token]);
+
   const checkPinStatus = async () => {
     try {
       const status = await getPinStatus();

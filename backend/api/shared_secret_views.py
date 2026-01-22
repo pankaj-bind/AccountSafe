@@ -1,47 +1,66 @@
 # api/shared_secret_views.py
+#
+# ════════════════════════════════════════════════════════════════════════════
+# TRUE ZERO-KNOWLEDGE SHARED SECRETS
+# ════════════════════════════════════════════════════════════════════════════
+#
+# This module implements TRUE zero-knowledge secret sharing:
+# 1. Frontend encrypts credential data with a random key (AES-256-GCM)
+# 2. Frontend sends ONLY the encrypted blob to server
+# 3. Server stores encrypted blob - CANNOT decrypt it
+# 4. Encryption key is in URL fragment (never sent to server)
+# 5. Recipient's browser decrypts using key from URL fragment
+#
+# The server NEVER sees:
+# - Plaintext credential data
+# - Encryption key
+# - Any sensitive information
+#
+# This maintains TRUE zero-knowledge architecture even for sharing.
+# ════════════════════════════════════════════════════════════════════════════
 
 import json
+import secrets as py_secrets
 from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 
 from .models import SharedSecret, Profile
-from .encryption import (
-    encrypt_shared_secret,
-    decrypt_shared_secret,
-    generate_salt,
-    secure_erase_field,
-)
 from .decorators import no_store
+
+
+def secure_erase_blob(blob: str) -> str:
+    """Overwrite blob with random data before deletion."""
+    if blob:
+        return py_secrets.token_hex(len(blob) // 2)
+    return ''
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_shared_secret(request):
     """
-    Create a secure one-time shareable link for a credential.
+    Create a zero-knowledge shareable link for a credential.
+    
+    TRUE ZERO-KNOWLEDGE: Server receives ONLY encrypted blob, CANNOT decrypt.
     
     POST /api/shared-secrets/create/
     Body: {
-        "profile_id": <int>,
+        "profile_id": <int> (optional, for tracking only),
         "expiry_hours": <int> (optional, default: 24, max: 168),
-        "decrypted_data": {
-            "title": <str>,
-            "username": <str> (optional),
-            "password": <str> (optional),
-            "email": <str> (optional),
-            "notes": <str> (optional),
-            "recovery_codes": <str> (optional),
-            "organization": <str>
-        }
+        "encrypted_blob": <str> (AES-256-GCM encrypted data, base64 encoded)
     }
+    
+    The encrypted_blob is created client-side:
+    1. Frontend generates random 256-bit key
+    2. Frontend encrypts credential data with AES-256-GCM
+    3. Frontend sends encrypted blob here
+    4. Encryption key goes in URL fragment (never sent to server)
     
     Returns: {
         "success": true,
@@ -49,11 +68,21 @@ def create_shared_secret(request):
         "expires_at": "2026-01-17T00:00:00Z",
         "share_id": "<uuid>"
     }
+    
+    Note: The full share URL with decryption key is:
+    https://domain.com/shared/<uuid>#<encryption_key>
+    The frontend adds the #<key> part - server never sees it.
     """
     try:
         profile_id = request.data.get('profile_id')
         expiry_hours = int(request.data.get('expiry_hours', 24))
-        decrypted_data = request.data.get('decrypted_data', {})
+        encrypted_blob = request.data.get('encrypted_blob', '')
+        
+        # Validate required fields
+        if not encrypted_blob:
+            return Response({
+                'error': 'encrypted_blob is required (encrypt data client-side first)'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         # Validate expiry (max 7 days)
         if expiry_hours < 1 or expiry_hours > 168:
@@ -61,64 +90,37 @@ def create_shared_secret(request):
                 'error': 'Expiry hours must be between 1 and 168 (7 days)'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Get the profile and verify ownership via organization
-        try:
-            profile = Profile.objects.get(
-                id=profile_id,
-                organization__category__user=request.user
-            )
-        except Profile.DoesNotExist:
-            return Response({
-                'error': 'Profile not found or access denied'
-            }, status=status.HTTP_404_NOT_FOUND)
+        # Get the profile and verify ownership (optional, for tracking only)
+        profile = None
+        if profile_id:
+            try:
+                profile = Profile.objects.get(
+                    id=profile_id,
+                    organization__category__user=request.user
+                )
+            except Profile.DoesNotExist:
+                pass  # Profile not required, continue without linking
         
-        # Prepare plaintext data to encrypt with Fernet
-        # The frontend sends already-decrypted data
-        profile_data = {
-            'title': decrypted_data.get('title', profile.title),
-            'username': decrypted_data.get('username', ''),
-            'password': decrypted_data.get('password', ''),
-            'email': decrypted_data.get('email', ''),
-            'notes': decrypted_data.get('notes', ''),
-            'recovery_codes': decrypted_data.get('recovery_codes', ''),
-            'organization': decrypted_data.get('organization', profile.organization.name),
-        }
-        
-        # Include document URL if it exists
-        if profile.document:
-            profile_data['document_url'] = request.build_absolute_uri(profile.document.url)
-        
-        # Generate unique salt for this secret
-        salt = generate_salt()
-        
-        # Encrypt the plaintext profile data with Fernet
-        encrypted_blob = encrypt_shared_secret(json.dumps(profile_data), salt)
-        
-        if not encrypted_blob:
-            return Response({
-                'error': 'Failed to encrypt data'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # Create the shared secret (multiple links can be created for same profile)
+        # Create the shared secret with encrypted blob
+        # Server CANNOT decrypt this - only stores it
         expires_at = timezone.now() + timedelta(hours=expiry_hours)
         shared_secret = SharedSecret.objects.create(
             profile=profile,
-            encrypted_blob=encrypted_blob,
-            salt=salt,
+            encrypted_blob=encrypted_blob,  # Already encrypted by frontend
+            salt='zk',  # Marker that this is zero-knowledge encrypted
             expires_at=expires_at,
         )
         
-        # Build the share URL - point to React frontend, not API
-        # Use environment variable for frontend URL, with fallbacks
+        # Build the share URL - point to React frontend
         import os
         is_local = 'localhost' in request.get_host() or '127.0.0.1' in request.get_host()
         
         if is_local:
             frontend_url = 'http://localhost:3000'
         else:
-            # In production, use the configured frontend URL (Vercel)
             frontend_url = os.getenv('FRONTEND_URL', 'https://accountsafe.vercel.app')
         
+        # Base URL without encryption key (key will be added by frontend in URL fragment)
         share_url = f"{frontend_url}/shared/{shared_secret.id}"
         
         return Response({
@@ -126,6 +128,7 @@ def create_shared_secret(request):
             'share_url': share_url,
             'expires_at': shared_secret.expires_at.isoformat(),
             'share_id': str(shared_secret.id),
+            'message': 'Zero-knowledge share created. Encryption key never sent to server.'
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
@@ -139,26 +142,31 @@ def create_shared_secret(request):
 @no_store
 def view_shared_secret(request, share_id):
     """
-    View and burn (delete) a shared secret atomically.
+    Retrieve and burn (delete) an encrypted shared secret.
+    
+    TRUE ZERO-KNOWLEDGE: Server returns encrypted blob, CANNOT decrypt.
+    Decryption happens in recipient's browser using key from URL fragment.
     
     GET /api/shared-secrets/<uuid>/
     
     Returns: {
         "success": true,
-        "data": { <decrypted profile data> },
-        "message": "This link has been destroyed and can no longer be accessed"
+        "encrypted_blob": "<encrypted data>",
+        "message": "Decrypt this data using the key from your link"
     }
+    
+    The frontend will:
+    1. Get encryption key from URL fragment (e.g., #abc123...)
+    2. Decrypt the encrypted_blob using AES-256-GCM
+    3. Display the decrypted credential to the user
     
     Errors:
     - 404: Link not found or already viewed
     - 410: Link expired
-    - 500: Decryption failed
     """
     try:
-        # Use atomic transaction with row-level locking to prevent race conditions
         with transaction.atomic():
             try:
-                # Lock the row for update (prevents concurrent access)
                 shared_secret = SharedSecret.objects.select_for_update(nowait=True).get(id=share_id)
             except SharedSecret.DoesNotExist:
                 return Response({
@@ -168,8 +176,7 @@ def view_shared_secret(request, share_id):
             
             # Check if expired
             if shared_secret.is_expired():
-                # Secure erase and delete expired secret
-                shared_secret.encrypted_blob = secure_erase_field(shared_secret.encrypted_blob)
+                shared_secret.encrypted_blob = secure_erase_blob(shared_secret.encrypted_blob)
                 shared_secret.save()
                 shared_secret.delete()
                 
@@ -178,45 +185,25 @@ def view_shared_secret(request, share_id):
                     'code': 'LINK_EXPIRED'
                 }, status=status.HTTP_410_GONE)
             
-            # Decrypt the data
-            decrypted_json = decrypt_shared_secret(
-                shared_secret.encrypted_blob,
-                shared_secret.salt
-            )
+            # Get encrypted blob (server CANNOT decrypt this)
+            encrypted_blob = shared_secret.encrypted_blob
             
-            if not decrypted_json:
-                # Secure erase and delete on decryption failure
-                shared_secret.encrypted_blob = secure_erase_field(shared_secret.encrypted_blob)
-                shared_secret.save()
-                shared_secret.delete()
-                
-                return Response({
-                    'error': 'Failed to decrypt data',
-                    'code': 'DECRYPTION_FAILED'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            # Parse the JSON data
-            profile_data = json.loads(decrypted_json)
-            
-            # SECURE ERASURE: Overwrite encrypted field with random garbage
-            shared_secret.encrypted_blob = secure_erase_field(shared_secret.encrypted_blob)
+            # SECURE ERASURE and DELETE (one-time view)
+            shared_secret.encrypted_blob = secure_erase_blob(shared_secret.encrypted_blob)
             shared_secret.view_count += 1
             shared_secret.save()
-            
-            # ATOMIC DELETE: Remove the record
             shared_secret.delete()
             
             return Response({
                 'success': True,
-                'data': profile_data,
-                'message': 'This link has been destroyed and can no longer be accessed',
+                'encrypted_blob': encrypted_blob,
+                'message': 'Decrypt this data using the key from your link. This link has been destroyed.',
                 'warning': 'Save this information now - you will not be able to access it again'
             }, status=status.HTTP_200_OK)
             
     except Exception as e:
-        # Handle database lock timeout or other errors
         return Response({
-            'error': 'This link is being accessed by another request. Please try again in a moment.',
+            'error': 'This link is being accessed by another request. Please try again.',
             'code': 'CONCURRENT_ACCESS'
         }, status=status.HTTP_409_CONFLICT)
 
@@ -280,7 +267,7 @@ def revoke_shared_secret(request, share_id):
             )
             
             # Secure erase before delete
-            secret.encrypted_blob = secure_erase_field(secret.encrypted_blob)
+            secret.encrypted_blob = secure_erase_blob(secret.encrypted_blob)
             secret.save()
             secret.delete()
             

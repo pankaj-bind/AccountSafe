@@ -6,7 +6,7 @@ import apiClient from '../api/apiClient';
 import { generatePassword, getPasswordStrength } from '../utils/passwordGenerator';
 import { maskSensitiveData } from '../utils/formatters';
 import { encryptCredentialFields, decryptCredentialFields } from '../utils/encryption';
-import { getSessionEncryptionKey } from '../services/encryptionService';
+import { useCrypto } from '../services/CryptoContext';
 import { checkPasswordBreach, updatePasswordStrength, updateBreachStatus, updatePasswordHash } from '../services/securityService';
 import { useClipboard } from '../hooks/useClipboard';
 import { usePwnedCheck } from '../hooks/usePwnedCheck';
@@ -674,6 +674,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack }) => {
+  // Get master key from CryptoContext (zero-knowledge: key exists only in memory)
+  const { getMasterKey } = useCrypto();
+  
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [orgData, setOrgData] = useState<Organization>(organization);
   const [loading, setLoading] = useState(false);
@@ -710,15 +713,31 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   // Real-time password breach detection
   const { breachCount, isChecking, error: breachError } = usePwnedCheck(newProfile.password);
   
-  // Real-time duplicate password detection
+  // Real-time duplicate password detection (pass getMasterKey for zero-knowledge decryption)
   const { duplicateCount, duplicates, isChecking: isDuplicateChecking, error: duplicateError } = useDuplicatePasswordCheck(
     newProfile.password,
-    editingProfile?.id
+    editingProfile?.id,
+    getMasterKey
   );
 
   useEffect(() => {
     fetchOrganizationData();
     fetchProfiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organization.id]);
+
+  // Listen for mode changes (normal ↔ duress) to refetch data
+  useEffect(() => {
+    const handleModeChange = () => {
+      console.log('🔄 Mode changed - refetching profiles...');
+      fetchOrganizationData();
+      fetchProfiles();
+    };
+    
+    window.addEventListener('vault-mode-changed', handleModeChange);
+    return () => {
+      window.removeEventListener('vault-mode-changed', handleModeChange);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organization.id]);
 
@@ -750,9 +769,9 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
       const response = await apiClient.get(`organizations/${organization.id}/profiles/`);
 
       // Decrypt credentials client-side
-      const encryptionKey = await getSessionEncryptionKey();
+      const encryptionKey = getMasterKey();
       if (!encryptionKey) {
-        // Show password re-entry modal instead of error
+        // Show password re-entry modal
         setShowPasswordReentry(true);
         setLoading(false);
         return;
@@ -825,8 +844,8 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     setError(null);
 
     try {
-      // Get encryption key from session
-      const encryptionKey = await getSessionEncryptionKey();
+      // Get encryption key from CryptoContext (memory only)
+      const encryptionKey = getMasterKey();
       if (!encryptionKey) {
         setShowPasswordReentry(true);
         return;
@@ -1116,21 +1135,15 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         return;
       }
 
-      // Get the master encryption key from session
-      const masterKey = await getSessionEncryptionKey();
+      // Get the master encryption key from CryptoContext (memory only)
+      const masterKey = getMasterKey();
       if (!masterKey) {
         setError('Session expired. Please re-enter your master password.');
         setShowPasswordReentry(true);
         return;
       }
 
-      // Decrypt all fields before sending to backend
-      const decryptedData: any = {
-        title: profile.title,
-        organization: orgData.name, // Send organization name, not ID
-      };
-
-      // Decrypt each encrypted field
+      // Decrypt all fields before encrypting for sharing
       const decryptedFields = await decryptCredentialFields(
         {
           username_encrypted: profile.username_encrypted,
@@ -1147,22 +1160,36 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         masterKey
       );
 
-      // Add decrypted fields to data object
-      if (decryptedFields.username) decryptedData.username = decryptedFields.username;
-      if (decryptedFields.password) decryptedData.password = decryptedFields.password;
-      if (decryptedFields.email) decryptedData.email = decryptedFields.email;
-      if (decryptedFields.notes) decryptedData.notes = decryptedFields.notes;
-      if (decryptedFields.recovery_codes) decryptedData.recovery_codes = decryptedFields.recovery_codes;
+      // Build data object for sharing
+      const shareData: Record<string, any> = {
+        title: profile.title,
+        organization: orgData.name,
+      };
+      
+      if (decryptedFields.username) shareData.username = decryptedFields.username;
+      if (decryptedFields.password) shareData.password = decryptedFields.password;
+      if (decryptedFields.email) shareData.email = decryptedFields.email;
+      if (decryptedFields.notes) shareData.notes = decryptedFields.notes;
+      if (decryptedFields.recovery_codes) shareData.recovery_codes = decryptedFields.recovery_codes;
 
-      // Create share link with plaintext data
+      // ═══════════════════════════════════════════════════════════════════════════
+      // ZERO-KNOWLEDGE: Encrypt client-side before sending to server
+      // Server NEVER sees the decrypted data
+      // ═══════════════════════════════════════════════════════════════════════════
+      const { encryptForOneTimeShare } = await import('../services/cryptoService');
+      const { encryptedBlob, shareKey } = await encryptForOneTimeShare(shareData);
+
+      // Send ONLY the encrypted blob to server (server cannot decrypt)
       const response = await apiClient.post('shared-secrets/create/', {
         profile_id: shareProfileId,
         expiry_hours: shareExpiryHours,
-        decrypted_data: decryptedData,
+        encrypted_blob: encryptedBlob,
       });
 
       if (response.data.success) {
-        setShareUrl(response.data.share_url);
+        // Append the encryption key as URL fragment (# not sent to server)
+        const fullShareUrl = `${response.data.share_url}#${shareKey}`;
+        setShareUrl(fullShareUrl);
         setError(null);
         setSuccess(`Secure share link created! Link expires in ${shareExpiryHours} hour${shareExpiryHours > 1 ? 's' : ''} and can only be viewed once.`);
 

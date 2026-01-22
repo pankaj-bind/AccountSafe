@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useRef } from 'react';
-import { clearEncryptionKeys } from '../services/encryptionService';
 import { getPanicDuressSettings } from '../services/securityService';
 import { usePanic } from '../contexts/PanicContext';
+import { useCrypto } from '../services/CryptoContext';
 
 interface PanicListenerProps {
   onPanic?: () => void;
@@ -12,17 +12,19 @@ interface PanicListenerProps {
  * 
  * A global keyboard listener that monitors for the user's configured panic shortcut.
  * When triggered:
- * 1. Clears encryption keys from memory
- * 2. Shows a Windows Lock Screen-style modal
- * 3. Requires password re-entry to decrypt data
+ * 1. Locks the vault via CryptoContext (wipes master key from memory)
+ * 2. Triggers panic state for cross-tab synchronization
+ * 3. Shows the unified lock screen
  * 
- * Listens for 'panicShortcutUpdated' custom event to refetch settings when changed.
+ * ZERO-KNOWLEDGE: No encryption keys are stored in sessionStorage anymore.
+ * The master key is wiped directly from memory.
  */
 const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
   const [isLoaded, setIsLoaded] = React.useState(false);
   const shortcutRef = useRef<string[]>([]);
   const fetchCountRef = useRef(0);
   const { isPanicLocked, triggerPanic: triggerPanicContext } = usePanic();
+  const { lock } = useCrypto();
 
   // Fetch panic shortcut configuration
   const fetchPanicSettings = useCallback(async () => {
@@ -36,13 +38,14 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
         shortcutRef.current = settings.panic_shortcut;
         console.log('[PanicListener] Panic shortcut loaded:', settings.panic_shortcut);
       } else {
-        shortcutRef.current = [];
-        console.log('[PanicListener] No panic shortcut configured');
+        // Default fallback: Escape key
+        shortcutRef.current = ['Escape'];
+        console.log('[PanicListener] Using default panic shortcut: Escape');
       }
     } catch (error) {
-      // Silently fail - user may not be logged in
-      console.debug('[PanicListener] Could not fetch panic settings');
-      shortcutRef.current = [];
+      // Silently fail - use default shortcut
+      console.debug('[PanicListener] Could not fetch panic settings, using default Escape key');
+      shortcutRef.current = ['Escape'];
     } finally {
       setIsLoaded(true);
     }
@@ -69,22 +72,20 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
 
   /**
    * Handle panic mode activation
+   * Uses zero-knowledge architecture - wipes master key from memory
    */
   const triggerPanic = useCallback(() => {
     console.log('🚨 PANIC MODE ACTIVATED');
     
-    // 1. Clear all encryption keys from memory immediately
-    clearEncryptionKeys();
-    sessionStorage.clear();
-    
-    // 2. Call optional callback for additional cleanup
+    // 1. Call optional callback for additional cleanup
     if (onPanic) {
       onPanic();
     }
     
-    // 3. Trigger global panic lock via context
-    triggerPanicContext();
-  }, [onPanic, triggerPanicContext]);
+    // 2. Trigger global panic lock via context (includes vault lock)
+    // Pass the lock function to ensure vault is locked
+    triggerPanicContext(() => lock('panic'));
+  }, [lock, onPanic, triggerPanicContext]);
 
   // Listen for panic mode trigger from the UI button
   useEffect(() => {
@@ -100,15 +101,18 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
     };
   }, [triggerPanic]);
 
-  // Set up global keyboard listeners
+  // Set up global keyboard listeners - always active
   useEffect(() => {
-    if (!isLoaded || isPanicLocked) return;
-
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Skip if already in panic mode (don't trigger again)
+      if (isPanicLocked) {
+        return;
+      }
+      
       try {
         const shortcut = shortcutRef.current;
-        if (!shortcut || !Array.isArray(shortcut) || shortcut.length === 0) return;
-
+        
+        // Build current key combination
         const currentKeys: string[] = [];
         
         // Capture modifiers
@@ -124,10 +128,18 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
             currentKeys.push(normalizedKey);
           }
         }
-
-        // Debug: Log every key combo when debugging
-        // Uncomment next line for debugging:
-        // console.log('[PanicListener] Key pressed:', currentKeys, 'Expected:', shortcut);
+        
+        // Skip if no shortcut configured (but should have default Escape)
+        if (!shortcut || !Array.isArray(shortcut) || shortcut.length === 0) {
+          // Use Escape as emergency fallback
+          if (mainKey === 'Escape') {
+            console.log('🚨 Emergency Escape key detected!');
+            event.preventDefault();
+            event.stopPropagation();
+            triggerPanic();
+          }
+          return;
+        }
 
         // Check if lengths match
         if (currentKeys.length !== shortcut.length) return;
@@ -137,12 +149,6 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
         const normalizedShortcut = shortcut.map(k => k.toLowerCase()).sort();
 
         const matches = normalizedPressed.every((key, index) => key === normalizedShortcut[index]);
-        
-        console.log('[PanicListener] Checking match:', {
-          pressed: normalizedPressed,
-          expected: normalizedShortcut,
-          matches
-        });
         
         if (matches) {
           console.log('🚨 Panic shortcut detected!', shortcut);
@@ -156,15 +162,20 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
       }
     };
 
+    // Add listener with capture phase to catch events early
+    // Keep listener active all the time - check isPanicLocked inside handler
+    console.log('[PanicListener] Setting up keyboard listener. Shortcut:', shortcutRef.current);
     window.addEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [isLoaded, isPanicLocked, triggerPanic]);
+  }, [triggerPanic, isPanicLocked]);
 
   // This component only handles keyboard detection
-  // The lock screen is rendered by ProtectedRoute when isPanicLocked is true
+  // The lock screen is rendered by GlobalPanicHandler when isPanicLocked is true
   return null;
 };
 

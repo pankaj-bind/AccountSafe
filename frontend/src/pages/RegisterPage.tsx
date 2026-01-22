@@ -172,40 +172,35 @@ const RegisterPage: React.FC = () => {
 
         setIsLoading(true);
         try {
-            // Initialize client-side encryption
-            const { salt, recoveryKey: generatedRecoveryKey } = await initializeUserEncryption();
+            // Generate recovery key (for backup purposes)
+            const { recoveryKey: generatedRecoveryKey } = await initializeUserEncryption();
             
-            // Register account
-            await register(username, email, password, password2, turnstileToken);
+            // Register account (generates salt internally and returns it)
+            const registerResponse = await register(username, email, password, password2, turnstileToken);
+            const salt = registerResponse.salt;
             setSuccess('Account created successfully!');
             
-            // Store salt BEFORE auto-login so login function can use it
-            localStorage.setItem(`encryption_salt_${username}`, salt);
+            // Store recovery key
             storeKeyData(salt, generatedRecoveryKey);
             
-            // Auto-login
-            const loginResponse = await login(username, password);
-            const authToken = loginResponse.key || loginResponse.token;
-            
+            // Set auth token (already done by register function)
+            const authToken = registerResponse.key || registerResponse.token;
             if (authToken) {
                 setToken(authToken);
-                
-                // Password is already stored by login function
-                // Salt is already stored above and will be migrated to backend by login function
                 
                 // Show recovery key modal
                 setRecoveryKey(generatedRecoveryKey);
                 setShowRecoveryModal(true);
             } else {
-                setError('Auto-login failed. Please log in manually.');
+                setError('Registration succeeded but auto-login failed. Please log in manually.');
             }
         } catch (err: any) {
             if (err.response?.data) {
                 const errors = err.response.data;
-                const errorMessage = errors.username?.[0] || errors.email?.[0] || errors.password?.[0] || 'Registration failed.';
+                const errorMessage = errors.username?.[0] || errors.email?.[0] || errors.password?.[0] || errors.error || 'Registration failed.';
                 setError(errorMessage);
             } else {
-                setError('An unexpected error occurred.');
+                setError(err.message || 'An unexpected error occurred.');
             }
         } finally {
             setIsLoading(false);

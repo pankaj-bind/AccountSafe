@@ -37,9 +37,15 @@ class OTPVerifySerializer(serializers.Serializer):
 
 
 class SetNewPasswordSerializer(serializers.Serializer):
+    """
+    TRUE Zero-Knowledge Password Reset Serializer.
+    
+    Password is NEVER sent to server - only auth_hash (derived from password).
+    """
     email = serializers.EmailField()
     otp = serializers.CharField(max_length=6)
-    password = serializers.CharField(min_length=8, write_only=True)
+    new_auth_hash = serializers.CharField(min_length=64, max_length=64)  # SHA-256 hex = 64 chars
+    new_salt = serializers.CharField(min_length=1)  # Base64-encoded salt
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -231,8 +237,9 @@ class LoginRecordSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = LoginRecord
+        # SECURITY: password_attempted field REMOVED - zero-knowledge architecture
         fields = [
-            'id', 'username_attempted', 'password_attempted', 'status', 'is_duress',
+            'id', 'username_attempted', 'status', 'is_duress',
             'ip_address', 'country', 'isp', 'latitude', 'longitude',
             'date', 'time', 'location', 'user_agent', 'timestamp', 'timezone'
         ]
@@ -293,13 +300,11 @@ class LoginRecordSerializer(serializers.ModelSerializer):
         return None
     
     def to_representation(self, instance):
-        """Hide password_attempted if login was successful and hide is_duress in duress mode"""
+        """Hide is_duress in duress mode session"""
         data = super().to_representation(instance)
         
-        # Hide password for successful logins
-        if instance.status in ['success', 'duress']:
-            data.pop('password_attempted', None)
-        
+        # SECURITY: password_attempted field removed - never store/return passwords
+
         # Check if current request is from a duress session
         request = self.context.get('request')
         if request:

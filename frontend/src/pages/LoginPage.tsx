@@ -3,6 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { login } from '../services/authService';
 import { getPinStatus } from '../services/pinService';
 import { useAuth } from '../contexts/AuthContext';
+import { useCrypto } from '../services/CryptoContext';
+import { storeKeyData } from '../services/encryptionService';
 import PinSetupModal from '../components/PinSetupModal';
 
 // Cloudflare Turnstile
@@ -42,6 +44,7 @@ const LoginPage: React.FC = () => {
     const turnstileRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
     const { setToken } = useAuth();
+    const { unlock } = useCrypto();
     const location = useLocation();
     const message = location.state?.message;
 
@@ -110,8 +113,30 @@ const LoginPage: React.FC = () => {
 
         setIsLoading(true);
         try {
+            // TRUE ZERO-KNOWLEDGE: login() now derives auth_hash locally
+            // Password is NEVER sent to the server!
             const data = await login(username, password, turnstileToken);
             setToken(data.key);
+            
+            // The salt is now returned from the login response
+            const salt = data.salt;
+            if (salt) {
+                storeKeyData(salt);
+                localStorage.setItem(`encryption_salt_${username}`, salt);
+                // Unlock the vault with the password (local key derivation only)
+                const unlockResult = await unlock(password, salt);
+                if (!unlockResult.success) {
+                    console.error('Failed to unlock vault:', unlockResult.error);
+                    setError(unlockResult.error || 'Failed to unlock vault. Please try again.');
+                    setIsLoading(false);
+                    return;
+                }
+                console.log('✅ Vault unlocked successfully after login');
+            } else {
+                setError('No encryption salt found. Please contact support.');
+                setIsLoading(false);
+                return;
+            }
             
             // Check if user has PIN set
             try {

@@ -1,10 +1,8 @@
-import React, { ReactNode, useCallback } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePanic } from '../contexts/PanicContext';
-import { storeMasterPasswordForSession } from '../services/encryptionService';
-import { relogin } from '../services/authService';
-import PanicLockScreen from './PanicLockScreen';
+import { useCrypto } from '../services/CryptoContext';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -12,57 +10,38 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { token } = useAuth();
-  const { isPanicLocked, unlock } = usePanic();
+  const { isPanicLocked, unlock: unlockPanic } = usePanic();
+  const { lock, isUnlocked } = useCrypto();
 
   /**
-   * Handle unlock with password re-entry
-   * Supports both master password (unlock) and duress password (re-login with fake vault)
+   * When panic mode is triggered, lock the vault
+   * This integrates panic mode with zero-knowledge architecture
    */
-  const handleUnlock = useCallback(async (password: string) => {
-    const username = localStorage.getItem('username');
-    
-    if (!username) {
-      throw new Error('No username found');
+  useEffect(() => {
+    if (isPanicLocked && isUnlocked) {
+      console.log('🚨 Panic mode active - locking vault');
+      lock('panic');
     }
-    
-    try {
-      const result = await relogin(username, password);
-      
-      if (result.success) {
-        // Login successful - could be duress or master
-        storeMasterPasswordForSession(password);
-        
-        // Unlock the panic state
-        unlock();
-        
-        // Reload to fetch data with the new session
-        console.log('✅ Re-login successful, reloading to apply new session...');
-        window.location.reload();
-        return;
-      }
-    } catch (err) {
-      console.log('Re-login attempt failed:', err);
+  }, [isPanicLocked, isUnlocked, lock]);
+
+  /**
+   * When vault is unlocked successfully, also unlock panic state
+   * This ensures both systems stay in sync
+   */
+  useEffect(() => {
+    if (isUnlocked && isPanicLocked) {
+      console.log('✅ Vault unlocked - clearing panic state');
+      unlockPanic();
     }
-    
-    throw new Error('Incorrect password');
-  }, [unlock]);
+  }, [isUnlocked, isPanicLocked, unlockPanic]);
 
   // If not authenticated, redirect to login
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // If panic locked, show lock screen INSTEAD of children
-  // This completely blocks access to the protected content
-  if (isPanicLocked) {
-    return (
-      <PanicLockScreen 
-        isOpen={true} 
-        onUnlock={handleUnlock}
-      />
-    );
-  }
-
+  // VaultGuard (wrapped around children in App.tsx) handles showing the lock screen
+  // So we just return children here - the guard will block if vault is locked
   return <>{children}</>;
 };
 

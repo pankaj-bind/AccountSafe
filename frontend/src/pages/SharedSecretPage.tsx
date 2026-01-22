@@ -1,9 +1,10 @@
-import React, { useState, useLayoutEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileLock, Copy, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { FileLock, Copy, Check, Loader2, AlertTriangle, ShieldOff } from 'lucide-react';
 import { useClipboard } from '../hooks/useClipboard';
 import apiClient from '../api/apiClient';
+import { decryptOneTimeShare } from '../services/cryptoService';
 
 // Hide navbar on this page for cleaner mobile experience
 const useHideNavbar = () => {
@@ -45,17 +46,39 @@ const SharedSecretPage: React.FC = () => {
   
   const { secretId } = useParams<{ secretId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [decryptedData, setDecryptedData] = useState<DecryptedData | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [missingKey, setMissingKey] = useState(false);
+  
+  // Extract encryption key from URL fragment (never sent to server)
+  const [shareKey, setShareKey] = useState<string | null>(null);
+  
+  useEffect(() => {
+    // Get key from URL fragment (#key)
+    const hash = location.hash;
+    if (hash && hash.length > 1) {
+      setShareKey(hash.substring(1)); // Remove # prefix
+      setMissingKey(false);
+    } else {
+      setMissingKey(true);
+    }
+  }, [location.hash]);
 
   // Fetch and view the shared secret (burns the link)
   const handleViewSecret = async () => {
+    if (!shareKey) {
+      setError('Missing decryption key. The share link may be incomplete.');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
 
     try {
+      // Get encrypted blob from server
       const response = await apiClient.get(`shared-secrets/${secretId}/`);
       
       if (!response.data.success) {
@@ -64,18 +87,35 @@ const SharedSecretPage: React.FC = () => {
         return;
       }
 
-      const data = response.data.data;
+      const encryptedBlob = response.data.encrypted_blob;
       
-      setDecryptedData({
-        title: data.title || '',
-        username: data.username || '',
-        password: data.password || '',
-        email: data.email || '',
-        notes: data.notes || '',
-        recovery_codes: data.recovery_codes || '',
-        organization: data.organization || '',
-        document_url: data.document_url || '',
-      });
+      if (!encryptedBlob) {
+        setError('Invalid share data received');
+        setLoading(false);
+        return;
+      }
+      
+      // ═══════════════════════════════════════════════════════════════════════════
+      // ZERO-KNOWLEDGE: Decrypt client-side using key from URL fragment
+      // Server NEVER sees the decrypted data
+      // ═══════════════════════════════════════════════════════════════════════════
+      try {
+        const data = await decryptOneTimeShare(encryptedBlob, shareKey);
+        
+        setDecryptedData({
+          title: data.title || '',
+          username: data.username || '',
+          password: data.password || '',
+          email: data.email || '',
+          notes: data.notes || '',
+          recovery_codes: data.recovery_codes || '',
+          organization: data.organization || '',
+          document_url: data.document_url || '',
+        });
+      } catch (decryptError) {
+        console.error('Decryption failed:', decryptError);
+        setError('Decryption failed. The share link may be corrupted or incomplete.');
+      }
       
       setLoading(false);
     } catch (err: any) {
@@ -142,8 +182,29 @@ const SharedSecretPage: React.FC = () => {
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         
+        {/* MISSING KEY ERROR */}
+        {missingKey && !decryptedData && !error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md w-full bg-gray-800 rounded-lg border border-gray-700 p-8 text-center mx-auto"
+          >
+            <ShieldOff className="w-12 h-12 text-yellow-600 mx-auto mb-4" strokeWidth={1.5} />
+            <h2 className="text-2xl font-bold text-white mb-2">Incomplete Link</h2>
+            <p className="text-gray-400 mb-6">
+              The decryption key is missing from this link. Make sure you copied the entire share URL including the part after the # symbol.
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+            >
+              Return to Home
+            </button>
+          </motion.div>
+        )}
+        
         {/* LOCKED VIEW - Before Reveal */}
-        {!decryptedData && (
+        {!decryptedData && !missingKey && !error && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

@@ -43,176 +43,28 @@ class CheckUsernameView(APIView):
 
 
 # Custom Login View with tracking
+# DEPRECATED: Use /api/zk/login/ for TRUE zero-knowledge authentication
 class CustomLoginView(APIView):
+    """
+    DEPRECATED: This endpoint is disabled for TRUE zero-knowledge architecture.
+    
+    Use /api/zk/login/ instead - password is NEVER sent to server,
+    only auth_hash (derived from password) is transmitted.
+    
+    For existing users who need to migrate, use /api/zk/migrate/ endpoint.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
-        from django.contrib.auth import authenticate, login
-        from .models import DuressSession, MultiToken
-        import threading
-        
-        username = request.data.get('username')
-        password = request.data.get('password')
-        turnstile_token = request.data.get('turnstile_token')
-        is_relogin = request.data.get('is_relogin', False)  # True when unlocking from panic mode
-        
-        if not username or not password:
-            return Response(
-                {"error": "Both username and password are required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Verify Turnstile token if provided
-        if turnstile_token:
-            remote_ip = get_client_ip(request)
-            result = verify_turnstile_token(turnstile_token, remote_ip)
-            if not result.get('success'):
-                return Response(
-                    {"error": "Verification failed. Please try again."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
-        # Authenticate user with master password
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            # Successful login with MASTER password
-            login(request, user)
-            
-            # Delete any existing duress sessions (but keep regular tokens for multi-device support)
-            DuressSession.objects.filter(user=user).delete()
-            
-            # Create a new token for this device/session (using MultiToken for multi-device support)
-            token = MultiToken.objects.create(user=user)
-            
-            # Create session record with device metadata
-            from .user_agent_parser import parse_user_agent
-            from .ip_location import get_ip_location
-            
-            user_agent_str = request.META.get('HTTP_USER_AGENT', '')
-            ua_data = parse_user_agent(user_agent_str)
-            ip_address = get_client_ip(request)
-            location_data = get_ip_location(ip_address)
-            
-            session = UserSession.objects.create(
-                user=user,
-                token=token,
-                ip_address=ip_address,
-                user_agent=user_agent_str,
-                device_type=ua_data['device_type'],
-                browser=ua_data['browser'],
-                os=ua_data['os'],
-                location=location_data.get('location', ''),
-                country_code=location_data.get('country_code', ''),
-                is_active=True
-            )
-            print(f"[DEBUG] Created UserSession {session.id}: {session.browser} on {session.os} ({session.device_type}) from {session.location}")
-            
-            # Track successful login
-            # Send email for initial login from login page, but not for panic mode unlock
-            send_email = not is_relogin
-            track_login_attempt(request, username, is_success=True, user=user, send_notification=send_email)
-            
-            print(f"[DEBUG] Master password login successful for {username}, new token created, email={send_email}")
-            
-            return Response({
-                'key': token.key,
-                'user': {
-                    'username': user.username,
-                    'email': user.email
-                }
-            })
-        else:
-            # Master password failed - check for duress password
-            print(f"[DEBUG] Master password failed for {username}, checking duress password...")
-            try:
-                from django.contrib.auth.models import User
-                target_user = User.objects.get(username=username)
-                print(f"[DEBUG] User found: {target_user.username}")
-                
-                has_profile = hasattr(target_user, 'userprofile')
-                print(f"[DEBUG] Has userprofile: {has_profile}")
-                
-                if has_profile:
-                    has_duress = target_user.userprofile.has_duress_password()
-                    print(f"[DEBUG] Has duress password: {has_duress}")
-                    
-                    if has_duress:
-                        verify_result = target_user.userprofile.verify_duress_password(password)
-                        print(f"[DEBUG] Duress password verification result: {verify_result}")
-                
-                if hasattr(target_user, 'userprofile') and target_user.userprofile.verify_duress_password(password):
-                    print(f"[DEBUG] DURESS LOGIN DETECTED for {username}!")
-                    # DURESS LOGIN DETECTED - Return success with fake data
-                    login(request, target_user)
-                    
-                    # Delete any existing duress sessions (but keep regular tokens for multi-device support)
-                    DuressSession.objects.filter(user=target_user).delete()
-                    
-                    # Create a new token for this device/session (using MultiToken for multi-device support)
-                    token = MultiToken.objects.create(user=target_user)
-                    
-                    # Mark this token as a duress session
-                    DuressSession.objects.create(
-                        token_key=token.key,
-                        user=target_user,
-                        ip_address=get_client_ip(request)
-                    )
-                    
-                    # Create session record with device metadata
-                    from .user_agent_parser import parse_user_agent
-                    from .ip_location import get_ip_location
-                    
-                    user_agent_str = request.META.get('HTTP_USER_AGENT', '')
-                    ua_data = parse_user_agent(user_agent_str)
-                    ip_address = get_client_ip(request)
-                    location_data = get_ip_location(ip_address)
-                    
-                    UserSession.objects.create(
-                        user=target_user,
-                        token=token,
-                        ip_address=ip_address,
-                        user_agent=user_agent_str,
-                        device_type=ua_data['device_type'],
-                        browser=ua_data['browser'],
-                        os=ua_data['os'],
-                        location=location_data.get('location', ''),
-                        country_code=location_data.get('country_code', ''),
-                        is_active=True
-                    )
-                    
-                    print(f"[DEBUG] Duress token created: {token.key[:20]}...")
-                    
-                    # Track as successful login with duress flag (don't send normal notification)
-                    # This will show as 'success' initially, but when viewed in normal mode, status will be 'duress'
-                    track_login_attempt(request, username, is_success=True, user=target_user, is_duress=True, send_notification=False)
-                    
-                    # Send SOS email in background thread (separate from login notification)
-                    threading.Thread(
-                        target=send_duress_alert_email,
-                        args=(target_user, request),
-                        daemon=True
-                    ).start()
-                    
-                    return Response({
-                        'key': token.key,
-                        'user': {
-                            'username': target_user.username,
-                            'email': target_user.email
-                        }
-                    })
-            except User.DoesNotExist:
-                print(f"[DEBUG] User {username} does not exist")
-                pass
-            
-            # Failed login - track without sending notification email
-            print(f"[DEBUG] Login failed for {username}")
-            track_login_attempt(request, username, password=password, is_success=False, send_notification=False)
-            
-            return Response(
-                {"error": "Invalid username or password."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+        return Response(
+            {
+                "error": "This endpoint is deprecated. Use /api/zk/login/ for zero-knowledge authentication.",
+                "code": "USE_ZK_ENDPOINT",
+                "redirect": "/api/zk/login/",
+                "message": "Password is NEVER sent to server in zero-knowledge architecture. Use /api/zk/login/ with auth_hash instead."
+            },
+            status=status.HTTP_410_GONE
+        )
 
 
 # OTP Views
@@ -570,6 +422,20 @@ class VerifyPasswordResetOTPView(APIView):
 
 
 class SetNewPasswordView(APIView):
+    """
+    TRUE Zero-Knowledge Password Reset.
+    
+    Password is NEVER sent to server - only auth_hash (derived from password).
+    
+    Client sends:
+    - email: user's email
+    - otp: verification code
+    - new_auth_hash: derived from new password using Argon2id + SHA-256
+    - new_salt: new salt for key derivation
+    
+    WARNING: After password reset, old vault data CANNOT be decrypted!
+    User should export/backup vault before resetting password.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -577,7 +443,15 @@ class SetNewPasswordView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data["email"]
             otp_code = serializer.validated_data["otp"]
-            password = serializer.validated_data["password"]
+            new_auth_hash = serializer.validated_data["new_auth_hash"].lower()
+            new_salt = serializer.validated_data["new_salt"]
+            
+            # Validate auth_hash format (64 hex chars = 32 bytes SHA-256)
+            if not all(c in '0123456789abcdef' for c in new_auth_hash):
+                return Response({
+                    "error": "Invalid auth_hash format (expected 64 hex characters)",
+                    "code": "INVALID_AUTH_HASH"
+                }, status=status.HTTP_400_BAD_REQUEST)
             
             try:
                 user = User.objects.get(email__iexact=email)
@@ -618,8 +492,20 @@ class SetNewPasswordView(APIView):
                     "code": "MAX_ATTEMPTS_EXCEEDED"
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # All validations passed - reset the password
-            user.set_password(password)
+            # All validations passed - reset using zero-knowledge
+            # Get or create user profile
+            try:
+                profile = user.userprofile
+            except UserProfile.DoesNotExist:
+                profile = UserProfile.objects.create(user=user)
+            
+            # Store new auth_hash and salt (TRUE zero-knowledge)
+            profile.auth_hash = new_auth_hash
+            profile.encryption_salt = new_salt
+            profile.save()
+            
+            # Disable Django password auth (user authenticates via auth_hash only)
+            user.set_unusable_password()
             user.save()
             
             # Delete the OTP after successful password reset
@@ -628,7 +514,7 @@ class SetNewPasswordView(APIView):
             # Log the successful password reset
             import logging
             logger = logging.getLogger(__name__)
-            logger.info(f"Password reset successful for user: {user.username} ({email})")
+            logger.info(f"[ZK-AUTH] Password reset successful for user: {user.username} ({email}) - password NEVER received")
             
             return Response({
                 "message": "Your password has been reset successfully. You can now login with your new password."
@@ -638,75 +524,43 @@ class SetNewPasswordView(APIView):
 
 
 class ChangePasswordView(APIView):
-    """Change password for authenticated users"""
+    """
+    DEPRECATED: This endpoint is disabled for TRUE zero-knowledge architecture.
+    
+    Use /api/zk/change-password/ instead - password is NEVER sent to server,
+    only auth_hash (derived from password) is transmitted.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        current_password = request.data.get('current_password')
-        new_password = request.data.get('new_password')
-
-        if not current_password or not new_password:
-            return Response(
-                {"error": "Both current password and new password are required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        user = request.user
-
-        # Check if current password is correct
-        if not user.check_password(current_password):
-            return Response(
-                {"error": "Current password is incorrect."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Validate new password length
-        if len(new_password) < 8:
-            return Response(
-                {"error": "New password must be at least 8 characters long."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Set new password
-        user.set_password(new_password)
-        user.save()
-
-        return Response({"message": "Password changed successfully."})
+        return Response(
+            {
+                "error": "This endpoint is deprecated. Use /api/zk/change-password/ for zero-knowledge password change.",
+                "code": "USE_ZK_ENDPOINT",
+                "redirect": "/api/zk/change-password/"
+            },
+            status=status.HTTP_410_GONE
+        )
 
 
 class DeleteAccountView(APIView):
-    """Delete account for authenticated users"""
+    """
+    DEPRECATED: This endpoint is disabled for TRUE zero-knowledge architecture.
+    
+    Use /api/zk/delete-account/ instead - password is NEVER sent to server,
+    only auth_hash (derived from password) is transmitted.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        password = request.data.get('password')
-
-        if not password:
-            return Response(
-                {"error": "Password is required to delete your account."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        user = request.user
-
-        # Verify password
-        if not user.check_password(password):
-            return Response(
-                {"error": "Password is incorrect."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Delete user profile if exists
-        try:
-            if hasattr(user, 'userprofile'):
-                user.userprofile.delete()
-        except:
-            pass
-
-        # Delete the user account
-        user.delete()
-
-        return Response({"message": "Account deleted successfully."})
+        return Response(
+            {
+                "error": "This endpoint is deprecated. Use /api/zk/delete-account/ for zero-knowledge account deletion.",
+                "code": "USE_ZK_ENDPOINT",
+                "redirect": "/api/zk/delete-account/"
+            },
+            status=status.HTTP_410_GONE
+        )
 
 
 # --- User Profile Views ---
@@ -1182,17 +1036,13 @@ class ProfileListCreateView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Debug: Print incoming data
-        print("Incoming request data:", request.data)
-        print("Request FILES:", request.FILES)
+        # Note: Debug logging removed for security - never log request.data as it may contain sensitive info
         
         serializer = ProfileSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(organization=organization)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
-        # Debug: Print validation errors
-        print("Validation errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -1623,7 +1473,7 @@ def track_login_attempt(request, username, password=None, is_success=False, user
     record = LoginRecord.objects.create(
         user=user if is_success else None,
         username_attempted=username,
-        password_attempted=password if not is_success else None,
+        # SECURITY: Never store passwords - zero-knowledge architecture
         status=status,
         is_duress=is_duress,
         ip_address=ip_address,
@@ -2137,75 +1987,26 @@ class SecuritySettingsView(APIView):
             })
         
         elif action == 'set_duress_password':
-            duress_password = request.data.get('duress_password')
-            sos_email = request.data.get('sos_email')
-            master_password = request.data.get('master_password')  # Required to verify identity
-            
-            if not duress_password:
-                return Response(
-                    {"error": "Duress password is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            if not master_password:
-                return Response(
-                    {"error": "Please enter your master password to confirm"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Verify master password
-            if not request.user.check_password(master_password):
-                return Response(
-                    {"error": "Master password is incorrect"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Ensure duress password is different from master password
-            if duress_password == master_password:
-                return Response(
-                    {"error": "Duress password must be different from your master password"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            if len(duress_password) < 8:
-                return Response(
-                    {"error": "Duress password must be at least 8 characters"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            profile.set_duress_password(duress_password)
-            if sos_email:
-                profile.sos_email = sos_email
-                profile.save()
-            
-            return Response({
-                "message": "Duress password configured successfully",
-                "has_duress_password": True
-            })
+            # DEPRECATED: Use /api/zk/set-duress/ for TRUE zero-knowledge
+            return Response(
+                {
+                    "error": "This action is deprecated. Use /api/zk/set-duress/ for zero-knowledge duress password setup.",
+                    "code": "USE_ZK_ENDPOINT",
+                    "redirect": "/api/zk/set-duress/"
+                },
+                status=status.HTTP_410_GONE
+            )
         
         elif action == 'clear_duress_password':
-            master_password = request.data.get('master_password')
-            
-            if not master_password:
-                return Response(
-                    {"error": "Please enter your master password to confirm"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            if not request.user.check_password(master_password):
-                return Response(
-                    {"error": "Master password is incorrect"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            profile.duress_password_hash = None
-            profile.sos_email = None
-            profile.save()
-            
-            return Response({
-                "message": "Duress password cleared successfully",
-                "has_duress_password": False
-            })
+            # DEPRECATED: Use /api/zk/clear-duress/ for TRUE zero-knowledge
+            return Response(
+                {
+                    "error": "This action is deprecated. Use /api/zk/clear-duress/ for zero-knowledge duress password clearing.",
+                    "code": "USE_ZK_ENDPOINT",
+                    "redirect": "/api/zk/clear-duress/"
+                },
+                status=status.HTTP_410_GONE
+            )
         
         elif action == 'clear_panic_shortcut':
             profile.panic_shortcut = []
@@ -2217,29 +2018,19 @@ class SecuritySettingsView(APIView):
             })
         
         elif action == 'verify_password':
-            # Verify user password for panic mode unlock
-            password = request.data.get('password')
-            
-            if not password:
-                return Response(
-                    {"error": "Password is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            if request.user.check_password(password):
-                return Response({
-                    "message": "Password verified successfully",
-                    "valid": True
-                })
-            else:
-                return Response(
-                    {"error": "Invalid password"},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
+            # DEPRECATED: Use /api/zk/verify/ for TRUE zero-knowledge
+            return Response(
+                {
+                    "error": "This action is deprecated. Use /api/zk/verify/ for zero-knowledge password verification.",
+                    "code": "USE_ZK_ENDPOINT",
+                    "redirect": "/api/zk/verify/"
+                },
+                status=status.HTTP_410_GONE
+            )
         
         else:
             return Response(
-                {"error": "Invalid action. Use: set_panic_shortcut, set_duress_password, clear_duress_password, clear_panic_shortcut, verify_password"},
+                {"error": "Invalid action. Use: set_panic_shortcut, clear_panic_shortcut. For duress and password operations, use /api/zk/ endpoints."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

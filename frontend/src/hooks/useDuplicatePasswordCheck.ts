@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api/apiClient';
-import { getSessionEncryptionKey } from '../services/encryptionService';
 import { decryptCredentialFields } from '../utils/encryption';
 
 interface DuplicateProfile {
@@ -22,23 +21,31 @@ interface DuplicateCheckResult {
  * 
  * **How it works:**
  * 1. Fetch all user's profiles across all organizations
- * 2. Decrypt passwords client-side
+ * 2. Decrypt passwords client-side using master key from CryptoContext
  * 3. Compare with current password (case-sensitive)
  * 4. Return list of profiles with duplicate passwords
+ * 
+ * **Zero-Knowledge Architecture:**
+ * - Master key is obtained from CryptoContext (memory only)
+ * - Master key is NEVER stored in localStorage/sessionStorage
+ * - All decryption happens client-side
  * 
  * **Features:**
  * - Cross-organization checking
  * - Client-side comparison only (privacy-first)
  * - Excludes the current profile being edited
  * - Debouncing: Waits 600ms after user stops typing
+ * - LAZY LOADING: Only fetches profiles when password is entered
  * 
  * @param password - The password to check
  * @param currentProfileId - ID of current profile (to exclude from duplicates)
+ * @param getMasterKey - Function to get master key from CryptoContext
  * @returns Object containing duplicateCount, duplicates list, isChecking, and error
  */
 export const useDuplicatePasswordCheck = (
   password: string,
-  currentProfileId?: number
+  currentProfileId?: number,
+  getMasterKey?: () => CryptoKey | null
 ): DuplicateCheckResult => {
   const [duplicateCount, setDuplicateCount] = useState<number>(0);
   const [duplicates, setDuplicates] = useState<DuplicateProfile[]>([]);
@@ -49,58 +56,70 @@ export const useDuplicatePasswordCheck = (
 
   /**
    * Fetch all user's profiles across all organizations
-   * This runs once when the hook is first used
+   * LAZY: Only called when actually needed (when password is entered)
    */
   const fetchAllProfiles = useCallback(async () => {
+    if (profilesFetched) return allProfiles;
+    
     try {
       // Step 1: Fetch all categories
       const categoriesResponse = await apiClient.get('/categories/');
       const categories = categoriesResponse.data;
 
-      // Step 2: Fetch all profiles from all organizations
+      // Step 2: Fetch all profiles from all organizations IN PARALLEL
       const allProfilesData: any[] = [];
-
+      
+      // Collect all organization IDs first
+      const orgPromises: Promise<any>[] = [];
+      const orgInfos: { orgId: number; orgName: string }[] = [];
+      
       for (const category of categories) {
         for (const org of category.organizations) {
-          try {
-            const profilesResponse = await apiClient.get(`/organizations/${org.id}/profiles/`);
-            const profiles = profilesResponse.data;
-
-            // Add organization info to each profile
-            profiles.forEach((profile: any) => {
-              allProfilesData.push({
-                ...profile,
-                organizationName: org.name,
-                organizationId: org.id,
-              });
-            });
-          } catch (err) {
-            console.error(`Failed to fetch profiles for org ${org.id}:`, err);
-          }
+          orgInfos.push({ orgId: org.id, orgName: org.name });
+          orgPromises.push(
+            apiClient.get(`/organizations/${org.id}/profiles/`).catch(err => {
+              console.error(`Failed to fetch profiles for org ${org.id}:`, err);
+              return { data: [] };
+            })
+          );
         }
       }
+      
+      // Fetch all in parallel
+      const responses = await Promise.all(orgPromises);
+      
+      // Combine results
+      responses.forEach((response, index) => {
+        const profiles = response.data || [];
+        profiles.forEach((profile: any) => {
+          allProfilesData.push({
+            ...profile,
+            organizationName: orgInfos[index].orgName,
+            organizationId: orgInfos[index].orgId,
+          });
+        });
+      });
 
       setAllProfiles(allProfilesData);
       setProfilesFetched(true);
+      return allProfilesData;
     } catch (err) {
       console.error('Failed to fetch all profiles:', err);
       setError('Failed to load profiles for duplicate check');
       setProfilesFetched(true); // Mark as fetched even on error to prevent infinite loops
+      return [];
     }
-  }, []);
+  }, [profilesFetched, allProfiles]);
 
-  // Fetch profiles once on mount
-  useEffect(() => {
-    if (!profilesFetched) {
-      fetchAllProfiles();
-    }
-  }, [profilesFetched, fetchAllProfiles]);
+  // DO NOT fetch profiles on mount - wait until password is entered
+  // This is lazy loading for better performance
 
   /**
    * Check for duplicate passwords
+   * LAZY: Only fetches all profiles when actually checking
    */
   const checkDuplicates = useCallback(async (pwd: string) => {
-    if (!pwd || pwd.length === 0 || !profilesFetched) {
+    if (!pwd || pwd.length === 0) {
       setDuplicateCount(0);
       setDuplicates([]);
       return;
@@ -110,26 +129,29 @@ export const useDuplicatePasswordCheck = (
       setIsChecking(true);
       setError(null);
 
-      // Get encryption key
-      const encryptionKey = await getSessionEncryptionKey();
+      // Get encryption key from CryptoContext (zero-knowledge: key exists only in memory)
+      const encryptionKey = getMasterKey?.();
       if (!encryptionKey) {
         setError('Session expired. Please re-enter your master password.');
         setIsChecking(false);
         return;
       }
 
+      // LAZY: Fetch profiles only when needed
+      const profiles = profilesFetched ? allProfiles : await fetchAllProfiles();
+
       const foundDuplicates: DuplicateProfile[] = [];
 
-      // Check each profile
-      for (const profile of allProfiles) {
+      // Decrypt all passwords in parallel for better performance
+      const decryptPromises = profiles.map(async (profile: any) => {
         // Skip the current profile being edited
         if (currentProfileId && profile.id === currentProfileId) {
-          continue;
+          return null;
         }
 
         // Skip if no password is set
         if (!profile.password_encrypted) {
-          continue;
+          return null;
         }
 
         try {
@@ -144,16 +166,26 @@ export const useDuplicatePasswordCheck = (
 
           // Compare passwords (case-sensitive)
           if (decryptedFields.password === pwd) {
-            foundDuplicates.push({
+            return {
               id: profile.id,
               title: profile.title || 'Untitled Profile',
               organizationName: profile.organizationName,
               organizationId: profile.organizationId,
-            });
+            } as DuplicateProfile;
           }
         } catch (err) {
           // Skip profiles that fail to decrypt
           console.error(`Failed to decrypt profile ${profile.id}:`, err);
+        }
+        return null;
+      });
+
+      const results = await Promise.all(decryptPromises);
+      
+      // Filter out null results
+      for (const result of results) {
+        if (result !== null) {
+          foundDuplicates.push(result);
         }
       }
 
@@ -167,18 +199,23 @@ export const useDuplicatePasswordCheck = (
       setDuplicates([]);
       setIsChecking(false);
     }
-  }, [allProfiles, currentProfileId, profilesFetched]);
+  }, [allProfiles, currentProfileId, profilesFetched, getMasterKey, fetchAllProfiles]);
 
-  // Debounce password checking
+  // Debounce password checking - only triggers when password is entered
   useEffect(() => {
-    if (!profilesFetched) return;
+    // Skip if password is empty (don't trigger unnecessary fetches)
+    if (!password || password.length === 0) {
+      setDuplicateCount(0);
+      setDuplicates([]);
+      return;
+    }
 
     const timer = setTimeout(() => {
       checkDuplicates(password);
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [password, checkDuplicates, profilesFetched]);
+  }, [password, checkDuplicates]);
 
   return {
     duplicateCount,

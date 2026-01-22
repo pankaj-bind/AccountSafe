@@ -113,6 +113,32 @@ class UserProfile(models.Model):
     # Encryption salt for client-side encryption
     encryption_salt = models.CharField(max_length=255, blank=True, null=True, help_text="Salt for deriving client-side encryption key")
 
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ZERO-KNOWLEDGE VAULT FIELDS
+    # Server stores encrypted blobs - CANNOT decrypt them
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    # Encrypted vault blob (entire vault as single encrypted blob)
+    vault_blob = models.TextField(blank=True, null=True, help_text="Encrypted vault blob (server cannot decrypt - zero-knowledge)")
+    
+    # Decoy vault for duress mode (plausible deniability)
+    decoy_vault_blob = models.TextField(blank=True, null=True, help_text="Encrypted decoy vault for duress mode (server cannot decrypt)")
+    
+    # Separate salt for duress vault
+    duress_salt = models.CharField(max_length=255, blank=True, null=True, help_text="Salt for duress password key derivation")
+    
+    # Auth hash for password verification (derived from password, not reversible)
+    auth_hash = models.CharField(max_length=128, blank=True, null=True, help_text="Auth hash for login verification (derived from password, not reversible)")
+    
+    # Duress auth hash for zero-knowledge duress login (derived from duress password)
+    duress_auth_hash = models.CharField(max_length=128, blank=True, null=True, help_text="Auth hash for duress login verification (derived from duress password, not reversible)")
+    
+    # Vault version for schema migrations
+    vault_version = models.CharField(max_length=20, default='1.0.0', help_text="Version of the vault encryption schema")
+    
+    # Last vault sync timestamp
+    last_vault_sync = models.DateTimeField(blank=True, null=True, help_text="Last time vault was synced from client")
+
     # Duress/Ghost Vault settings
     duress_password_hash = models.CharField(max_length=128, blank=True, null=True, help_text="Hashed duress password for ghost vault access")
     sos_email = models.EmailField(blank=True, null=True, help_text="Email to notify when duress password is used")
@@ -143,8 +169,8 @@ class UserProfile(models.Model):
         return check_password(password, self.duress_password_hash)
     
     def has_duress_password(self) -> bool:
-        """Check if duress password is set"""
-        return bool(self.duress_password_hash)
+        """Check if duress password is set (either legacy hash or ZK auth_hash)"""
+        return bool(self.duress_password_hash) or bool(self.duress_auth_hash)
 
     def set_pin(self, pin: str) -> bool:
         """Set a 4-digit security PIN"""
@@ -335,7 +361,8 @@ class LoginRecord(models.Model):
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_records', null=True, blank=True)
     username_attempted = models.CharField(max_length=150)
-    password_attempted = models.CharField(max_length=255, blank=True, null=True)  # Only stored for failed attempts
+    # SECURITY: password_attempted field REMOVED - never store passwords!
+    # Zero-knowledge means server never sees passwords
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
     is_duress = models.BooleanField(default=False, help_text="True if this was a duress password login")
     ip_address = models.GenericIPAddressField(null=True, blank=True)

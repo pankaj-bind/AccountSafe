@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { storeMasterPasswordForSession, storeKeyData } from '../services/encryptionService';
+import { storeKeyData } from '../services/encryptionService';
+import { useCrypto } from '../services/CryptoContext';
 import apiClient from '../api/apiClient';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 
 interface PasswordReentryModalProps {
   isOpen: boolean;
@@ -15,6 +19,12 @@ const LockIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   </svg>
 );
 
+/**
+ * PasswordReentryModal
+ * 
+ * Prompts user to re-enter password to unlock the vault.
+ * Supports BOTH master and duress password while maintaining zero-knowledge architecture.
+ */
 const PasswordReentryModal: React.FC<PasswordReentryModalProps> = ({
   isOpen,
   onSuccess,
@@ -23,6 +33,7 @@ const PasswordReentryModal: React.FC<PasswordReentryModalProps> = ({
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { unlock } = useCrypto();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,45 +41,58 @@ const PasswordReentryModal: React.FC<PasswordReentryModalProps> = ({
     setIsLoading(true);
 
     try {
-      // First, verify the password by trying to get the user profile
-      // This validates the session is still active
-      const profileResponse = await apiClient.get('/profile/');
-      const username = profileResponse.data.username;
-      let salt = profileResponse.data.encryption_salt;
-
-      // If no salt in backend, try localStorage
-      if (!salt) {
-        salt = localStorage.getItem(`encryption_salt_${username}`);
-        
-        // If we found it in localStorage, save it to backend for other devices
-        if (salt) {
-          try {
-            await apiClient.put('/profile/update/', { encryption_salt: salt });
-            console.log('Migrated salt from localStorage to backend');
-          } catch (err) {
-            console.error('Failed to save salt to backend:', err);
-          }
-        }
+      const username = localStorage.getItem('username');
+      if (!username) {
+        setError('Session expired. Please log in again.');
+        window.location.href = '/login';
+        return;
       }
 
-      if (!salt) {
-        // No salt anywhere - this is a problem
-        setError('Encryption setup not found. Your data may have been encrypted with a different salt. Please contact support or try logging in from the original device.');
+      // Fetch both salts from server (both are public info)
+      const saltResponse = await axios.get(`${API_URL}zk/salt/?username=${encodeURIComponent(username)}`);
+      const masterSalt = saltResponse.data.salt;
+      const duressSalt = saltResponse.data.duress_salt;
+
+      if (!masterSalt) {
+        setError('Encryption setup not found. Please contact support.');
         setIsLoading(false);
         return;
       }
 
-      // Store the salt and password for this session
-      storeMasterPasswordForSession(password);
-      storeKeyData(salt);
-      localStorage.setItem(`encryption_salt_${username}`, salt);
+      // Try unlock with master salt first
+      let result = await unlock(password, masterSalt);
       
-      setPassword('');
-      onSuccess();
+      if (result.success) {
+        // Store salt for future reference (salt is public, safe to store)
+        storeKeyData(masterSalt);
+        localStorage.setItem(`encryption_salt_${username}`, masterSalt);
+        
+        setPassword('');
+        onSuccess();
+        return;
+      }
+      
+      // If master salt failed and duress_salt exists, try with duress salt
+      if (duressSalt) {
+        console.log('🔄 Master password failed, trying duress password...');
+        result = await unlock(password, duressSalt);
+        
+        if (result.success) {
+          // Store duress salt for this session
+          storeKeyData(duressSalt);
+          localStorage.setItem(`encryption_salt_${username}`, duressSalt);
+          
+          setPassword('');
+          onSuccess();
+          return;
+        }
+      }
+      
+      // Both passwords failed
+      setError('Invalid password. Please try again.');
     } catch (err: any) {
       if (err.response?.status === 401) {
         setError('Session expired. Please log in again.');
-        // Redirect to login
         window.location.href = '/login';
       } else {
         setError('Failed to verify. Please try again.');
