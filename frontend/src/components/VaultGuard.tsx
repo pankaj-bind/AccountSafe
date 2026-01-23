@@ -32,7 +32,7 @@ interface VaultGuardProps {
 }
 
 const VaultGuard: React.FC<VaultGuardProps> = ({ children }) => {
-  const { isUnlocked, isLoading, lockReason, fastUnlockForModeSwitch } = useCrypto();
+  const { isUnlocked, isLoading, fastUnlockForModeSwitch } = useCrypto();
   const { isPanicLocked, unlock: unlockPanic } = usePanic();
   const { logout: authLogout } = useAuth();
   const navigate = useNavigate();
