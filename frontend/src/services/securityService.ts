@@ -6,9 +6,18 @@
  * - Password strength assessment (zxcvbn)
  * - HIBP breach checking using k-Anonymity
  * - Batch updates of security metrics
+ * - Duress password with TRUE zero-knowledge (auth_hash only)
  */
 
 import apiClient from '../api/apiClient';
+import { 
+  generateSalt, 
+  deriveAuthHash, 
+  deriveMasterKey,
+  encryptVault,
+  createEmptyVault,
+  VaultData
+} from './cryptoService';
 
 export interface SecurityHealthScore {
   overall_score: number;
@@ -287,42 +296,135 @@ export async function clearPanicShortcut(): Promise<void> {
 }
 
 /**
- * Set duress password and SOS email
+ * Set duress password, SOS email, and create decoy vault with TRUE zero-knowledge.
+ * 
+ * ZERO-KNOWLEDGE: Neither master nor duress password is sent to server!
+ * Only auth_hash (derived from password) is transmitted.
+ * 
+ * The decoy vault is encrypted with duress password and stored on server.
+ * Server cannot decrypt either the real vault or decoy vault.
+ * 
+ * @param masterPassword - For verification (derives auth_hash)
+ * @param duressPassword - The duress password to set (derives auth_hash)
+ * @param sosEmail - Email to notify on duress login
+ * @param decoyVault - Optional decoy vault data (if not provided, creates empty vault)
  */
 export async function setDuressPassword(
   masterPassword: string,
   duressPassword: string,
-  sosEmail: string
+  sosEmail: string,
+  decoyVault?: VaultData
 ): Promise<{ has_duress_password: boolean }> {
-  const response = await apiClient.post('/security/settings/', {
-    action: 'set_duress_password',
-    master_password: masterPassword,
-    duress_password: duressPassword,
+  // Get current salt for master password verification
+  const username = localStorage.getItem('username');
+  if (!username) {
+    throw new Error('Not logged in');
+  }
+  
+  // IMPORTANT: Fetch master salt from server, NOT from localStorage
+  // When logged in with duress password, localStorage has duress_salt
+  // We need the MASTER salt to derive the correct auth_hash for verification
+  const saltResponse = await apiClient.get(`/zk/salt/?username=${encodeURIComponent(username)}`);
+  const masterSalt = saltResponse.data.salt;  // This is always the MASTER salt
+  
+  if (!masterSalt) {
+    throw new Error('Cannot find encryption salt');
+  }
+  
+  // Derive master auth_hash for verification
+  const masterAuthHash = deriveAuthHash(masterPassword, masterSalt);
+  
+  // Generate new salt for duress password
+  const duressSalt = generateSalt();
+  
+  // Derive duress auth_hash
+  const duressAuthHash = deriveAuthHash(duressPassword, duressSalt);
+  
+  // Create and encrypt decoy vault with duress key
+  const duressKey = await deriveMasterKey(duressPassword, duressSalt);
+  const decoyVaultData = decoyVault || createEmptyVault();
+  const decoyVaultBlob = await encryptVault(decoyVaultData, duressKey);
+  
+  // Send auth_hashes only (password NEVER sent)
+  const response = await apiClient.post('/zk/set-duress/', {
+    master_auth_hash: masterAuthHash,
+    duress_auth_hash: duressAuthHash,
+    duress_salt: duressSalt,
     sos_email: sosEmail
   });
+  
+  // Store decoy vault blob on server
+  await apiClient.put('/vault/', {
+    decoy_vault_blob: decoyVaultBlob,
+    duress_salt: duressSalt
+  });
+  
+  console.log('✅ Duress password and decoy vault set with zero-knowledge (password NEVER sent)');
+  
   return response.data;
 }
 
 /**
- * Clear duress password
+ * Clear duress password with TRUE zero-knowledge verification.
+ * 
+ * ZERO-KNOWLEDGE: Master password is NOT sent to server!
+ * Only auth_hash (derived from password) is transmitted.
  */
 export async function clearDuressPassword(masterPassword: string): Promise<void> {
-  await apiClient.post('/security/settings/', {
-    action: 'clear_duress_password',
-    master_password: masterPassword
+  // Get current salt for master password verification
+  const username = localStorage.getItem('username');
+  if (!username) {
+    throw new Error('Not logged in');
+  }
+  
+  // IMPORTANT: Fetch master salt from server, NOT from localStorage
+  // When logged in with duress password, localStorage has duress_salt
+  const saltResponse = await apiClient.get(`/zk/salt/?username=${encodeURIComponent(username)}`);
+  const masterSalt = saltResponse.data.salt;  // This is always the MASTER salt
+  
+  if (!masterSalt) {
+    throw new Error('Cannot find encryption salt');
+  }
+  
+  // Derive master auth_hash for verification
+  const masterAuthHash = deriveAuthHash(masterPassword, masterSalt);
+  
+  // Send auth_hash only (password NEVER sent)
+  await apiClient.post('/zk/clear-duress/', {
+    master_auth_hash: masterAuthHash
   });
+  
+  console.log('✅ Duress password cleared with zero-knowledge (password NEVER sent)');
 }
 
 /**
- * Verify user password (for panic mode unlock)
+ * Verify user password with TRUE zero-knowledge.
+ * 
+ * ZERO-KNOWLEDGE: Password is NOT sent to server!
+ * Only auth_hash (derived from password) is transmitted.
  */
 export async function verifyPassword(password: string): Promise<boolean> {
   try {
-    const response = await apiClient.post('/security/settings/', {
-      action: 'verify_password',
-      password
+    // Get current salt
+    const username = localStorage.getItem('username');
+    if (!username) {
+      return false;
+    }
+    
+    const salt = localStorage.getItem(`encryption_salt_${username}`);
+    if (!salt) {
+      return false;
+    }
+    
+    // Derive auth_hash for verification
+    const authHash = deriveAuthHash(password, salt);
+    
+    // Verify with auth_hash only (password NEVER sent)
+    const response = await apiClient.post('/zk/verify/', {
+      auth_hash: authHash
     });
-    return response.data.valid;
+    
+    return response.data.verified;
   } catch (error) {
     return false;
   }

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useProfile } from '../contexts/ProfileContext';
 import { usePanic } from '../contexts/PanicContext';
+import { useCrypto } from '../services/CryptoContext';
 
 // Modern SVG Icons
 const SunIcon = () => (
@@ -54,6 +55,7 @@ const Navbar: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { profilePicture, displayName } = useProfile();
   const { isPanicLocked, triggerPanic } = usePanic();
+  const { lock } = useCrypto();
   const navigate = useNavigate();
   const location = useLocation();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -68,8 +70,8 @@ const Navbar: React.FC = () => {
   };
 
   const handlePanic = () => {
-    // Trigger panic mode using the context (same as keyboard shortcut)
-    triggerPanic();
+    // Trigger panic mode with vault lock (zero-knowledge: wipes master key from memory)
+    triggerPanic(() => lock('panic'));
   };
 
   const closeMenus = () => {

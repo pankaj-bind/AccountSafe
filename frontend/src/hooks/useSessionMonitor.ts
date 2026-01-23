@@ -34,7 +34,7 @@ export const useSessionMonitor = ({
         }
 
         // Validate session with backend
-        await apiClient.get('/api/sessions/validate/');
+        await apiClient.get('/sessions/validate/');
         
         // Session is valid, continue
       } catch (error: any) {

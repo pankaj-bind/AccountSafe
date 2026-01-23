@@ -202,6 +202,19 @@ const DashboardPage: React.FC = () => {
     fetchDashboardData();
   }, []);
 
+  // Listen for mode changes (normal ↔ duress) to refetch data
+  useEffect(() => {
+    const handleModeChange = () => {
+      console.log('🔄 Mode changed - refetching dashboard data...');
+      fetchDashboardData();
+    };
+    
+    window.addEventListener('vault-mode-changed', handleModeChange);
+    return () => {
+      window.removeEventListener('vault-mode-changed', handleModeChange);
+    };
+  }, []);
+
   const fetchDashboardData = async () => {
     try {
       const [statsResponse, healthResponse] = await Promise.all([

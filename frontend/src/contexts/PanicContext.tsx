@@ -1,8 +1,10 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
+import { clearEncryptionKeys } from '../services/encryptionService';
 
 interface PanicContextType {
   isPanicLocked: boolean;
-  triggerPanic: () => void;
+  previousLocation: string | null;
+  triggerPanic: (lockVault?: () => void) => void;
   unlock: () => void;
 }
 
@@ -10,12 +12,20 @@ const PanicContext = createContext<PanicContextType | undefined>(undefined);
 
 // localStorage key for panic state persistence (shared across all tabs)
 const PANIC_STATE_KEY = 'accountsafe_panic_locked';
+const PANIC_LOCATION_KEY = 'accountsafe_panic_location';
 
 export const PanicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize from localStorage to persist across ALL tabs
   const [isPanicLocked, setIsPanicLocked] = useState(() => {
     return localStorage.getItem(PANIC_STATE_KEY) === 'true';
   });
+  
+  const [previousLocation, setPreviousLocation] = useState<string | null>(() => {
+    return localStorage.getItem(PANIC_LOCATION_KEY);
+  });
+  
+  // Store the lock function reference
+  const lockVaultRef = useRef<(() => void) | null>(null);
 
   // Sync to localStorage when state changes
   useEffect(() => {
@@ -61,8 +71,25 @@ export const PanicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  const triggerPanic = useCallback(() => {
+  const triggerPanic = useCallback((lockVault?: () => void) => {
     console.log('🚨 PANIC MODE ACTIVATED - Locking ALL tabs');
+    
+    // Store current location so we can return to it after unlock
+    const currentPath = window.location.pathname;
+    localStorage.setItem(PANIC_LOCATION_KEY, currentPath);
+    setPreviousLocation(currentPath);
+    
+    // Clear session password immediately (zero-knowledge security)
+    clearEncryptionKeys();
+    
+    // Lock vault if function is provided
+    if (lockVault) {
+      lockVault();
+      lockVaultRef.current = lockVault;
+    } else if (lockVaultRef.current) {
+      lockVaultRef.current();
+    }
+    
     setIsPanicLocked(true);
   }, []);
 
@@ -70,10 +97,12 @@ export const PanicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     console.log('✅ Panic mode unlocked');
     setIsPanicLocked(false);
     localStorage.removeItem(PANIC_STATE_KEY);
+    // Keep previousLocation in memory for navigation, but remove from storage
+    localStorage.removeItem(PANIC_LOCATION_KEY);
   }, []);
 
   return (
-    <PanicContext.Provider value={{ isPanicLocked, triggerPanic, unlock }}>
+    <PanicContext.Provider value={{ isPanicLocked, previousLocation, triggerPanic, unlock }}>
       {children}
     </PanicContext.Provider>
   );

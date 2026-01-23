@@ -1,8 +1,14 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Encryption Key Management Service
 // ═══════════════════════════════════════════════════════════════════════════════
+// 
+// ZERO-KNOWLEDGE ARCHITECTURE:
+// - Master password is NEVER stored anywhere (not even sessionStorage)
+// - Only the derived CryptoKey exists in memory during active session
+// - Salt is public and can be stored (needed for key derivation)
+// ═══════════════════════════════════════════════════════════════════════════════
 
-import { deriveKeyFromPassword, generateSalt, generateRecoveryKey } from '../utils/encryption';
+import { generateSalt, generateRecoveryKey } from '../utils/encryption';
 
 interface KeyData {
   salt: string;
@@ -10,7 +16,6 @@ interface KeyData {
 }
 
 const STORAGE_KEY = 'accountsafe_key_data';
-const SESSION_KEY = 'accountsafe_master_key';
 
 /**
  * Initialize encryption for a new user during registration
@@ -24,8 +29,8 @@ export async function initializeUserEncryption(): Promise<{ salt: string; recove
 }
 
 /**
- * Store user's key data (salt) in localStorage
- * Note: We never store the master password or derived key permanently
+ * Store user's key data (salt only) in localStorage
+ * Note: We NEVER store the master password or derived key
  */
 export function storeKeyData(salt: string, recoveryKey?: string): void {
   const keyData: KeyData = { salt, recoveryKey };
@@ -47,40 +52,14 @@ export function getKeyData(): KeyData | null {
 }
 
 /**
- * Store master password in session storage (for current session only)
- * This allows us to re-derive the key without asking for password repeatedly
- */
-export function storeMasterPasswordForSession(password: string): void {
-  sessionStorage.setItem(SESSION_KEY, password);
-}
-
-/**
- * Get master password from session storage
- */
-export function getMasterPasswordFromSession(): string | null {
-  return sessionStorage.getItem(SESSION_KEY);
-}
-
-/**
- * Derive encryption key from session password
- * Returns null if no session password exists
- */
-export async function getSessionEncryptionKey(): Promise<CryptoKey | null> {
-  const password = getMasterPasswordFromSession();
-  const keyData = getKeyData();
-  
-  if (!password || !keyData) {
-    return null;
-  }
-  
-  return await deriveKeyFromPassword(password, keyData.salt);
-}
-
-/**
- * Clear all encryption keys from memory (logout)
+ * Clear all encryption keys from memory (logout/panic)
+ * In true zero-knowledge, there's nothing in storage to clear
+ * The master key only exists in CryptoContext's memory ref
  */
 export function clearEncryptionKeys(): void {
-  sessionStorage.removeItem(SESSION_KEY);
+  // No session storage to clear - master key is in memory only (CryptoContext)
+  // This function is kept for API compatibility
+  console.log('🔒 Clearing encryption state (zero-knowledge: nothing in storage)');
 }
 
 /**

@@ -1,58 +1,10 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { usePanic } from '../contexts/PanicContext';
-import { storeMasterPasswordForSession } from '../services/encryptionService';
-import { relogin } from '../services/authService';
 import CategoryManager from '../components/CategoryManager';
-import PanicLockScreen from '../components/PanicLockScreen';
 
 const HomePage: React.FC = () => {
   const { token } = useAuth();
-  const { isPanicLocked, unlock } = usePanic();
-
-  /**
-   * Handle unlock with password re-entry
-   * Supports both master password (unlock) and duress password (re-login with fake vault)
-   */
-  const handleUnlock = useCallback(async (password: string) => {
-    const username = localStorage.getItem('username');
-    
-    if (!username) {
-      throw new Error('No username found');
-    }
-    
-    try {
-      const result = await relogin(username, password);
-      
-      if (result.success) {
-        // Login successful - could be duress or master
-        storeMasterPasswordForSession(password);
-        
-        // Unlock the panic state
-        unlock();
-        
-        // Reload to fetch data with the new session
-        console.log('✅ Re-login successful, reloading to apply new session...');
-        window.location.reload();
-        return;
-      }
-    } catch (err) {
-      console.log('Re-login attempt failed:', err);
-    }
-    
-    throw new Error('Incorrect password');
-  }, [unlock]);
-
-  // If logged in and panic locked, show panic screen
-  if (token && isPanicLocked) {
-    return (
-      <PanicLockScreen 
-        isOpen={true} 
-        onUnlock={handleUnlock}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#09090b]">

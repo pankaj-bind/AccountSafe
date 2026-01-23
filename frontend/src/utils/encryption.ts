@@ -231,6 +231,8 @@ export async function encryptCredentialFields(
 /**
  * Decrypt an object's encrypted fields
  * If the data contains a _plaintext field (for duress mode), use that directly
+ * 
+ * Optimized: Decrypts all fields in parallel for better performance
  */
 export async function decryptCredentialFields(
   encryptedData: any,
@@ -254,21 +256,32 @@ export async function decryptCredentialFields(
     };
   }
 
-  const result: any = {};
-
   const fieldNames = ['username', 'password', 'email', 'notes', 'recovery_codes'];
-
-  for (const fieldName of fieldNames) {
+  
+  // Decrypt all fields in parallel for better performance
+  const decryptionPromises = fieldNames.map(async (fieldName) => {
     const ciphertext = encryptedData[`${fieldName}_encrypted`];
     const iv = encryptedData[`${fieldName}_iv`];
-
+    
     if (ciphertext && iv) {
       try {
-        result[fieldName] = await decryptData(ciphertext, iv, key);
+        const value = await decryptData(ciphertext, iv, key);
+        return { fieldName, value };
       } catch (error) {
         console.warn(`Failed to decrypt ${fieldName}:`, error);
-        result[fieldName] = null;
+        return { fieldName, value: null };
       }
+    }
+    return { fieldName, value: undefined };
+  });
+  
+  const results = await Promise.all(decryptionPromises);
+  
+  // Convert array of results to object
+  const result: any = {};
+  for (const { fieldName, value } of results) {
+    if (value !== undefined) {
+      result[fieldName] = value;
     }
   }
 

@@ -48,6 +48,29 @@ from api.shared_secret_views import (
     revoke_shared_secret,
 )
 
+# Zero-Knowledge Vault views
+from api.vault_views import (
+    VaultView,
+    VaultSaltView,
+    VaultAuthHashView,
+    VaultExportView,
+    VaultImportView,
+)
+
+# TRUE Zero-Knowledge Authentication views (password NEVER sent to server)
+from api.zero_knowledge_auth import (
+    ZeroKnowledgeRegisterView,
+    ZeroKnowledgeLoginView,
+    ZeroKnowledgeGetSaltView,
+    ZeroKnowledgeChangePasswordView,
+    ZeroKnowledgeDeleteAccountView,
+    ZeroKnowledgeSetDuressView,
+    ZeroKnowledgeClearDuressView,
+    ZeroKnowledgeVerifyView,
+    ZeroKnowledgeSwitchModeView,
+    ZeroKnowledgeMigrateView,
+)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/check-username/', CheckUsernameView.as_view(), name='check-username'),
@@ -112,10 +135,47 @@ urlpatterns = [
     path('api/shared-secrets/', list_user_shared_secrets, name='list-shared-secrets'),
     path('api/shared-secrets/<uuid:share_id>/revoke/', revoke_shared_secret, name='revoke-shared-secret'),
 
-    # dj-rest-auth endpoints (logout, user details, registration)
-    # Note: login is handled by CustomLoginView above
-    path('api/auth/', include('dj_rest_auth.urls')),
-    path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ZERO-KNOWLEDGE VAULT ENDPOINTS
+    # Server stores encrypted blobs - CANNOT decrypt them
+    # ═══════════════════════════════════════════════════════════════════════════
+    path('api/vault/', VaultView.as_view(), name='vault'),
+    path('api/vault/salt/', VaultSaltView.as_view(), name='vault-salt'),
+    path('api/vault/auth-hash/', VaultAuthHashView.as_view(), name='vault-auth-hash'),
+    path('api/vault/export/', VaultExportView.as_view(), name='vault-export'),
+    path('api/vault/import/', VaultImportView.as_view(), name='vault-import'),
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # TRUE ZERO-KNOWLEDGE AUTHENTICATION
+    # Password is NEVER sent to server - only auth_hash (derived from password)
+    # ═══════════════════════════════════════════════════════════════════════════
+    path('api/zk/register/', ZeroKnowledgeRegisterView.as_view(), name='zk-register'),
+    path('api/zk/login/', ZeroKnowledgeLoginView.as_view(), name='zk-login'),
+    path('api/zk/salt/', ZeroKnowledgeGetSaltView.as_view(), name='zk-salt'),
+    # REMOVED: path('api/zk/migrate/', ...) - Migration endpoint DISABLED
+    # Legacy users must use password reset via email OTP to set up ZK auth
+    # This ensures password is NEVER sent to server, even for migration
+    path('api/zk/change-password/', ZeroKnowledgeChangePasswordView.as_view(), name='zk-change-password'),
+    path('api/zk/delete-account/', ZeroKnowledgeDeleteAccountView.as_view(), name='zk-delete-account'),
+    path('api/zk/set-duress/', ZeroKnowledgeSetDuressView.as_view(), name='zk-set-duress'),
+    path('api/zk/clear-duress/', ZeroKnowledgeClearDuressView.as_view(), name='zk-clear-duress'),
+    path('api/zk/verify/', ZeroKnowledgeVerifyView.as_view(), name='zk-verify'),
+    path('api/zk/switch-mode/', ZeroKnowledgeSwitchModeView.as_view(), name='zk-switch-mode'),
+
+    # ════════════════════════════════════════════════════════════════════════════
+    # SECURITY: dj-rest-auth endpoints DISABLED for zero-knowledge architecture
+    # All authentication MUST go through /api/zk/* endpoints which use auth_hash
+    # instead of password to maintain true zero-knowledge encryption.
+    # 
+    # The following routes have been removed:
+    # - /api/auth/login/ → Use /api/zk/login/ (auth_hash only)
+    # - /api/auth/registration/ → Use /api/zk/register/ (auth_hash only)
+    # - /api/auth/password/change/ → Use /api/zk/change-password/ (auth_hash only)
+    #
+    # Only logout endpoint is kept for session cleanup:
+    # path('api/auth/', include('dj_rest_auth.urls')),  # DISABLED
+    # path('api/auth/registration/', include('dj_rest_auth.registration.urls')),  # DISABLED
+    # ════════════════════════════════════════════════════════════════════════════
 ]
 
 if settings.DEBUG:

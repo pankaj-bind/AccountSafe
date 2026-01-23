@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { clearEncryptionKeys } from '../services/encryptionService';
 import { useProfile } from '../contexts/ProfileContext';
 
 interface PanicLockScreenProps {
   isOpen: boolean;
   onUnlock: (password: string) => void;
+  onLogout: () => void;
 }
 
 const LockIcon = () => (
@@ -14,13 +13,12 @@ const LockIcon = () => (
   </svg>
 );
 
-const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock }) => {
+const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onLogout }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const { profilePicture, displayName } = useProfile();
   const username = displayName || localStorage.getItem('username') || 'User';
-  const navigate = useNavigate();
 
   // Reset state when modal opens
   useEffect(() => {
@@ -88,11 +86,8 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock }) =
     }
   };
 
-  const handleCancel = () => {
-    // Properly log out the user
-    localStorage.removeItem('authToken');
-    clearEncryptionKeys();
-    navigate('/');
+  const handleLogout = () => {
+    onLogout();
   };
 
   if (!isOpen) return null;
@@ -171,7 +166,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock }) =
             <div className="flex gap-2.5 md:gap-3">
               <button
                 type="button"
-                onClick={handleCancel}
+                onClick={handleLogout}
                 className="flex-1 px-3 md:px-4 py-2.5 md:py-3 text-sm md:text-base bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg font-medium transition-colors"
                 disabled={isUnlocking}
               >
