@@ -23,7 +23,6 @@ import React, {
   useRef,
   useMemo,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   deriveMasterKey,
   deriveAuthHash,
@@ -172,9 +171,6 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
   const tabHiddenTimeRef = useRef<number | null>(null);
-  
-  // Navigate kept for future use - currently using lock screen modal
-  const _navigate = useNavigate(); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // Log initial state for debugging
   useEffect(() => {
@@ -612,23 +608,6 @@ export const useCrypto = (): CryptoContextValue => {
     throw new Error('useCrypto must be used within a CryptoProvider');
   }
   return context;
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// HELPER HOOK - Require unlocked vault
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export const useRequireUnlock = (): CryptoContextValue => {
-  const crypto = useCrypto();
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    if (!crypto.isUnlocked && !crypto.isLoading) {
-      navigate('/unlock');
-    }
-  }, [crypto.isUnlocked, crypto.isLoading, navigate]);
-  
-  return crypto;
 };
 
 export default CryptoContext;
