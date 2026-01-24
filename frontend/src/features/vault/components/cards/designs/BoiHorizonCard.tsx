@@ -49,10 +49,10 @@ const BoiHorizonCard: React.FC<BoiHorizonCardProps> = ({ children }) => (
     
     {/* Subtle texture pattern */}
     <div 
-      className="
-        absolute inset-0 z-[2] opacity-100
-        [background-image:url(&quot;data:image/svg+xml,%3Csvg_width='4'_height='4'_viewBox='0_0_4_4'_xmlns='http://www.w3.org/2000/svg'%3E%3Cpath_d='M1_3h1v1H1V3zm2-2h1v1H3V1z'_fill='%23ffffff'_fill-opacity='0.05'_fill-rule='evenodd'/%3E%3C/svg%3E&quot;)]
-      " 
+      className="absolute inset-0 z-[2]"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 3h1v1H1V3zm2-2h1v1H3V1z' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E")`
+      }}
     />
     
     {children}

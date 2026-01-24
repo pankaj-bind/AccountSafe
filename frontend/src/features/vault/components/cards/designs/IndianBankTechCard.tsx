@@ -56,10 +56,10 @@ const IndianBankTechCard: React.FC<IndianBankTechCardProps> = ({ children }) => 
     
     {/* Noise overlay */}
     <div 
-      className="
-        absolute inset-0 mix-blend-overlay
-        [background-image:url(&quot;data:image/svg+xml,%3Csvg_viewBox='0_0_200_200'_xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter_id='noise'%3E%3CfeTurbulence_type='fractalNoise'_baseFrequency='1.5'_numOctaves='3'_stitchTiles='stitch'/%3E%3C/filter%3E%3Crect_width='100%25'_height='100%25'_filter='url(%23noise)'_opacity='0.07'/%3E%3C/svg%3E&quot;)]
-      " 
+      className="absolute inset-0 mix-blend-overlay"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.07'/%3E%3C/svg%3E")`
+      }}
     />
     
     {children}

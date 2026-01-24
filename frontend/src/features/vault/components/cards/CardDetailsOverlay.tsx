@@ -1,5 +1,5 @@
 import React from 'react';
-import { CardDetailsProps, TextColorType } from './types';
+import { CardDetailsProps, TextColorType, CARD_NETWORKS } from './types';
 
 interface CardDetailsOverlayProps extends CardDetailsProps {
   textColor?: TextColorType;
@@ -54,22 +54,24 @@ const CardDetailsOverlay: React.FC<CardDetailsOverlayProps> = ({
           {bankName}
         </span>
         <div className="flex items-center">
-          {cardNetwork === 'visa' ? (
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/960px-Visa_Inc._logo.svg.png" 
-              alt="Visa" 
-              className={`
-                h-[clamp(20px,7vw,28px)] w-auto object-contain
-                ${textColor === 'white' ? 'brightness-0 invert' : ''}
-              `}
-            />
-          ) : cardNetwork === 'mastercard' ? (
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/960px-Mastercard-logo.svg.png" 
-              alt="Mastercard" 
-              className="h-[clamp(20px,7vw,28px)] w-auto object-contain"
-            />
-          ) : null}
+          {cardNetwork && (() => {
+            const network = CARD_NETWORKS.find(n => n.id === cardNetwork);
+            if (!network || !network.logo) return null;
+            
+            // Visa needs invert filter on white text backgrounds
+            const needsInvert = cardNetwork === 'visa' && textColor === 'white';
+            
+            return (
+              <img 
+                src={network.logo} 
+                alt={network.name} 
+                className={`
+                  h-[clamp(20px,7vw,28px)] w-auto object-contain
+                  ${needsInvert ? 'brightness-0 invert' : ''}
+                `}
+              />
+            );
+          })()}
         </div>
       </div>
 

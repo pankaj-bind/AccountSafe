@@ -15,7 +15,7 @@ import { trackAccess, sortByFrequency } from '../utils/frequencyTracker';
 import PasswordReentryModal from './PasswordReentryModal';
 import BreachWarning from './BreachWarning';
 import DuplicatePasswordWarning from './DuplicatePasswordWarning';
-import { CreditCard, CARD_DESIGNS, CardDesignType } from '../features/vault/components/cards';
+import { CreditCard, CARD_DESIGNS, CardDesignType, CARD_NETWORKS, CardNetworkType } from '../features/vault/components/cards';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icon Components
@@ -738,7 +738,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   // Credit Card specific state
   const [creditCardData, setCreditCardData] = useState({
     bankName: '',
-    cardNetwork: '' as 'visa' | 'mastercard' | '',
+    cardNetwork: '' as CardNetworkType,
     cardNumber: '',
     cardHolder: '',
     expiry: '',
@@ -2132,13 +2132,15 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                   </label>
                   <select
                     value={creditCardData.cardNetwork}
-                    onChange={(e) => setCreditCardData({ ...creditCardData, cardNetwork: e.target.value as 'visa' | 'mastercard' | '' })}
+                    onChange={(e) => setCreditCardData({ ...creditCardData, cardNetwork: e.target.value as CardNetworkType })}
                     className="as-input w-full"
                     required
                   >
-                    <option value="">Select card network</option>
-                    <option value="visa">Visa</option>
-                    <option value="mastercard">Mastercard</option>
+                    {CARD_NETWORKS.map((network) => (
+                      <option key={network.id} value={network.id}>
+                        {network.id === '' ? 'Select card network' : network.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
