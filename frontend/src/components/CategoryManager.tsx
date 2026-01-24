@@ -41,15 +41,16 @@ interface DocumentType {
 
 // Digital Wallet documents data
 const digitalWalletDocuments: DocumentType[] = [
-  { id: "passport", label: "Passport", category: "Identity", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z'/><circle cx='12' cy='12' r='4'/><path d='M12 8v8'/><path d='M8 12h8'/></svg>" },
-  { id: "driving_license", label: "Driving License", category: "Identity", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M6 12h.01M6 15h.01'/><path d='M10 12h6'/><path d='M10 15h4'/><circle cx='18' cy='10' r='2'/><path d='M4 7h16'/></svg>" },
-  { id: "bank_card", label: "Credit / Debit Card", category: "Finance", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='1' y='4' width='22' height='16' rx='2' ry='2'/><line x1='1' y1='10' x2='23' y2='10'/><rect x='3' y='14' width='4' height='2'/></svg>" },
-  { id: "travel_card", label: "Travel / Forex Card", category: "Finance", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'/><path d='M2 9h20'/><path d='M22 13h-4'/></svg>" },
-  { id: "employee_id", label: "Work ID / Corporate", category: "Professional", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='2'/><circle cx='12' cy='10' r='3'/><path d='M7 20v-2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2'/></svg>" },
-  { id: "student_id", label: "Student ID (ISIC)", category: "Education", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='8' width='18' height='12' rx='2'/><path d='M12 2L3 7v1h18V7L12 2z'/><circle cx='12' cy='13' r='2'/><path d='M8 18v-1a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1'/></svg>" },
-  { id: "health_insurance", label: "Health Insurance", category: "Health", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2l9 4v6c0 5.5-3.5 10.5-9 12-5.5-1.5-9-6.5-9-12V6l9-4z'/><path d='M12 8v8'/><path d='M8 12h8'/></svg>" },
-  { id: "vaccine_cert", label: "Vaccination Cert", category: "Health", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='6' y='3' width='12' height='18' rx='2'/><path d='M9 7h6'/><path d='M12 11v6'/><path d='M9 14h6'/><circle cx='12' cy='14' r='4'/></svg>" },
-  { id: "membership", label: "Membership / Loyalty", category: "Lifestyle", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'/><line x1='7' y1='7' x2='7.01' y2='7'/></svg>" }
+  { id: "passport", label: "Passport", category: "Identity", icon: "/logo/passport.png" },
+  { id: "driving_license", label: "Driving License", category: "Identity", icon: "/logo/driving license.png" },
+  { id: "pan_card", label: "PAN Card", category: "Identity", icon: "/logo/pan card.png" },
+  { id: "bank_card", label: "Credit / Debit Card", category: "Finance", icon: "/logo/credit card.png" },
+  { id: "travel_card", label: "Travel / Forex Card", category: "Finance", icon: "/logo/travel-card.png" },
+  { id: "employee_id", label: "Work ID / Corporate", category: "Professional", icon: "/logo/work id.png" },
+  { id: "student_id", label: "Student ID (ISIC)", category: "Education", icon: "/logo/student id.png" },
+  { id: "health_insurance", label: "Health Insurance", category: "Health", icon: "/logo/health insurance.png" },
+  { id: "vaccine_cert", label: "Vaccination Cert", category: "Health", icon: "/logo/vaccination certificate.png" },
+  { id: "membership", label: "Membership / Loyalty", category: "Lifestyle", icon: "/logo/membership card.png" }
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -242,11 +243,12 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onEdit, onCli
           const docMatch = digitalWalletDocuments.find(d => d.label === org.name);
           
           if (docMatch) {
-            // Display the SVG icon for Digital Wallet documents
+            // Display the image icon for Digital Wallet documents
             return (
-              <div 
-                className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-blue-400"
-                dangerouslySetInnerHTML={{ __html: docMatch.icon }}
+              <img
+                src={docMatch.icon}
+                alt={org.name}
+                className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
               />
             );
           } else if (org.logo_url && !imageError) {
@@ -1037,13 +1039,10 @@ const CategoryManager: React.FC = () => {
                           }
                         `}
                       >
-                        <div 
-                          className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg ${
-                            newOrg.name === doc.label 
-                              ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' 
-                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
-                          }`}
-                          dangerouslySetInnerHTML={{ __html: doc.icon }}
+                        <img
+                          src={doc.icon}
+                          alt={doc.label}
+                          className="w-8 h-8 flex-shrink-0 rounded-lg object-contain"
                         />
                         <div className="min-w-0 flex-1">
                           <p className={`text-xs font-medium truncate ${
@@ -1128,9 +1127,10 @@ const CategoryManager: React.FC = () => {
                       const docMatch = isDigitalWalletCategory && digitalWalletDocuments.find(d => d.label === newOrg.name);
                       if (docMatch) {
                         return (
-                          <div 
-                            className="w-full h-full flex items-center justify-center text-blue-600 dark:text-blue-400"
-                            dangerouslySetInnerHTML={{ __html: docMatch.icon }}
+                          <img
+                            src={docMatch.icon}
+                            alt={newOrg.name}
+                            className="w-full h-full object-contain"
                           />
                         );
                       } else if (newOrg.logo_url) {
