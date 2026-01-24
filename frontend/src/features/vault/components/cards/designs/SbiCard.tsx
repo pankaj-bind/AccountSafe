@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface SbiCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface SbiCardProps {
  * Deep blue gradient with circular elements
  */
 const SbiCard: React.FC<SbiCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[22px] overflow-hidden
-      bg-gradient-to-br from-blue-800 via-blue-600 to-blue-500
-      shadow-[0_22px_50px_rgba(0,0,0,0.4),inset_0_0_0_1px_rgba(255,255,255,0.25)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-br from-blue-800 via-blue-600 to-blue-500"
+    textColor="white"
   >
     {/* Glossy top-left corner effect */}
     <div 
@@ -53,7 +51,7 @@ const SbiCard: React.FC<SbiCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default SbiCard;

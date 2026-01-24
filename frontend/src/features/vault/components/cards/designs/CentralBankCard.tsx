@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface CentralBankCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface CentralBankCardProps {
  * Red and blue slabs
  */
 const CentralBankCard: React.FC<CentralBankCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[22px] overflow-hidden
-      bg-gradient-to-br from-slate-800 to-slate-900
-      shadow-[0_26px_60px_rgba(0,0,0,0.45),inset_0_0_0_1px_rgba(255,255,255,0.22)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-br from-slate-800 to-slate-900 shadow-[0_26px_60px_rgba(0,0,0,0.45),inset_0_0_0_1px_rgba(255,255,255,0.22)]"
+    textColor="white"
   >
     {/* Red slab - top left */}
     <div 
@@ -54,7 +52,7 @@ const CentralBankCard: React.FC<CentralBankCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default CentralBankCard;

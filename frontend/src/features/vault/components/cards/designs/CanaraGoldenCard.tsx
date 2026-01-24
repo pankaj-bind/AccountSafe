@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface CanaraGoldenCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface CanaraGoldenCardProps {
  * Blue with golden diagonal paths
  */
 const CanaraGoldenCard: React.FC<CanaraGoldenCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[20px] overflow-hidden
-      bg-gradient-to-br from-[#0060ac] to-[#0085ca]
-      shadow-[0_25px_45px_rgba(0,80,150,0.3),0_10px_15px_rgba(0,0,0,0.05)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-br from-[#0060ac] to-[#0085ca]"
+    textColor="white"
   >
     {/* Golden path 1 */}
     <div 
@@ -47,7 +45,7 @@ const CanaraGoldenCard: React.FC<CanaraGoldenCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default CanaraGoldenCard;

@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface CanaraCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface CanaraCardProps {
  * Blue with yellow arc accent
  */
 const CanaraCard: React.FC<CanaraCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[22px] overflow-hidden
-      bg-gradient-to-br from-[#0f4c81] via-[#1f6fb2] to-[#2b7fc4]
-      shadow-[0_22px_50px_rgba(0,0,0,0.4),inset_0_0_0_1px_rgba(255,255,255,0.25)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-br from-[#0f4c81] via-[#1f6fb2] to-[#2b7fc4]"
+    textColor="white"
   >
     {/* Glossy top-left corner effect */}
     <div 
@@ -53,7 +51,7 @@ const CanaraCard: React.FC<CanaraCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default CanaraCard;

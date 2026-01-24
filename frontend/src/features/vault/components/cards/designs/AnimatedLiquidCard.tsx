@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface AnimatedLiquidCardProps {
   children?: React.ReactNode;
@@ -9,15 +10,9 @@ interface AnimatedLiquidCardProps {
  * Premium animated liquid blobs with multiple effects
  */
 const AnimatedLiquidCard: React.FC<AnimatedLiquidCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[22px] overflow-hidden
-      shadow-[0_50px_100px_rgba(0,0,0,0.6),0_0_80px_rgba(220,38,38,0.4),inset_0_0_0_1px_rgba(255,255,255,0.1)]
-      transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
-      [transform-style:preserve-3d]
-      hover:-translate-y-2.5 hover:[transform:rotateY(-5deg)_rotateX(5deg)]
-      hover:shadow-[0_60px_140px_rgba(0,0,0,0.7),0_0_120px_rgba(220,38,38,0.6),inset_0_0_0_1px_rgba(255,255,255,0.2)]
-    "
+  <BaseCard 
+    className="shadow-[0_50px_100px_rgba(0,0,0,0.6),0_0_80px_rgba(220,38,38,0.4),inset_0_0_0_1px_rgba(255,255,255,0.1)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] [transform-style:preserve-3d] hover:-translate-y-2.5 hover:[transform:rotateY(-5deg)_rotateX(5deg)] hover:shadow-[0_60px_140px_rgba(0,0,0,0.7),0_0_120px_rgba(220,38,38,0.6),inset_0_0_0_1px_rgba(255,255,255,0.2)]"
+    textColor="white"
   >
     {/* Base red gradient background */}
     <div 
@@ -181,7 +176,7 @@ const AnimatedLiquidCard: React.FC<AnimatedLiquidCardProps> = ({ children }) => 
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default AnimatedLiquidCard;

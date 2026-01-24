@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface CentralBankHubCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface CentralBankHubCardProps {
  * Radar rings design
  */
 const CentralBankHubCard: React.FC<CentralBankHubCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[20px] overflow-hidden
-      bg-[radial-gradient(circle_at_50%_50%,#003366_0%,#001f3f_100%)]
-      shadow-[0_25px_45px_rgba(0,40,85,0.4),0_10px_10px_rgba(0,0,0,0.05)]
-    "
+  <BaseCard 
+    className="bg-[radial-gradient(circle_at_50%_50%,#003366_0%,#001f3f_100%)] shadow-[0_25px_45px_rgba(0,40,85,0.4),0_10px_10px_rgba(0,0,0,0.05)]"
+    textColor="white"
   >
     {/* Texture - vertical lines */}
     <div 
@@ -85,7 +83,7 @@ const CentralBankHubCard: React.FC<CentralBankHubCardProps> = ({ children }) => 
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default CentralBankHubCard;
