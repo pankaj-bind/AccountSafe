@@ -142,6 +142,30 @@ const DotsVerticalIcon = ({ className = "w-4 h-4" }: { className?: string }) => 
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Digital Wallet Documents Data
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface DocumentType {
+  id: string;
+  label: string;
+  category: string;
+  icon: string;
+}
+
+const digitalWalletDocuments: DocumentType[] = [
+  { id: "passport", label: "Passport", category: "Identity", icon: "/logo/passport.png" },
+  { id: "driving_license", label: "Driving License", category: "Identity", icon: "/logo/driving license.png" },
+  { id: "pan_card", label: "PAN Card", category: "Identity", icon: "/logo/pan card.png" },
+  { id: "bank_card", label: "Credit / Debit Card", category: "Finance", icon: "/logo/credit card.png" },
+  { id: "travel_card", label: "Travel / Forex Card", category: "Finance", icon: "/logo/travel-card.png" },
+  { id: "employee_id", label: "Work ID / Corporate", category: "Professional", icon: "/logo/work id.png" },
+  { id: "student_id", label: "Student ID (ISIC)", category: "Education", icon: "/logo/student id.png" },
+  { id: "health_insurance", label: "Health Insurance", category: "Health", icon: "/logo/health insurance.png" },
+  { id: "vaccine_cert", label: "Vaccination Cert", category: "Health", icon: "/logo/vaccination certificate.png" },
+  { id: "membership", label: "Membership / Loyalty", category: "Lifestyle", icon: "/logo/membership card.png" }
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Types
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1625,21 +1649,41 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         <div className="max-w-7xl mx-auto mb-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Organization Logo */}
-            {orgData.logo_url ? (
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
-                <img
-                  src={orgData.logo_url}
-                  alt={orgData.name}
-                  className="w-full h-full object-contain p-2 bg-white dark:bg-transparent"
-                />
-              </div>
-            ) : (
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                <span className="text-white font-bold text-lg sm:text-xl">
-                  {orgData.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
-                </span>
-              </div>
-            )}
+            {(() => {
+              // Check if this org matches a Digital Wallet document type
+              const docMatch = digitalWalletDocuments.find(d => d.label === orgData.name);
+              
+              if (docMatch) {
+                // Display the image icon for Digital Wallet documents
+                return (
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-white dark:bg-zinc-900 flex-shrink-0 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <img
+                      src={docMatch.icon}
+                      alt={orgData.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                );
+              } else if (orgData.logo_url) {
+                return (
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
+                    <img
+                      src={orgData.logo_url}
+                      alt={orgData.name}
+                      className="w-full h-full object-contain p-2 bg-white dark:bg-transparent"
+                    />
+                  </div>
+                );
+              } else {
+                return (
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                    <span className="text-white font-bold text-lg sm:text-xl">
+                      {orgData.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
+                    </span>
+                  </div>
+                );
+              }
+            })()}
 
             <div className="min-w-0 flex-1">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white truncate">
