@@ -339,11 +339,27 @@ class Profile(models.Model):
     # User preferences
     is_pinned = models.BooleanField(default=False, help_text="Pin this profile to the top of the list")
     
+    # Soft delete support (Trash/Recycle Bin)
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text="When the profile was moved to trash (null = not deleted)")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.title or 'Untitled'} - {self.organization.name}"
+    
+    def is_in_trash(self) -> bool:
+        """Check if profile is in trash."""
+        return self.deleted_at is not None
+    
+    def days_until_permanent_delete(self) -> int | None:
+        """Calculate days until permanent deletion. Returns None if not in trash."""
+        if not self.deleted_at:
+            return None
+        from datetime import timedelta
+        expiry_date = self.deleted_at + timedelta(days=30)
+        remaining = expiry_date - timezone.now()
+        return max(0, remaining.days)
 
     class Meta:
         verbose_name = "Profile"
