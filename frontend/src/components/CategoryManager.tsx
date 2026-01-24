@@ -555,12 +555,6 @@ const CategoryManager: React.FC = () => {
     }
   };
 
-  // Check if the selected category is Digital Wallet
-  const checkIfDigitalWalletCategory = (categoryId: number) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.name.toLowerCase() === 'digital wallet';
-  };
-
   // Handle document selection for Digital Wallet
   const handleDocumentSelect = (doc: DocumentType) => {
     setNewOrg({ 
