@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface LiquidGradientCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface LiquidGradientCardProps {
  * Animated multi-color blobs with dark background
  */
 const LiquidGradientCard: React.FC<LiquidGradientCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[24px] overflow-hidden
-      bg-gradient-to-b from-[#0f0c29] via-[#302b63] to-[#24243e]
-      shadow-[0_20px_40px_rgba(0,0,0,0.5)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-b from-[#0f0c29] via-[#302b63] to-[#24243e] shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+    textColor="white"
   >
     {/* Blob 1 - Orange/red - top left */}
     <div 
@@ -62,7 +60,7 @@ const LiquidGradientCard: React.FC<LiquidGradientCardProps> = ({ children }) => 
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default LiquidGradientCard;

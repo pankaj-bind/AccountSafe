@@ -71,8 +71,7 @@ export const CreditCard: React.FC<CreditCardProps> = ({
   return (
     <div
       className={`
-        w-full max-w-[380px] aspect-[1.586/1]
-        [perspective:1200px]
+        w-full max-w-[380px]
         md:max-w-full
         ${className}
       `}

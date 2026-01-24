@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface BobCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface BobCardProps {
  * Classic orange gradient with circular accents
  */
 const BobCard: React.FC<BobCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[22px] overflow-hidden
-      bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600
-      shadow-[0_22px_48px_rgba(0,0,0,0.35),inset_0_0_0_1px_rgba(255,255,255,0.25)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600"
+    textColor="white"
   >
     {/* Glossy top-left corner effect */}
     <div 
@@ -53,7 +51,7 @@ const BobCard: React.FC<BobCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default BobCard;

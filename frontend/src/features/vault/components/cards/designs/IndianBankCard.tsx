@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface IndianBankCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface IndianBankCardProps {
  * Deep blue with orange energy
  */
 const IndianBankCard: React.FC<IndianBankCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[22px] overflow-hidden
-      bg-gradient-to-br from-[#003a8f] via-[#004aad] to-[#00366f]
-      shadow-[0_26px_60px_rgba(0,0,0,0.45),inset_0_0_0_1px_rgba(255,255,255,0.22)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-br from-[#003a8f] via-[#004aad] to-[#00366f]"
+    textColor="white"
   >
     {/* Flow - center highlight */}
     <div 
@@ -52,7 +50,7 @@ const IndianBankCard: React.FC<IndianBankCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default IndianBankCard;

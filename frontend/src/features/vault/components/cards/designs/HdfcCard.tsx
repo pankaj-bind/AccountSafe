@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface HdfcCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface HdfcCardProps {
  * Corporate navy with red glow
  */
 const HdfcCard: React.FC<HdfcCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[22px] overflow-hidden
-      bg-[radial-gradient(circle_at_top_left,#122b46_0%,#0b1f33_55%,#071726_100%)]
-      shadow-[0_30px_70px_rgba(0,0,0,0.55),inset_0_0_0_1px_rgba(255,255,255,0.16)]
-    "
+  <BaseCard 
+    className="bg-[radial-gradient(circle_at_top_left,#122b46_0%,#0b1f33_55%,#071726_100%)]"
+    textColor="white"
   >
     {/* Red edge glow - top right */}
     <div 
@@ -52,7 +50,7 @@ const HdfcCard: React.FC<HdfcCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default HdfcCard;

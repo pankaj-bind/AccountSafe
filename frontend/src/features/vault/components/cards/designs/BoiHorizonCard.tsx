@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface BoiHorizonCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface BoiHorizonCardProps {
  * Ocean blue with saffron wave
  */
 const BoiHorizonCard: React.FC<BoiHorizonCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[20px] overflow-hidden
-      bg-gradient-to-b from-[#003b64] to-[#005f99]
-      shadow-[0_20px_40px_rgba(0,45,98,0.4),0_10px_10px_rgba(0,0,0,0.05)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-b from-[#003b64] to-[#005f99]"
+    textColor="white"
   >
     {/* Blue wave - top right area */}
     <div 
@@ -56,7 +54,7 @@ const BoiHorizonCard: React.FC<BoiHorizonCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default BoiHorizonCard;

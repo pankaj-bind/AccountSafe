@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface PnbCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface PnbCardProps {
  * Rich maroon with gold accent
  */
 const PnbCard: React.FC<PnbCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[22px] overflow-hidden
-      bg-gradient-to-br from-[#7a1f2b] via-[#8b1e2d] to-[#a11c2a]
-      shadow-[0_22px_50px_rgba(0,0,0,0.45),inset_0_0_0_1px_rgba(255,255,255,0.22)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-br from-[#7a1f2b] via-[#8b1e2d] to-[#a11c2a]"
+    textColor="white"
   >
     {/* Glossy top-left corner effect */}
     <div 
@@ -53,7 +51,7 @@ const PnbCard: React.FC<PnbCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default PnbCard;

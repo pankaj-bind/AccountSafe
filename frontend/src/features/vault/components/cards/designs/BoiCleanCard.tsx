@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface BoiCleanCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface BoiCleanCardProps {
  * Clean blue with orange accent
  */
 const BoiCleanCard: React.FC<BoiCleanCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[22px] overflow-hidden
-      bg-gradient-to-br from-[#0c3b66] via-[#0f4c81] to-[#103f6e]
-      shadow-[0_24px_55px_rgba(0,0,0,0.45),inset_0_0_0_1px_rgba(255,255,255,0.22)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-br from-[#0c3b66] via-[#0f4c81] to-[#103f6e]"
+    textColor="white"
   >
     {/* Geometric gradient overlay */}
     <div 
@@ -52,7 +50,7 @@ const BoiCleanCard: React.FC<BoiCleanCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default BoiCleanCard;

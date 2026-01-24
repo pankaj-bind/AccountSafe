@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface IndianBankTechCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface IndianBankTechCardProps {
  * Modern tech bars design
  */
 const IndianBankTechCard: React.FC<IndianBankTechCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[20px] overflow-hidden
-      bg-gradient-to-r from-[#0a1f44] to-[#122b5e]
-      shadow-[0_20px_40px_rgba(0,40,85,0.4),0_10px_10px_rgba(0,0,0,0.05)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-r from-[#0a1f44] to-[#122b5e] shadow-[0_20px_40px_rgba(0,40,85,0.4),0_10px_10px_rgba(0,0,0,0.05)]"
+    textColor="white"
   >
     {/* Bars container - skewed */}
     <div 
@@ -63,7 +61,7 @@ const IndianBankTechCard: React.FC<IndianBankTechCardProps> = ({ children }) => 
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default IndianBankTechCard;

@@ -1,4 +1,5 @@
 import React from 'react';
+import BaseCard from '../BaseCard';
 
 interface HdfcGeometricCardProps {
   children?: React.ReactNode;
@@ -9,12 +10,9 @@ interface HdfcGeometricCardProps {
  * Geometric blocks design
  */
 const HdfcGeometricCard: React.FC<HdfcGeometricCardProps> = ({ children }) => (
-  <div 
-    className="
-      relative w-full h-full rounded-[20px] overflow-hidden
-      bg-gradient-to-br from-[#004c8f] to-[#003366]
-      shadow-[0_25px_45px_rgba(0,50,100,0.3),0_10px_10px_rgba(0,0,0,0.05)]
-    "
+  <BaseCard 
+    className="bg-gradient-to-br from-[#004c8f] to-[#003366] shadow-[0_25px_45px_rgba(0,50,100,0.3),0_10px_10px_rgba(0,0,0,0.05)]"
+    textColor="white"
   >
     {/* Grid pattern */}
     <div 
@@ -82,7 +80,7 @@ const HdfcGeometricCard: React.FC<HdfcGeometricCardProps> = ({ children }) => (
     />
     
     {children}
-  </div>
+  </BaseCard>
 );
 
 export default HdfcGeometricCard;
