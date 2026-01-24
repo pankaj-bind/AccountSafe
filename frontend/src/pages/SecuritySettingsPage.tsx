@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { getUserProfile, deleteAccount, requestPasswordResetOTP, verifyPasswordResetOTP, changePassword } from "../services/authService";
-import { getPinStatus, resetPin } from "../services/pinService";
+import { getPinStatus, resetPin, clearPin } from "../services/pinService";
 import { useAuth } from "../contexts/AuthContext";
 import SecuritySettingsPanel from "../components/SecuritySettingsPanel";
 import ActiveSessionsList from "../components/ActiveSessionsList";
@@ -42,6 +42,11 @@ const SecuritySettingsPage: React.FC = () => {
   const [isPinResetting, setIsPinResetting] = useState(false);
   const [pinResetError, setPinResetError] = useState<string | null>(null);
   const [pinResetSuccess, setPinResetSuccess] = useState<string | null>(null);
+
+  // Clear PIN states
+  const [showClearPinModal, setShowClearPinModal] = useState(false);
+  const [isClearingPin, setIsClearingPin] = useState(false);
+  const [clearPinError, setClearPinError] = useState<string | null>(null);
 
   const { logout: authLogout } = useAuth();
   const navigate = useNavigate();
@@ -185,6 +190,22 @@ const SecuritySettingsPage: React.FC = () => {
     setConfirmNewPin(['', '', '', '']);
     setPinResetError(null);
     setPinResetSuccess(null);
+  };
+
+  // Clear PIN handler
+  const handleClearPin = async () => {
+    setIsClearingPin(true);
+    setClearPinError(null);
+
+    try {
+      await clearPin();
+      setHasPin(false);
+      setShowClearPinModal(false);
+    } catch (err: any) {
+      setClearPinError(err.response?.data?.error || "Failed to clear PIN");
+    } finally {
+      setIsClearingPin(false);
+    }
   };
 
   // Delete account handler
@@ -408,6 +429,20 @@ const SecuritySettingsPage: React.FC = () => {
             </svg>
             {hasPin ? 'Reset PIN' : 'Set Up PIN'}
           </button>
+          
+          {/* Clear PIN Button - only show when PIN is set */}
+          {hasPin && (
+            <button
+              type="button"
+              onClick={() => setShowClearPinModal(true)}
+              className="ml-3 inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear PIN
+            </button>
+          )}
         </div>
 
         {/* Security & Safety Section (Panic Button + Ghost Vault) */}
@@ -613,10 +648,18 @@ const SecuritySettingsPage: React.FC = () => {
                     type="text"
                     maxLength={6}
                     value={pinResetOtp}
-                    onChange={(e) => setPinResetOtp(e.target.value.replace(/\D/g, ''))}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      setPinResetOtp(value);
+                      // Auto-submit when 6 digits entered
+                      if (value.length === 6 && !isPinResetting) {
+                        setTimeout(() => handleVerifyPinResetOtp(), 100);
+                      }
+                    }}
                     className="as-input text-center text-xl tracking-widest mb-4 font-mono"
                     placeholder="000000"
                     autoFocus
+                    inputMode="numeric"
                   />
                   <button
                     onClick={handleVerifyPinResetOtp}
@@ -641,11 +684,11 @@ const SecuritySettingsPage: React.FC = () => {
                     {newPin.map((digit, index) => (
                       <input
                         key={`new-${index}`}
-                        type="password"
+                        type="text"
                         maxLength={1}
-                        value={digit}
+                        value={digit ? '•' : ''}
                         onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, '');
+                          const val = e.target.value.replace(/[^0-9•]/g, '').replace('•', '');
                           const updated = [...newPin];
                           updated[index] = val.slice(-1);
                           setNewPin(updated);
@@ -654,9 +697,16 @@ const SecuritySettingsPage: React.FC = () => {
                             next?.focus();
                           }
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Backspace' && !newPin[index] && index > 0) {
+                            const prev = document.getElementById(`new-pin-${index - 1}`);
+                            prev?.focus();
+                          }
+                        }}
                         id={`new-pin-${index}`}
                         className="w-12 h-12 text-center text-xl font-bold as-input rounded-lg"
                         inputMode="numeric"
+                        autoComplete="off"
                       />
                     ))}
                   </div>
@@ -665,11 +715,11 @@ const SecuritySettingsPage: React.FC = () => {
                     {confirmNewPin.map((digit, index) => (
                       <input
                         key={`confirm-${index}`}
-                        type="password"
+                        type="text"
                         maxLength={1}
-                        value={digit}
+                        value={digit ? '•' : ''}
                         onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, '');
+                          const val = e.target.value.replace(/[^0-9•]/g, '').replace('•', '');
                           const updated = [...confirmNewPin];
                           updated[index] = val.slice(-1);
                           setConfirmNewPin(updated);
@@ -678,9 +728,16 @@ const SecuritySettingsPage: React.FC = () => {
                             next?.focus();
                           }
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Backspace' && !confirmNewPin[index] && index > 0) {
+                            const prev = document.getElementById(`confirm-pin-${index - 1}`);
+                            prev?.focus();
+                          }
+                        }}
                         id={`confirm-pin-${index}`}
                         className="w-12 h-12 text-center text-xl font-bold as-input rounded-lg"
                         inputMode="numeric"
+                        autoComplete="off"
                       />
                     ))}
                   </div>
@@ -705,6 +762,77 @@ const SecuritySettingsPage: React.FC = () => {
                 className="w-full mt-3 as-btn-secondary"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear PIN Confirmation Modal */}
+      {showClearPinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
+              if (!isClearingPin) {
+                setShowClearPinModal(false);
+                setClearPinError(null);
+              }
+            }}
+          ></div>
+          <div className="relative bg-white dark:bg-zinc-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 border border-zinc-200 dark:border-zinc-700">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-red-100 dark:bg-red-500/20 rounded-xl">
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">Clear Security PIN?</h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+              Clearing your PIN will remove the additional security layer from your vault. 
+              Anyone with access to your account will be able to view organization details without entering a PIN.
+            </p>
+
+            {clearPinError && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
+                {clearPinError}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowClearPinModal(false);
+                  setClearPinError(null);
+                }}
+                disabled={isClearingPin}
+                className="flex-1 as-btn-secondary disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearPin}
+                disabled={isClearingPin}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isClearingPin ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Clearing...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Clear PIN
+                  </>
+                )}
               </button>
             </div>
           </div>

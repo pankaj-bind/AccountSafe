@@ -24,3 +24,8 @@ export const resetPin = async (email: string, otp: string, newPin: string) => {
   });
   return response.data;
 };
+
+export const clearPin = async () => {
+  const response = await apiClient.delete('/pin/clear/');
+  return response.data;
+};

@@ -28,6 +28,7 @@ from api.views import (
     SetupPinView,
     VerifyPinView,
     PinStatusView,
+    ClearPinView,
     ResetPinView,
     dashboard_statistics,
     login_records,
@@ -117,6 +118,7 @@ urlpatterns = [
     path('api/pin/setup/', SetupPinView.as_view(), name='setup-pin'),
     path('api/pin/verify/', VerifyPinView.as_view(), name='verify-pin'),
     path('api/pin/status/', PinStatusView.as_view(), name='pin-status'),
+    path('api/pin/clear/', ClearPinView.as_view(), name='clear-pin'),
     path('api/pin/reset/', ResetPinView.as_view(), name='reset-pin'),
 
     # Security Health Score endpoints

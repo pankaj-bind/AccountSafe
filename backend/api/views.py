@@ -1382,6 +1382,31 @@ class PinStatusView(APIView):
         return Response({"has_pin": has_pin})
 
 
+class ClearPinView(APIView):
+    """Clear/remove the user's security PIN"""
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        try:
+            user_profile = request.user.userprofile
+            if not user_profile.has_pin():
+                return Response(
+                    {"error": "No PIN is currently set."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Clear the PIN by setting it to None/empty
+            user_profile.security_pin = None
+            user_profile.save()
+            
+            return Response({"message": "PIN cleared successfully."})
+        except UserProfile.DoesNotExist:
+            return Response(
+                {"error": "User profile not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class ResetPinView(APIView):
     """Reset security PIN after OTP verification"""
     permission_classes = [AllowAny]
