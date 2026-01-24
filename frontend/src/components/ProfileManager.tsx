@@ -15,7 +15,7 @@ import { trackAccess, sortByFrequency } from '../utils/frequencyTracker';
 import PasswordReentryModal from './PasswordReentryModal';
 import BreachWarning from './BreachWarning';
 import DuplicatePasswordWarning from './DuplicatePasswordWarning';
-import { CreditCard, CARD_DESIGNS, CardDesignType } from './CreditCardDesigns';
+import { CreditCard, CARD_DESIGNS, CardDesignType } from '../features/vault/components/cards';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icon Components
