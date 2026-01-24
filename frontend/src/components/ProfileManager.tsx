@@ -15,6 +15,7 @@ import { trackAccess, sortByFrequency } from '../utils/frequencyTracker';
 import PasswordReentryModal from './PasswordReentryModal';
 import BreachWarning from './BreachWarning';
 import DuplicatePasswordWarning from './DuplicatePasswordWarning';
+import { CreditCard, CARD_DESIGNS, CardDesignType } from './CreditCardDesigns';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icon Components
@@ -733,6 +734,27 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     notes: '',
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Credit Card specific state
+  const [creditCardData, setCreditCardData] = useState({
+    bankName: '',
+    cardNetwork: '' as 'visa' | 'mastercard' | '',
+    cardNumber: '',
+    cardHolder: '',
+    expiry: '',
+    cvv: '',
+    design: 'sbi' as CardDesignType,
+  });
+
+  // Function to cycle through card designs
+  const cycleCardDesign = () => {
+    const currentIndex = CARD_DESIGNS.findIndex(d => d.id === creditCardData.design);
+    const nextIndex = (currentIndex + 1) % CARD_DESIGNS.length;
+    setCreditCardData({ ...creditCardData, design: CARD_DESIGNS[nextIndex].id });
+  };
+
+  // Check if this is a Credit/Debit Card organization (reactive to orgData changes)
+  const isCreditCardOrg = orgData.name === 'Credit / Debit Card';
 
   // Real-time password breach detection
   const { breachCount, isChecking, error: breachError } = usePwnedCheck(newProfile.password);
@@ -860,6 +882,132 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     } catch (error) {
       console.error('Failed to update security metrics:', error);
       // Don't fail the profile creation/update if security check fails
+    }
+  };
+
+  // Handle credit card form submission
+  const handleCreateCreditCard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      const encryptionKey = getMasterKey();
+      if (!encryptionKey) {
+        setShowPasswordReentry(true);
+        return;
+      }
+
+      // Store credit card data in existing fields:
+      // title: Bank Name
+      // username: Card Number
+      // password: CVV
+      // email: Card Holder Name
+      // notes: JSON with cardNetwork, expiry, and design
+      const cardMetadata = JSON.stringify({
+        cardNetwork: creditCardData.cardNetwork,
+        expiry: creditCardData.expiry,
+        design: creditCardData.design,
+      });
+
+      const encryptedFields = await encryptCredentialFields(
+        {
+          username: creditCardData.cardNumber,
+          password: creditCardData.cvv,
+          email: creditCardData.cardHolder,
+          notes: cardMetadata,
+          recovery_codes: '',
+        },
+        encryptionKey
+      );
+
+      const formData = new FormData();
+      formData.append('title', creditCardData.bankName || '');
+
+      if (encryptedFields.username_encrypted) {
+        formData.append('username_encrypted', encryptedFields.username_encrypted);
+        formData.append('username_iv', encryptedFields.username_iv!);
+      }
+      if (encryptedFields.password_encrypted) {
+        formData.append('password_encrypted', encryptedFields.password_encrypted);
+        formData.append('password_iv', encryptedFields.password_iv!);
+      }
+      if (encryptedFields.email_encrypted) {
+        formData.append('email_encrypted', encryptedFields.email_encrypted);
+        formData.append('email_iv', encryptedFields.email_iv!);
+      }
+      if (encryptedFields.notes_encrypted) {
+        formData.append('notes_encrypted', encryptedFields.notes_encrypted);
+        formData.append('notes_iv', encryptedFields.notes_iv!);
+      }
+
+      if (editingProfile) {
+        const response = await apiClient.put(
+          `profiles/${editingProfile.id}/`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+
+        const decryptedFields = await decryptCredentialFields(response.data, encryptionKey);
+        const decryptedProfile = {
+          ...response.data,
+          username: decryptedFields.username || null,
+          password: decryptedFields.password || null,
+          email: decryptedFields.email || null,
+          notes: decryptedFields.notes || null,
+          recovery_codes: decryptedFields.recovery_codes || null,
+        };
+        setProfiles(profiles.map(p => p.id === editingProfile.id ? decryptedProfile : p));
+      } else {
+        const response = await apiClient.post(
+          `organizations/${organization.id}/profiles/`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+
+        const decryptedFields = await decryptCredentialFields(response.data, encryptionKey);
+        const decryptedProfile = {
+          ...response.data,
+          username: decryptedFields.username || null,
+          password: decryptedFields.password || null,
+          email: decryptedFields.email || null,
+          notes: decryptedFields.notes || null,
+          recovery_codes: decryptedFields.recovery_codes || null,
+        };
+        setProfiles([...profiles, decryptedProfile]);
+      }
+
+      setShowModal(false);
+      setEditingProfile(null);
+      setCreditCardData({ bankName: '', cardNetwork: '', cardNumber: '', cardHolder: '', expiry: '', cvv: '', design: 'sbi' });
+    } catch (err: any) {
+      console.error('Error:', err.response || err);
+      setError(editingProfile ? 'Failed to update card' : 'Failed to add card');
+    }
+  };
+
+  // Parse credit card data from profile
+  const parseCreditCardData = (profile: Profile) => {
+    try {
+      const metadata = profile.notes ? JSON.parse(profile.notes) : {};
+      return {
+        bankName: profile.title || '',
+        cardNetwork: metadata.cardNetwork || '',
+        cardNumber: profile.username || '',
+        cardHolder: profile.email || '',
+        expiry: metadata.expiry || '',
+        cvv: profile.password || '',
+        design: (metadata.design || 'sbi') as CardDesignType,
+      };
+    } catch {
+      return {
+        bankName: profile.title || '',
+        cardNetwork: '',
+        cardNumber: profile.username || '',
+        cardHolder: profile.email || '',
+        expiry: '',
+        cvv: profile.password || '',
+        design: 'sbi' as CardDesignType,
+      };
     }
   };
 
@@ -1783,33 +1931,122 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {/* Profiles Grid */}
         {/* ═══════════════════════════════════════════════════════════════════════════ */}
         {!loading && profiles.length > 0 && (
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 items-start">
-            {sortByFrequency(profiles, 'profile').map((profile) => (
-              <ProfileCard
-                key={profile.id}
-                profile={profile}
-                recoveryCodes={recoveryCodes[profile.id] || []}
-                showPassword={showPassword[profile.id] || false}
-                showUsername={showUsername[profile.id] || false}
-                showEmail={showEmail[profile.id] || false}
-                expandedNotes={expandedNotes[profile.id] || false}
-                isExpanded={expandedCard[profile.id] || false}
-                copiedField={copiedField}
-                isPinned={profile.is_pinned || false}
-                onEdit={() => handleEditProfile(profile)}
-                onDelete={() => handleDeleteProfile(profile.id)}
-                onShare={() => handleShareProfile(profile.id)}
-                onTogglePin={() => togglePinProfile(profile.id)}
-                onCopy={copyToClipboard}
-                onTogglePassword={() => togglePasswordVisibility(profile.id)}
-                onToggleUsername={() => toggleUsernameVisibility(profile.id)}
-                onToggleEmail={() => toggleEmailVisibility(profile.id)}
-                onToggleNotes={() => toggleNotesExpansion(profile.id)}
-                onToggleExpand={() => setExpandedCard(prev => ({ ...prev, [profile.id]: !prev[profile.id] }))}
-                onCopyRecoveryCode={(code, index) => handleCopyRecoveryCode(profile.id, code, index)}
-              />
-            ))}
-          </div>
+          <>
+            {isCreditCardOrg ? (
+              /* Credit Card Display Grid */
+              <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 items-start justify-items-center md:justify-items-start">
+                {sortByFrequency(profiles, 'profile').map((profile) => {
+                  const cardData = parseCreditCardData(profile);
+                  
+                  return (
+                    <motion.div
+                      key={profile.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="relative group w-full max-w-[380px]"
+                    >
+                      {/* Credit Card Visual using CreditCard component */}
+                      <div className="transition-all duration-300 group-hover:scale-[1.02]">
+                        <CreditCard
+                          design={cardData.design}
+                          bankName={cardData.bankName}
+                          cardNetwork={cardData.cardNetwork}
+                          cardNumber={cardData.cardNumber}
+                          cardHolder={cardData.cardHolder}
+                          expiryDate={cardData.expiry}
+                          showDetails={true}
+                        />
+                      </div>
+
+                      {/* Card Actions */}
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {/* Copy Card Number */}
+                          <button
+                            onClick={() => copyToClipboard(cardData.cardNumber, `cardnum-${profile.id}`)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                              copiedField === `cardnum-${profile.id}` 
+                                ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                                : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
+                            }`}
+                          >
+                            {copiedField === `cardnum-${profile.id}` ? <CheckIcon className="w-3.5 h-3.5" /> : <CopyIcon className="w-3.5 h-3.5" />}
+                            {copiedField === `cardnum-${profile.id}` ? 'Copied!' : 'Card No.'}
+                          </button>
+
+                          {/* Copy CVV */}
+                          <button
+                            onClick={() => copyToClipboard(cardData.cvv, `cvv-${profile.id}`)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                              copiedField === `cvv-${profile.id}` 
+                                ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                                : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-600'
+                            }`}
+                          >
+                            {copiedField === `cvv-${profile.id}` ? <CheckIcon className="w-3.5 h-3.5" /> : <CopyIcon className="w-3.5 h-3.5" />}
+                            {copiedField === `cvv-${profile.id}` ? 'Copied!' : 'CVV'}
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {/* Edit Button */}
+                          <button
+                            onClick={() => {
+                              setEditingProfile(profile);
+                              setCreditCardData(cardData);
+                              setShowModal(true);
+                            }}
+                            className="p-2 rounded-lg text-zinc-400 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
+                            title="Edit"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDeleteProfile(profile.id)}
+                            className="p-2 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            title="Delete"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Regular Profile Cards Grid */
+              <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 items-start">
+                {sortByFrequency(profiles, 'profile').map((profile) => (
+                  <ProfileCard
+                    key={profile.id}
+                    profile={profile}
+                    recoveryCodes={recoveryCodes[profile.id] || []}
+                    showPassword={showPassword[profile.id] || false}
+                    showUsername={showUsername[profile.id] || false}
+                    showEmail={showEmail[profile.id] || false}
+                    expandedNotes={expandedNotes[profile.id] || false}
+                    isExpanded={expandedCard[profile.id] || false}
+                    copiedField={copiedField}
+                    isPinned={profile.is_pinned || false}
+                    onEdit={() => handleEditProfile(profile)}
+                    onDelete={() => handleDeleteProfile(profile.id)}
+                    onShare={() => handleShareProfile(profile.id)}
+                    onTogglePin={() => togglePinProfile(profile.id)}
+                    onCopy={copyToClipboard}
+                    onTogglePassword={() => togglePasswordVisibility(profile.id)}
+                    onToggleUsername={() => toggleUsernameVisibility(profile.id)}
+                    onToggleEmail={() => toggleEmailVisibility(profile.id)}
+                    onToggleNotes={() => toggleNotesExpansion(profile.id)}
+                    onToggleExpand={() => setExpandedCard(prev => ({ ...prev, [profile.id]: !prev[profile.id] }))}
+                    onCopyRecoveryCode={(code, index) => handleCopyRecoveryCode(profile.id, code, index)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -1828,15 +2065,29 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-zinc-800 sticky top-0 bg-zinc-900 z-10">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <KeyIcon className="w-5 h-5 text-blue-400" />
+                <div className={`p-2 rounded-lg ${isCreditCardOrg ? 'bg-emerald-500/10' : 'bg-blue-500/10'}`}>
+                  {isCreditCardOrg ? (
+                    <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                  ) : (
+                    <KeyIcon className="w-5 h-5 text-blue-400" />
+                  )}
                 </div>
                 <h3 className="text-xl font-semibold text-white">
-                  {editingProfile ? 'Edit Credential' : 'Add Credential'}
+                  {isCreditCardOrg 
+                    ? (editingProfile ? 'Edit Card' : 'Add Card')
+                    : (editingProfile ? 'Edit Credential' : 'Add Credential')
+                  }
                 </h3>
               </div>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingProfile(null);
+                  setCreditCardData({ bankName: '', cardNetwork: '', cardNumber: '', cardHolder: '', expiry: '', cvv: '', design: 'sbi' });
+                  setNewProfile({ title: '', username: '', password: '', email: '', recovery_codes: '', notes: '' });
+                }}
                 className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1845,63 +2096,251 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
               </button>
             </div>
 
-            {/* Modal Body */}
-            <form onSubmit={handleCreateProfile} className="p-6 space-y-5">
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  <span className="flex items-center gap-2">
-                    <NotesIcon className="w-4 h-4 text-zinc-500" />
-                    Title
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={newProfile.title}
-                  onChange={(e) => setNewProfile({ ...newProfile, title: e.target.value })}
-                  placeholder="e.g., Admin Account, Personal Login"
-                  className="as-input w-full"
-                  autoFocus
-                />
-              </div>
+            {/* Credit Card Form */}
+            {isCreditCardOrg ? (
+              <form onSubmit={handleCreateCreditCard} className="p-6 space-y-5">
+                {/* Bank Name */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      Name of Bank <span className="text-red-400">*</span>
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={creditCardData.bankName}
+                    onChange={(e) => setCreditCardData({ ...creditCardData, bankName: e.target.value })}
+                    placeholder="e.g., Chase, Bank of America, HDFC"
+                    className="as-input w-full"
+                    required
+                    autoFocus
+                  />
+                </div>
 
-              {/* Username */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  <span className="flex items-center gap-2">
-                    <UserIcon className="w-4 h-4 text-zinc-500" />
-                    Username
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={newProfile.username}
-                  onChange={(e) => setNewProfile({ ...newProfile, username: e.target.value })}
-                  placeholder="e.g., john_doe or admin@example.com"
-                  className="as-input w-full"
-                />
-              </div>
+                {/* Card Network */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                      Card Network <span className="text-red-400">*</span>
+                    </span>
+                  </label>
+                  <select
+                    value={creditCardData.cardNetwork}
+                    onChange={(e) => setCreditCardData({ ...creditCardData, cardNetwork: e.target.value as 'visa' | 'mastercard' | '' })}
+                    className="as-input w-full"
+                    required
+                  >
+                    <option value="">Select card network</option>
+                    <option value="visa">Visa</option>
+                    <option value="mastercard">Mastercard</option>
+                  </select>
+                </div>
 
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  <span className="flex items-center gap-2">
-                    <KeyIcon className="w-4 h-4 text-zinc-500" />
-                    Password
-                  </span>
-                </label>
-                <div className="space-y-3">
-                  <div className="flex gap-2">
+                {/* Card Number */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                      </svg>
+                      Card Number <span className="text-red-400">*</span>
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={creditCardData.cardNumber}
+                    onChange={(e) => {
+                      // Only allow numbers and spaces, max 19 chars (16 digits + 3 spaces)
+                      const value = e.target.value.replace(/[^\d\s]/g, '').slice(0, 19);
+                      setCreditCardData({ ...creditCardData, cardNumber: value });
+                    }}
+                    placeholder="1234 5678 9012 3456"
+                    className="as-input w-full font-mono text-lg tracking-wider"
+                    required
+                  />
+                </div>
+
+                {/* Card Holder Name */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    <span className="flex items-center gap-2">
+                      <UserIcon className="w-4 h-4 text-zinc-500" />
+                      Account Holder Name <span className="text-red-400">*</span>
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={creditCardData.cardHolder}
+                    onChange={(e) => setCreditCardData({ ...creditCardData, cardHolder: e.target.value.toUpperCase() })}
+                    placeholder="JOHN DOE"
+                    className="as-input w-full uppercase tracking-wide"
+                    required
+                  />
+                </div>
+
+                {/* Expiry & CVV Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Expiry Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">
+                      <span className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Expiry <span className="text-red-400">*</span>
+                      </span>
+                    </label>
                     <input
                       type="text"
-                      value={newProfile.password}
-                      onChange={(e) => setNewProfile({ ...newProfile, password: e.target.value })}
-                      placeholder="Enter password or generate one"
-                      className="as-input flex-1 font-mono"
+                      value={creditCardData.expiry}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/[^\d]/g, '');
+                        if (value.length > 2) {
+                          value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                        }
+                        setCreditCardData({ ...creditCardData, expiry: value });
+                      }}
+                      placeholder="MM/YY"
+                      maxLength={5}
+                      className="as-input w-full font-mono text-center text-lg"
+                      required
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
+                  </div>
+
+                  {/* CVV */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">
+                      <span className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        CVV <span className="text-red-400">*</span>
+                      </span>
+                    </label>
+                    <input
+                      type="password"
+                      value={creditCardData.cvv}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d]/g, '').slice(0, 4);
+                        setCreditCardData({ ...creditCardData, cvv: value });
+                      }}
+                      placeholder="•••"
+                      maxLength={4}
+                      className="as-input w-full font-mono text-center text-lg"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Card Preview - Click to change design */}
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-zinc-500">Card Preview</p>
+                    <p className="text-xs text-zinc-400">
+                      Click card to change theme • <span className="text-emerald-400">{CARD_DESIGNS.find(d => d.id === creditCardData.design)?.name}</span>
+                    </p>
+                  </div>
+                  <div 
+                    onClick={cycleCardDesign}
+                    className="cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <CreditCard
+                      design={creditCardData.design}
+                      bankName={creditCardData.bankName || undefined}
+                      cardNetwork={creditCardData.cardNetwork || undefined}
+                      cardNumber={creditCardData.cardNumber || undefined}
+                      cardHolder={creditCardData.cardHolder || undefined}
+                      expiryDate={creditCardData.expiry || undefined}
+                      showDetails={true}
+                    />
+                  </div>
+                </div>
+
+                {/* Modal Actions */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false);
+                      setEditingProfile(null);
+                      setCreditCardData({ bankName: '', cardNetwork: '', cardNumber: '', cardHolder: '', expiry: '', cvv: '', design: 'sbi' });
+                    }}
+                    className="as-btn-secondary flex-1"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="as-btn-primary flex-1"
+                  >
+                    {editingProfile ? 'Save Changes' : 'Add Card'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Regular Credential Form */
+              <form onSubmit={handleCreateProfile} className="p-6 space-y-5">
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    <span className="flex items-center gap-2">
+                      <NotesIcon className="w-4 h-4 text-zinc-500" />
+                      Title
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newProfile.title}
+                    onChange={(e) => setNewProfile({ ...newProfile, title: e.target.value })}
+                    placeholder="e.g., Admin Account, Personal Login"
+                    className="as-input w-full"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    <span className="flex items-center gap-2">
+                      <UserIcon className="w-4 h-4 text-zinc-500" />
+                      Username
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newProfile.username}
+                    onChange={(e) => setNewProfile({ ...newProfile, username: e.target.value })}
+                    placeholder="e.g., john_doe or admin@example.com"
+                    className="as-input w-full"
+                  />
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    <span className="flex items-center gap-2">
+                      <KeyIcon className="w-4 h-4 text-zinc-500" />
+                      Password
+                    </span>
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newProfile.password}
+                        onChange={(e) => setNewProfile({ ...newProfile, password: e.target.value })}
+                        placeholder="Enter password or generate one"
+                        className="as-input flex-1 font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
                         const pwd = generatePassword({
                           length: 16,
                           uppercase: true,
@@ -2102,6 +2541,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
                 </button>
               </div>
             </form>
+            )}
           </div>
         </div>
       )}

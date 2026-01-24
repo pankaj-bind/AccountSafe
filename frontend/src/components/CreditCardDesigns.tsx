@@ -51,6 +51,8 @@ export const CARD_DESIGNS: CardDesignOption[] = [
 
 export interface CreditCardProps {
   design: CardDesignType;
+  bankName?: string;
+  cardNetwork?: 'visa' | 'mastercard' | '';
   cardNumber?: string;
   cardHolder?: string;
   expiryDate?: string;
@@ -1028,6 +1030,8 @@ const HDFCGeometricCard: React.FC<{ children?: React.ReactNode }> = ({ children 
 // ============================================
 
 interface CardDetailsOverlayProps {
+  bankName?: string;
+  cardNetwork?: 'visa' | 'mastercard' | '';
   cardNumber?: string;
   cardHolder?: string;
   expiryDate?: string;
@@ -1036,6 +1040,8 @@ interface CardDetailsOverlayProps {
 }
 
 const CardDetailsOverlay: React.FC<CardDetailsOverlayProps> = ({
+  bankName = 'BANK NAME',
+  cardNetwork = '',
   cardNumber = '•••• •••• •••• ••••',
   cardHolder = 'CARD HOLDER',
   expiryDate = 'MM/YY',
@@ -1047,28 +1053,55 @@ const CardDetailsOverlay: React.FC<CardDetailsOverlayProps> = ({
   const formatCardNumber = (num: string) => {
     if (num === '•••• •••• •••• ••••') return num;
     const cleaned = num.replace(/\s/g, '');
+    // Show masked format: **** **** **** 1234
+    if (cleaned.length >= 4) {
+      const last4 = cleaned.slice(-4);
+      return `****  ****  ****  ${last4}`;
+    }
     const groups = cleaned.match(/.{1,4}/g) || [];
-    return groups.join(' ');
+    return groups.join('  ');
   };
 
   return (
     <div className="card-details-overlay">
-      <div className="chip">
-        <div className="chip-line" />
-        <div className="chip-line" />
-        <div className="chip-line" />
-        <div className="chip-line" />
+      {/* Header: Bank Name & Card Network Logo */}
+      <div className="card-header">
+        <span className="bank-name">{bankName}</span>
+        <div className="card-network">
+          {cardNetwork === 'visa' ? (
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/960px-Visa_Inc._logo.svg.png" 
+              alt="Visa" 
+              className="network-logo visa"
+            />
+          ) : cardNetwork === 'mastercard' ? (
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/960px-Mastercard-logo.svg.png" 
+              alt="Mastercard" 
+              className="network-logo mastercard"
+            />
+          ) : null}
+        </div>
+      </div>
+
+      {/* Card Number - Single Line */}
+      <div className="card-number-row">
+        <span className="card-number">{formatCardNumber(cardNumber)}</span>
       </div>
       
-      <div className="card-number">{formatCardNumber(cardNumber)}</div>
+      {/* EMV Chip */}
+      <div className="chip-container">
+        <img src="/logo/chip.png" alt="Chip" className="chip-img" />
+      </div>
       
+      {/* Bottom Info: Card Holder & Expiry */}
       <div className="card-info">
         <div className="card-holder">
-          <span className="label">Card Holder</span>
+          <span className="label">Card Holder Name</span>
           <span className="value">{cardHolder}</span>
         </div>
         <div className="card-expiry">
-          <span className="label">Expires</span>
+          <span className="label">Expiry Date</span>
           <span className="value">{expiryDate}</span>
         </div>
       </div>
@@ -1077,58 +1110,113 @@ const CardDetailsOverlay: React.FC<CardDetailsOverlayProps> = ({
         .card-details-overlay {
           position: absolute;
           inset: 0;
-          padding: 24px;
+          padding: 5% 6%;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
           color: white;
-          font-family: 'Courier New', monospace;
+          font-family: 'Segoe UI', -apple-system, sans-serif;
           z-index: 10;
         }
-        .card-details-overlay .chip {
-          width: 50px;
-          height: 40px;
-          background: linear-gradient(135deg, #ffd700 0%, #ffb700 50%, #ffd700 100%);
-          border-radius: 6px;
+        .card-details-overlay .card-header {
           display: flex;
-          flex-direction: column;
-          justify-content: center;
-          gap: 3px;
-          padding: 6px;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 4%;
         }
-        .card-details-overlay .chip-line {
-          height: 4px;
-          background: linear-gradient(90deg, rgba(0,0,0,0.2), rgba(0,0,0,0.1), rgba(0,0,0,0.2));
-          border-radius: 2px;
+        .card-details-overlay .bank-name {
+          font-size: clamp(12px, 4.5vw, 18px);
+          font-weight: 700;
+          font-style: italic;
+          color: white;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+        .card-details-overlay .card-network {
+          display: flex;
+          align-items: center;
+        }
+        .card-details-overlay .network-logo {
+          height: clamp(20px, 7vw, 28px);
+          width: auto;
+          object-fit: contain;
+        }
+        .card-details-overlay .network-logo.visa {
+          filter: brightness(0) invert(1);
+        }
+        .card-details-overlay .card-number-row {
+          margin-bottom: 4%;
         }
         .card-details-overlay .card-number {
-          font-size: 22px;
-          letter-spacing: 3px;
+          font-size: clamp(14px, 5vw, 20px);
+          letter-spacing: clamp(1px, 0.8vw, 3px);
+          color: white;
+          font-weight: 600;
+          font-family: 'Consolas', 'Courier New', monospace;
           text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          font-weight: 500;
+          white-space: nowrap;
+        }
+        .card-details-overlay .chip-container {
+          margin-bottom: 4%;
+        }
+        .card-details-overlay .chip-img {
+          width: clamp(35px, 13vw, 50px);
+          height: clamp(28px, 10vw, 40px);
+          object-fit: contain;
         }
         .card-details-overlay .card-info {
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
+          margin-top: auto;
         }
         .card-details-overlay .card-holder,
         .card-details-overlay .card-expiry {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 2px;
+        }
+        .card-details-overlay .card-expiry {
+          text-align: right;
         }
         .card-details-overlay .label {
-          font-size: 10px;
+          font-size: clamp(7px, 2.5vw, 9px);
+          color: rgba(255,255,255,0.7);
+          letter-spacing: 0.3px;
           text-transform: uppercase;
-          opacity: 0.7;
-          letter-spacing: 1px;
         }
         .card-details-overlay .value {
-          font-size: 14px;
+          font-size: clamp(10px, 3.5vw, 14px);
+          font-weight: 600;
+          color: white;
           text-transform: uppercase;
-          letter-spacing: 1px;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+          letter-spacing: 0.5px;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        @media (max-width: 480px) {
+          .card-details-overlay {
+            padding: 4% 5%;
+          }
+          .card-details-overlay .bank-name {
+            font-size: 14px;
+          }
+          .card-details-overlay .network-logo {
+            height: 22px;
+          }
+          .card-details-overlay .card-number {
+            font-size: 16px;
+            letter-spacing: 2px;
+          }
+          .card-details-overlay .chip-img {
+            width: 40px;
+            height: 32px;
+          }
+          .card-details-overlay .label {
+            font-size: 8px;
+          }
+          .card-details-overlay .value {
+            font-size: 12px;
+          }
         }
       `}</style>
     </div>
@@ -1141,6 +1229,8 @@ const CardDetailsOverlay: React.FC<CardDetailsOverlayProps> = ({
 
 export const CreditCard: React.FC<CreditCardProps> = ({
   design,
+  bankName,
+  cardNetwork,
   cardNumber,
   cardHolder,
   expiryDate,
@@ -1152,6 +1242,8 @@ export const CreditCard: React.FC<CreditCardProps> = ({
   const renderCard = () => {
     const detailsOverlay = (
       <CardDetailsOverlay
+        bankName={bankName}
+        cardNetwork={cardNetwork}
         cardNumber={cardNumber}
         cardHolder={cardHolder}
         expiryDate={expiryDate}
@@ -1189,9 +1281,15 @@ export const CreditCard: React.FC<CreditCardProps> = ({
       {renderCard()}
       <style>{`
         .credit-card-wrapper {
-          width: 380px;
-          height: 240px;
+          width: 100%;
+          max-width: 380px;
+          aspect-ratio: 1.586 / 1;
           perspective: 1200px;
+        }
+        @media (max-width: 768px) {
+          .credit-card-wrapper {
+            max-width: 100%;
+          }
         }
       `}</style>
     </div>
