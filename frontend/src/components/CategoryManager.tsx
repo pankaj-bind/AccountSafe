@@ -31,6 +31,27 @@ interface Category {
   organizations: Organization[];
 }
 
+// Document type for Digital Wallet
+interface DocumentType {
+  id: string;
+  label: string;
+  category: string;
+  icon: string;
+}
+
+// Digital Wallet documents data
+const digitalWalletDocuments: DocumentType[] = [
+  { id: "passport", label: "Passport", category: "Identity", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z'/><circle cx='12' cy='12' r='4'/><path d='M12 8v8'/><path d='M8 12h8'/></svg>" },
+  { id: "driving_license", label: "Driving License", category: "Identity", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M6 12h.01M6 15h.01'/><path d='M10 12h6'/><path d='M10 15h4'/><circle cx='18' cy='10' r='2'/><path d='M4 7h16'/></svg>" },
+  { id: "bank_card", label: "Credit / Debit Card", category: "Finance", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='1' y='4' width='22' height='16' rx='2' ry='2'/><line x1='1' y1='10' x2='23' y2='10'/><rect x='3' y='14' width='4' height='2'/></svg>" },
+  { id: "travel_card", label: "Travel / Forex Card", category: "Finance", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'/><path d='M2 9h20'/><path d='M22 13h-4'/></svg>" },
+  { id: "employee_id", label: "Work ID / Corporate", category: "Professional", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='2'/><circle cx='12' cy='10' r='3'/><path d='M7 20v-2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2'/></svg>" },
+  { id: "student_id", label: "Student ID (ISIC)", category: "Education", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='8' width='18' height='12' rx='2'/><path d='M12 2L3 7v1h18V7L12 2z'/><circle cx='12' cy='13' r='2'/><path d='M8 18v-1a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1'/></svg>" },
+  { id: "health_insurance", label: "Health Insurance", category: "Health", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2l9 4v6c0 5.5-3.5 10.5-9 12-5.5-1.5-9-6.5-9-12V6l9-4z'/><path d='M12 8v8'/><path d='M8 12h8'/></svg>" },
+  { id: "vaccine_cert", label: "Vaccination Cert", category: "Health", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='6' y='3' width='12' height='18' rx='2'/><path d='M9 7h6'/><path d='M12 11v6'/><path d='M9 14h6'/><circle cx='12' cy='14' r='4'/></svg>" },
+  { id: "membership", label: "Membership / Loyalty", category: "Lifestyle", icon: "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'/><line x1='7' y1='7' x2='7.01' y2='7'/></svg>" }
+];
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Icons
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -216,20 +237,37 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, onDelete, onEdit, onCli
 
       {/* Logo */}
       <div className="flex items-center justify-center h-12 sm:h-14 mb-2 sm:mb-3">
-        {org.logo_url && !imageError ? (
-          <img
-            src={org.logo_url}
-            alt={org.name}
-            className="max-w-full max-h-full object-contain"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 rounded-lg sm:rounded-xl flex items-center justify-center">
-            <span className="text-lg sm:text-xl font-bold text-blue-400">
-              {org.name.charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
+        {(() => {
+          // Check if this org matches a Digital Wallet document type
+          const docMatch = digitalWalletDocuments.find(d => d.label === org.name);
+          
+          if (docMatch) {
+            // Display the SVG icon for Digital Wallet documents
+            return (
+              <div 
+                className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-blue-400"
+                dangerouslySetInnerHTML={{ __html: docMatch.icon }}
+              />
+            );
+          } else if (org.logo_url && !imageError) {
+            return (
+              <img
+                src={org.logo_url}
+                alt={org.name}
+                className="max-w-full max-h-full object-contain"
+                onError={() => setImageError(true)}
+              />
+            );
+          } else {
+            return (
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 rounded-lg sm:rounded-xl flex items-center justify-center">
+                <span className="text-lg sm:text-xl font-bold text-blue-400">
+                  {org.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            );
+          }
+        })()}
       </div>
 
       {/* Name */}
@@ -397,6 +435,9 @@ const CategoryManager: React.FC = () => {
   const [newOrg, setNewOrg] = useState({ name: '', logo_url: '', website_link: '' });
   const [editingOrgId, setEditingOrgId] = useState<number | null>(null);
   
+  // Digital Wallet state
+  const [isDigitalWalletCategory, setIsDigitalWalletCategory] = useState(false);
+  
   // PIN verification state
   const [showPinModal, setShowPinModal] = useState(false);
   const [pendingOrgId, setPendingOrgId] = useState<number | null>(null);
@@ -486,6 +527,47 @@ const CategoryManager: React.FC = () => {
       console.error('Error:', err.response || err);
       setError(err.response?.data?.name?.[0] || 'Failed to create category');
     }
+  };
+
+  // Handler for creating Digital Wallet category
+  const handleCreateDigitalWallet = async () => {
+    setError(null);
+    try {
+      const response = await apiClient.post('categories/', { 
+        name: 'Digital Wallet', 
+        description: 'ID, Credit Card, etc' 
+      });
+      setCategories([response.data, ...categories]);
+      setNewCategory({ name: '', description: '' });
+      setShowCategoryModal(false);
+    } catch (err: any) {
+      console.error('Error:', err.response || err);
+      // If category already exists, find it and show success
+      if (err.response?.data?.name?.[0]?.includes('already exists')) {
+        const existingCategory = categories.find(c => c.name.toLowerCase() === 'digital wallet');
+        if (existingCategory) {
+          setShowCategoryModal(false);
+          setNewCategory({ name: '', description: '' });
+          return;
+        }
+      }
+      setError(err.response?.data?.name?.[0] || 'Failed to create Digital Wallet category');
+    }
+  };
+
+  // Check if the selected category is Digital Wallet
+  const checkIfDigitalWalletCategory = (categoryId: number) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name.toLowerCase() === 'digital wallet';
+  };
+
+  // Handle document selection for Digital Wallet
+  const handleDocumentSelect = (doc: DocumentType) => {
+    setNewOrg({ 
+      name: doc.label, 
+      logo_url: '', // We'll use the SVG icon instead
+      website_link: '' 
+    });
   };
 
   const handleAddOrganization = async (e: React.FormEvent) => {
@@ -774,7 +856,14 @@ const CategoryManager: React.FC = () => {
                 key={category.id}
                 category={category}
                 searchQuery={searchQuery}
-                onAddOrg={() => { setSelectedCategoryId(category.id); setShowOrgModal(true); setError(null); setEditingOrgId(null); setNewOrg({ name: '', logo_url: '', website_link: '' }); }}
+                onAddOrg={() => { 
+                  setSelectedCategoryId(category.id); 
+                  setIsDigitalWalletCategory(category.name.toLowerCase() === 'digital wallet');
+                  setShowOrgModal(true); 
+                  setError(null); 
+                  setEditingOrgId(null); 
+                  setNewOrg({ name: '', logo_url: '', website_link: '' }); 
+                }}
                 onEditOrg={(org) => handleEditOrganization(org, category.id)}
                 onDeleteCategory={() => handleDeleteCategory(category.id)}
                 onOrgClick={handleOrganizationClick}
@@ -841,6 +930,22 @@ const CategoryManager: React.FC = () => {
                   autoFocus
                   required
                 />
+                
+                {/* Digital Wallet Quick Create Link */}
+                <button
+                  type="button"
+                  onClick={handleCreateDigitalWallet}
+                  className="mt-3 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors group"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <path d="M2 9h20"/>
+                  </svg>
+                  <span className="group-hover:underline">Digital Wallet for Gov ID and Credit Cards</span>
+                  <svg className="w-3 h-3 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
               
               <div>
@@ -889,15 +994,25 @@ const CategoryManager: React.FC = () => {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-zinc-300 dark:border-zinc-800">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-emerald-500/10 rounded-lg">
-                  <GlobeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                <div className={`p-1.5 sm:p-2 rounded-lg ${isDigitalWalletCategory ? 'bg-blue-500/10' : 'bg-emerald-500/10'}`}>
+                  {isDigitalWalletCategory ? (
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="2" y="5" width="20" height="14" rx="2"/>
+                      <path d="M2 9h20"/>
+                    </svg>
+                  ) : (
+                    <GlobeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                  )}
                 </div>
                 <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white">
-                  {editingOrgId ? 'Edit Organization' : 'Add Organization'}
+                  {editingOrgId 
+                    ? (isDigitalWalletCategory ? 'Edit Document' : 'Edit Organization')
+                    : (isDigitalWalletCategory ? 'Add Document' : 'Add Organization')
+                  }
                 </h3>
               </div>
               <button
-                onClick={() => setShowOrgModal(false)}
+                onClick={() => { setShowOrgModal(false); setIsDigitalWalletCategory(false); }}
                 className="p-1.5 sm:p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -908,72 +1023,156 @@ const CategoryManager: React.FC = () => {
 
             {/* Modal Body */}
             <form onSubmit={handleAddOrganization} className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
+              {/* Document Type Selection for Digital Wallet */}
+              {isDigitalWalletCategory && !editingOrgId && (
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+                    Select Document Type
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                    {digitalWalletDocuments.map((doc) => (
+                      <button
+                        key={doc.id}
+                        type="button"
+                        onClick={() => handleDocumentSelect(doc)}
+                        className={`
+                          flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-left
+                          ${newOrg.name === doc.label 
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' 
+                            : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                          }
+                        `}
+                      >
+                        <div 
+                          className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg ${
+                            newOrg.name === doc.label 
+                              ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' 
+                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+                          }`}
+                          dangerouslySetInnerHTML={{ __html: doc.icon }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs font-medium truncate ${
+                            newOrg.name === doc.label 
+                              ? 'text-blue-700 dark:text-blue-300' 
+                              : 'text-zinc-900 dark:text-zinc-100'
+                          }`}>
+                            {doc.label}
+                          </p>
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-500 truncate">
+                            {doc.category}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                    Choose a document type or enter custom name below
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Organization Name <span className="text-red-500 dark:text-red-400">*</span>
+                  {isDigitalWalletCategory ? 'Document Name' : 'Organization Name'} <span className="text-red-500 dark:text-red-400">*</span>
                 </label>
-                <BrandSearchInput
-                  value={newOrg.name}
-                  onChange={(value) => setNewOrg({ ...newOrg, name: value })}
-                  onBrandSelect={handleBrandSelect}
-                  placeholder="e.g., Google, GitHub, Netflix"
-                  className="as-input w-full text-sm sm:text-base"
-                />
+                {isDigitalWalletCategory ? (
+                  <input
+                    type="text"
+                    value={newOrg.name}
+                    onChange={(e) => setNewOrg({ ...newOrg, name: e.target.value })}
+                    placeholder="e.g., My Aadhaar Card, HDFC Credit Card"
+                    className="as-input w-full text-sm sm:text-base"
+                  />
+                ) : (
+                  <BrandSearchInput
+                    value={newOrg.name}
+                    onChange={(value) => setNewOrg({ ...newOrg, name: value })}
+                    onBrandSelect={handleBrandSelect}
+                    placeholder="e.g., Google, GitHub, Netflix"
+                    className="as-input w-full text-sm sm:text-base"
+                  />
+                )}
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-                  Start typing to see brand suggestions with logos
+                  {isDigitalWalletCategory 
+                    ? 'Selected from above or enter a custom name' 
+                    : 'Start typing to see brand suggestions with logos'
+                  }
                 </p>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Logo URL <span className="text-zinc-500">(optional)</span>
-                </label>
-                <input
-                  type="url"
-                  value={newOrg.logo_url}
-                  onChange={(e) => setNewOrg({ ...newOrg, logo_url: e.target.value })}
-                  placeholder="https://example.com/logo.png"
-                  className="as-input w-full text-sm sm:text-base"
-                />
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-                  Auto-filled from brand selection or add manually
-                </p>
-              </div>
+              {!isDigitalWalletCategory && (
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    Logo URL <span className="text-zinc-500">(optional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={newOrg.logo_url}
+                    onChange={(e) => setNewOrg({ ...newOrg, logo_url: e.target.value })}
+                    placeholder="https://example.com/logo.png"
+                    className="as-input w-full text-sm sm:text-base"
+                  />
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                    Auto-filled from brand selection or add manually
+                  </p>
+                </div>
+              )}
 
               {/* Logo Preview */}
               {(newOrg.name || newOrg.logo_url) && (
                 <div className={`
                   p-4 rounded-xl border-2 flex items-center gap-4 transition-all
-                  ${newOrg.logo_url 
+                  ${(newOrg.logo_url || (isDigitalWalletCategory && digitalWalletDocuments.find(d => d.label === newOrg.name)))
                     ? 'border-blue-500 dark:border-blue-500 bg-blue-50 dark:bg-blue-500/5' 
                     : 'border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/30 opacity-60'
                   }
                 `}>
                   <div className="w-16 h-16 flex-shrink-0 bg-white dark:bg-zinc-900 rounded-xl p-2 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden">
-                    {newOrg.logo_url ? (
-                      <img
-                        src={newOrg.logo_url}
-                        alt={newOrg.name}
-                        className="w-full h-full object-contain"
-                        onError={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          img.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 rounded-lg flex items-center justify-center">
-                        <span className="text-zinc-500 dark:text-zinc-400 font-bold text-2xl">
-                          {newOrg.name ? newOrg.name.charAt(0).toUpperCase() : '?'}
-                        </span>
-                      </div>
-                    )}
+                    {(() => {
+                      // Check if it's a Digital Wallet document with an icon
+                      const docMatch = isDigitalWalletCategory && digitalWalletDocuments.find(d => d.label === newOrg.name);
+                      if (docMatch) {
+                        return (
+                          <div 
+                            className="w-full h-full flex items-center justify-center text-blue-600 dark:text-blue-400"
+                            dangerouslySetInnerHTML={{ __html: docMatch.icon }}
+                          />
+                        );
+                      } else if (newOrg.logo_url) {
+                        return (
+                          <img
+                            src={newOrg.logo_url}
+                            alt={newOrg.name}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              img.style.display = 'none';
+                            }}
+                          />
+                        );
+                      } else {
+                        return (
+                          <div className="w-full h-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 rounded-lg flex items-center justify-center">
+                            <span className="text-zinc-500 dark:text-zinc-400 font-bold text-2xl">
+                              {newOrg.name ? newOrg.name.charAt(0).toUpperCase() : '?'}
+                            </span>
+                          </div>
+                        );
+                      }
+                    })()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-zinc-900 dark:text-white truncate">
-                      {newOrg.name || 'Organization Name'}
+                      {newOrg.name || (isDigitalWalletCategory ? 'Document Name' : 'Organization Name')}
                     </div>
                     <div className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
-                      {newOrg.logo_url ? 'Logo loaded' : 'No logo - will use initial'}
+                      {(() => {
+                        const docMatch = isDigitalWalletCategory && digitalWalletDocuments.find(d => d.label === newOrg.name);
+                        if (docMatch) return docMatch.category;
+                        if (newOrg.logo_url) return 'Logo loaded';
+                        return 'No logo - will use initial';
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -983,13 +1182,16 @@ const CategoryManager: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => { setShowOrgModal(false); setNewOrg({ name: '', logo_url: '', website_link: '' }); setSelectedCategoryId(null); setEditingOrgId(null); }}
+                  onClick={() => { setShowOrgModal(false); setNewOrg({ name: '', logo_url: '', website_link: '' }); setSelectedCategoryId(null); setEditingOrgId(null); setIsDigitalWalletCategory(false); }}
                   className="as-btn-secondary w-full sm:flex-1 text-sm sm:text-base"
                 >
                   Cancel
                 </button>
                 <button type="submit" className="as-btn-primary w-full sm:flex-1 !bg-emerald-600 hover:!bg-emerald-500 text-sm sm:text-base">
-                  {editingOrgId ? 'Update Organization' : 'Add Organization'}
+                  {editingOrgId 
+                    ? (isDigitalWalletCategory ? 'Update Document' : 'Update Organization')
+                    : (isDigitalWalletCategory ? 'Add Document' : 'Add Organization')
+                  }
                 </button>
               </div>
             </form>
