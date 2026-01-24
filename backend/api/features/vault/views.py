@@ -6,6 +6,7 @@ Views handle HTTP request/response only.
 Business logic is delegated to VaultService.
 """
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -243,13 +244,114 @@ class ProfileDetailView(APIView):
         return self.put(request, profile_id)
 
     def delete(self, request, profile_id):
+        """Soft delete - moves profile to trash instead of permanent deletion."""
         is_duress = VaultService.is_duress_session(request)
-        success = VaultService.delete_profile(profile_id, request.user, is_duress)
+        success = VaultService.soft_delete_profile(profile_id, request.user, is_duress)
         
         if not success:
             return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        return Response({"message": "Profile deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({
+            "message": "Profile moved to trash. It will be permanently deleted after 30 days.",
+            "recoverable_until": "30 days"
+        }, status=status.HTTP_200_OK)
+
+
+# ===========================
+# TRASH / RECYCLE BIN VIEWS
+# ===========================
+
+class TrashListView(APIView):
+    """
+    GET /profiles/trash/ - List all profiles in trash (soft-deleted)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        is_duress = VaultService.is_duress_session(request)
+        
+        if is_duress:
+            # In duress mode, return empty trash (don't reveal deleted items)
+            return Response([])
+        
+        profiles = VaultService.list_trash_profiles(request.user)
+        serializer = ProfileSerializer(profiles, many=True, context={'request': request})
+        
+        # Enrich with days_remaining
+        data = serializer.data
+        for item, profile in zip(data, profiles):
+            item['days_remaining'] = profile.days_until_permanent_delete()
+            item['deleted_at'] = profile.deleted_at.isoformat() if profile.deleted_at else None
+        
+        return Response(data)
+
+
+class ProfileRestoreView(APIView):
+    """
+    POST /profiles/{id}/restore/ - Restore a profile from trash
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, profile_id):
+        is_duress = VaultService.is_duress_session(request)
+        
+        if is_duress:
+            # In duress mode, pretend to restore
+            return Response({"message": "Profile restored successfully"})
+        
+        success = VaultService.restore_profile(profile_id, request.user)
+        
+        if not success:
+            return Response(
+                {"error": "Profile not found in trash"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        return Response({"message": "Profile restored successfully"})
+
+
+class ProfileShredView(APIView):
+    """
+    DELETE /profiles/{id}/shred/ - Permanently delete with crypto-shredding
+    
+    SECURITY: Before deletion, encrypted data is overwritten with random bytes
+    to prevent disk recovery attacks.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, profile_id):
+        is_duress = VaultService.is_duress_session(request)
+        
+        if is_duress:
+            # In duress mode, pretend to shred
+            return Response({
+                "message": "Profile permanently destroyed",
+                "shredded": True
+            })
+        
+        # Require explicit confirmation
+        confirm = request.data.get('confirm')
+        if confirm != 'PERMANENTLY_DELETE':
+            return Response(
+                {
+                    "error": "Confirmation required. Send confirm: 'PERMANENTLY_DELETE'",
+                    "warning": "This action cannot be undone. All encrypted data will be destroyed."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        success = VaultService.shred_profile(profile_id, request.user)
+        
+        if not success:
+            return Response(
+                {"error": "Profile not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        return Response({
+            "message": "Profile permanently destroyed. Encryption data has been shredded.",
+            "shredded": True
+        })
 
 
 # ===========================

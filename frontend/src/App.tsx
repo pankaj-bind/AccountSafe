@@ -32,6 +32,7 @@ import ProfilePage from './pages/ProfilePage';
 import SecuritySettingsPage from './pages/SecuritySettingsPage';
 import OrganizationPage from './pages/OrganizationPage';
 import SharedSecretPage from './pages/SharedSecretPage';
+import TrashPage from './pages/TrashPage';
 import './App.css';
 
 const App: React.FC = () => {
@@ -66,6 +67,7 @@ const App: React.FC = () => {
                           <Route path="/profile" element={<ProtectedRoute><VaultGuard><ProfilePage /></VaultGuard></ProtectedRoute>} />
                           <Route path="/security" element={<ProtectedRoute><VaultGuard><SecuritySettingsPage /></VaultGuard></ProtectedRoute>} />
                           <Route path="/organization/:id" element={<ProtectedRoute><VaultGuard><OrganizationPage /></VaultGuard></ProtectedRoute>} />
+                          <Route path="/vault/trash" element={<ProtectedRoute><VaultGuard><TrashPage /></VaultGuard></ProtectedRoute>} />
                         </Routes>
                       </main>
                     </div>

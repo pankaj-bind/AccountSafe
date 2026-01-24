@@ -133,3 +133,37 @@ export async function updateProfile(id: number, data: Partial<Profile>): Promise
 export async function deleteProfile(id: number): Promise<void> {
   await apiClient.delete(`/profiles/${id}/`);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Trash / Recycle Bin Operations
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface TrashProfile extends Profile {
+  deleted_at: string;
+  days_remaining: number;
+}
+
+/**
+ * Get all profiles in trash.
+ */
+export async function getTrashProfiles(): Promise<TrashProfile[]> {
+  const response = await apiClient.get('/profiles/trash/');
+  return response.data;
+}
+
+/**
+ * Restore a profile from trash.
+ */
+export async function restoreProfile(id: number): Promise<void> {
+  await apiClient.post(`/profiles/${id}/restore/`);
+}
+
+/**
+ * Permanently delete a profile with crypto-shredding.
+ * This action cannot be undone - all encrypted data is destroyed.
+ */
+export async function shredProfile(id: number): Promise<void> {
+  await apiClient.delete(`/profiles/${id}/shred/`, {
+    data: { confirm: 'PERMANENTLY_DELETE' }
+  });
+}

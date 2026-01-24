@@ -302,7 +302,10 @@ class VaultService:
     
     @staticmethod
     def list_profiles(organization_id: int, user, is_duress: bool = False):
-        """List all profiles for an organization."""
+        """
+        List all active profiles for an organization.
+        Excludes profiles in trash (where deleted_at is set).
+        """
         if is_duress:
             fake_data = VaultService.get_fake_vault_data()
             for cat in fake_data:
@@ -313,7 +316,8 @@ class VaultService:
         
         try:
             organization = Organization.objects.get(pk=organization_id, category__user=user)
-            return Profile.objects.filter(organization=organization)
+            # Filter out trashed profiles
+            return Profile.objects.filter(organization=organization, deleted_at__isnull=True)
         except Organization.DoesNotExist:
             return None
     
@@ -351,7 +355,10 @@ class VaultService:
     
     @staticmethod
     def get_profile(pk: int, user, is_duress: bool = False):
-        """Get a specific profile."""
+        """
+        Get a specific active profile.
+        Excludes profiles in trash.
+        """
         if is_duress:
             fake_data = VaultService.get_fake_vault_data()
             for cat in fake_data:
@@ -362,7 +369,11 @@ class VaultService:
             return None
         
         try:
-            return Profile.objects.get(pk=pk, organization__category__user=user)
+            return Profile.objects.get(
+                pk=pk, 
+                organization__category__user=user,
+                deleted_at__isnull=True  # Exclude trashed profiles
+            )
         except Profile.DoesNotExist:
             return None
     
@@ -388,13 +399,108 @@ class VaultService:
     
     @staticmethod
     def delete_profile(pk: int, user, is_duress: bool = False) -> bool:
-        """Delete a profile."""
+        """Hard delete a profile (used internally)."""
         if is_duress:
             return True
         
         try:
             profile = Profile.objects.get(pk=pk, organization__category__user=user)
             profile.delete()
+            return True
+        except Profile.DoesNotExist:
+            return False
+    
+    @staticmethod
+    def soft_delete_profile(pk: int, user, is_duress: bool = False) -> bool:
+        """
+        Soft delete a profile - moves it to trash.
+        Profile will be permanently deleted after 30 days.
+        """
+        if is_duress:
+            return True
+        
+        try:
+            # Only soft-delete profiles that are NOT already in trash
+            profile = Profile.objects.get(
+                pk=pk, 
+                organization__category__user=user,
+                deleted_at__isnull=True
+            )
+            profile.deleted_at = timezone.now()
+            profile.save()
+            return True
+        except Profile.DoesNotExist:
+            return False
+    
+    @staticmethod
+    def list_trash_profiles(user):
+        """
+        List all profiles in trash (soft-deleted) for a user.
+        Returns only profiles where deleted_at is NOT null.
+        """
+        return Profile.objects.filter(
+            organization__category__user=user,
+            deleted_at__isnull=False
+        ).select_related('organization', 'organization__category').order_by('-deleted_at')
+    
+    @staticmethod
+    def restore_profile(pk: int, user) -> bool:
+        """
+        Restore a profile from trash.
+        Sets deleted_at back to None.
+        """
+        try:
+            profile = Profile.objects.get(
+                pk=pk,
+                organization__category__user=user,
+                deleted_at__isnull=False  # Must be in trash
+            )
+            profile.deleted_at = None
+            profile.save()
+            return True
+        except Profile.DoesNotExist:
+            return False
+    
+    @staticmethod
+    def shred_profile(pk: int, user) -> bool:
+        """
+        Permanently delete a profile with crypto-shredding.
+        
+        SECURITY: Before deletion, all encrypted fields are overwritten
+        with random data to prevent disk recovery attacks.
+        """
+        import os
+        
+        try:
+            # Can shred both active and trashed profiles
+            profile = Profile.objects.get(pk=pk, organization__category__user=user)
+            
+            # Crypto-shred: Overwrite all encrypted fields with random bytes
+            # This prevents recovery of deleted data from disk sectors
+            random_data = os.urandom(32).hex()
+            
+            profile.username_encrypted = random_data
+            profile.username_iv = random_data[:24]
+            profile.password_encrypted = random_data
+            profile.password_iv = random_data[:24]
+            profile.email_encrypted = random_data
+            profile.email_iv = random_data[:24]
+            profile.notes_encrypted = random_data
+            profile.notes_iv = random_data[:24]
+            profile.recovery_codes_encrypted = random_data
+            profile.recovery_codes_iv = random_data[:24]
+            profile.password_hash = random_data[:64]
+            
+            # Save the shredded data first (overwrites disk sectors)
+            profile.save()
+            
+            # Delete any associated documents
+            if profile.document:
+                profile.document.delete(save=False)
+            
+            # Now delete the record
+            profile.delete()
+            
             return True
         except Profile.DoesNotExist:
             return False

@@ -16,6 +16,10 @@ from .views import (
     VaultView,
     VaultExportView,
     VaultImportView,
+    # Trash/Recycle Bin views
+    TrashListView,
+    ProfileRestoreView,
+    ProfileShredView,
 )
 
 urlpatterns = [
@@ -30,6 +34,11 @@ urlpatterns = [
     # Profiles
     path('organizations/<int:organization_id>/profiles/', ProfileListCreateView.as_view(), name='profile-list-create'),
     path('profiles/<int:profile_id>/', ProfileDetailView.as_view(), name='profile-detail'),
+    
+    # Trash / Recycle Bin
+    path('profiles/trash/', TrashListView.as_view(), name='profile-trash-list'),
+    path('profiles/<int:profile_id>/restore/', ProfileRestoreView.as_view(), name='profile-restore'),
+    path('profiles/<int:profile_id>/shred/', ProfileShredView.as_view(), name='profile-shred'),
     
     # Zero-Knowledge Encrypted Vault
     path('vault/', VaultView.as_view(), name='vault'),

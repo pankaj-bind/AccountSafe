@@ -21,6 +21,10 @@ from api.views import (
     OrganizationDetailView,
     ProfileListCreateView,
     ProfileDetailView,
+    # Trash / Recycle Bin views
+    TrashListView,
+    ProfileRestoreView,
+    ProfileShredView,
     SetupPinView,
     VerifyPinView,
     PinStatusView,
@@ -103,6 +107,11 @@ urlpatterns = [
     # Profile endpoints
     path('api/organizations/<int:organization_id>/profiles/', ProfileListCreateView.as_view(), name='profile-list-create'),
     path('api/profiles/<int:profile_id>/', ProfileDetailView.as_view(), name='profile-detail'),
+
+    # Trash / Recycle Bin endpoints
+    path('api/profiles/trash/', TrashListView.as_view(), name='profile-trash-list'),
+    path('api/profiles/<int:profile_id>/restore/', ProfileRestoreView.as_view(), name='profile-restore'),
+    path('api/profiles/<int:profile_id>/shred/', ProfileShredView.as_view(), name='profile-shred'),
 
     # Security PIN endpoints
     path('api/pin/setup/', SetupPinView.as_view(), name='setup-pin'),
