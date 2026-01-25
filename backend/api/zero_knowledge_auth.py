@@ -23,6 +23,7 @@
 import secrets
 import hashlib
 import hmac
+import logging
 from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.db import transaction
@@ -35,6 +36,9 @@ from .models import UserProfile, LoginRecord, MultiToken, DuressSession, UserSes
 from .turnstile import verify_turnstile_token, get_client_ip
 from .user_agent_parser import parse_user_agent
 from .ip_location import get_ip_location
+
+# Logger for zero-knowledge auth events
+logger = logging.getLogger(__name__)
 
 
 def constant_time_compare(a: str, b: str) -> bool:
@@ -148,7 +152,7 @@ class ZeroKnowledgeRegisterView(APIView):
                     is_active=True
                 )
                 
-                print(f"[ZK-AUTH] ✅ User registered: {username} (password NEVER transmitted)")
+                logger.info(f"[ZK-AUTH] User registered: {username} (password NEVER transmitted)")
                 
                 return Response({
                     'key': token.key,
@@ -160,7 +164,7 @@ class ZeroKnowledgeRegisterView(APIView):
                 }, status=status.HTTP_201_CREATED)
                 
         except Exception as e:
-            print(f"[ZK-AUTH] ❌ Registration failed for {username}: {e}")
+            logger.error(f"[ZK-AUTH] Registration failed for {username}: {e}")
             return Response({'error': 'Registration failed. Please try again.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -291,7 +295,7 @@ class ZeroKnowledgeLoginView(APIView):
         send_email = not is_relogin and not is_duress_match
         track_zk_login_attempt(request, username, is_success=True, user=user, is_duress=is_duress_match, send_notification=send_email)
         
-        print(f"[ZK-AUTH] ✅ Login successful: {username} (duress={is_duress_match}, password NEVER transmitted)")
+        logger.info(f"[ZK-AUTH] Login successful: {username} (duress={is_duress_match}, password NEVER transmitted)")
         
         response_data = {
             'key': token.key,
@@ -409,7 +413,7 @@ class ZeroKnowledgeChangePasswordView(APIView):
         profile.encryption_salt = new_salt
         profile.save()
         
-        print(f"[ZK-AUTH] ✅ Password changed for {request.user.username} (password NEVER transmitted)")
+        logger.info(f"[ZK-AUTH] Password changed for {request.user.username} (password NEVER transmitted)")
         
         return Response({
             'message': 'Password changed successfully (zero-knowledge)',
@@ -454,7 +458,7 @@ class ZeroKnowledgeDeleteAccountView(APIView):
         username = request.user.username
         request.user.delete()
         
-        print(f"[ZK-AUTH] ✅ Account deleted: {username} (password NEVER transmitted)")
+        logger.info(f"[ZK-AUTH] Account deleted: {username} (password NEVER transmitted)")
         
         return Response({
             'message': 'Account deleted successfully',
@@ -517,7 +521,7 @@ class ZeroKnowledgeSetDuressView(APIView):
             profile.sos_email = sos_email
         profile.save()
         
-        print(f"[ZK-AUTH] ✅ Duress password set for {request.user.username} (password NEVER transmitted)")
+        logger.info(f"[ZK-AUTH] Duress password set for {request.user.username} (password NEVER transmitted)")
         
         return Response({
             'message': 'Duress password configured successfully',
@@ -560,7 +564,7 @@ class ZeroKnowledgeClearDuressView(APIView):
         profile.duress_salt = None
         profile.save()
         
-        print(f"[ZK-AUTH] ✅ Duress password cleared for {request.user.username}")
+        logger.info(f"[ZK-AUTH] Duress password cleared for {request.user.username}")
         
         return Response({
             'message': 'Duress password cleared successfully',
@@ -683,7 +687,7 @@ class ZeroKnowledgeSwitchModeView(APIView):
             DuressSession.objects.filter(token_key=token_key).delete()
             DuressSession.objects.filter(user=request.user).delete()
             
-            print(f"[ZK-AUTH] ✅ Switched to NORMAL mode for {request.user.username}")
+            logger.info(f"[ZK-AUTH] Switched to NORMAL mode for {request.user.username}")
             
             return Response({
                 'verified': True,
@@ -710,7 +714,7 @@ class ZeroKnowledgeSwitchModeView(APIView):
                 daemon=True
             ).start()
             
-            print(f"[ZK-AUTH] ⚠️ Switched to DURESS mode for {request.user.username}")
+            logger.warning(f"[ZK-AUTH] Switched to DURESS mode for {request.user.username}")
             
             return Response({
                 'verified': True,
