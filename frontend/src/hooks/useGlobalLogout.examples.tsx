@@ -103,7 +103,7 @@ export const Example2 = () => {
 
 // USAGE EXAMPLE 3: Session expiry
 export const Example3 = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // This shows how to handle session expiry with broadcast
   const handleSessionExpired = () => {
     // Clear session data
     sessionStorage.clear();
@@ -112,5 +112,11 @@ export const Example3 = () => {
     broadcastLogout('SESSION_EXPIRED');
   };
 
-  return <div>Session monitor</div>;
+  // Example usage in component
+  return (
+    <div>
+      <p>Session monitor</p>
+      <button onClick={handleSessionExpired}>Simulate Session Expiry</button>
+    </div>
+  );
 };

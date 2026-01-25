@@ -135,11 +135,12 @@ export const login = async (username: string, password: string, turnstileToken?:
       // User exists but no ZK auth - must use password reset
       throw new Error('LEGACY_ACCOUNT_NEEDS_RESET');
     }
-  } catch (error: any) {
-    if (error.response?.status === 404) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { status?: number }; message?: string };
+    if (axiosError.response?.status === 404) {
       // User doesn't exist or has no ZK auth
       throw new Error('Invalid credentials');
-    } else if (error.message === 'LEGACY_ACCOUNT_NEEDS_RESET') {
+    } else if (axiosError.message === 'LEGACY_ACCOUNT_NEEDS_RESET') {
       throw new Error('Your account needs to be upgraded. Please use "Forgot Password" to reset your password and enable zero-knowledge encryption.');
     } else {
       throw error;
@@ -177,9 +178,10 @@ export const login = async (username: string, password: string, turnstileToken?:
       ...response.data,
       salt: responseSalt  // Return correct salt for CryptoContext to use
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If login failed and duress_salt exists, try with duress salt
-    if (error.response?.status === 401 && duressSalt) {
+    const axiosError = error as { response?: { status?: number } };
+    if (axiosError.response?.status === 401 && duressSalt) {
       console.log('🔄 Master auth failed, trying duress salt...');
       
       const duressAuthHash = deriveAuthHash(password, duressSalt);
@@ -253,7 +255,7 @@ export const relogin = async (username: string, password: string): Promise<{ suc
         // Legacy account - cannot re-login without ZK auth
         return { success: false };
       }
-    } catch (error: any) {
+    } catch (_error: unknown) {
       return { success: false };
     }
     
@@ -279,9 +281,10 @@ export const relogin = async (username: string, password: string): Promise<{ suc
       console.log('✅ Zero-knowledge re-login successful (password NEVER sent to server)');
       
       return { success: true, salt: responseSalt, isDuress };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If login failed and duress_salt exists, try with duress salt
-      if (error.response?.status === 401 && duressSalt) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 401 && duressSalt) {
         console.log('🔄 Master auth failed in relogin, trying duress salt...');
         
         const duressAuthHash = deriveAuthHash(password, duressSalt);

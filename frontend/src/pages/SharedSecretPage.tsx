@@ -118,13 +118,14 @@ const SharedSecretPage: React.FC = () => {
       }
       
       setLoading(false);
-    } catch (err: any) {
-      if (err.response?.status === 404) {
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { status?: number; data?: { error?: string } } };
+      if (axiosError.response?.status === 404) {
         setError('This link has expired or has already been viewed');
-      } else if (err.response?.status === 410) {
+      } else if (axiosError.response?.status === 410) {
         setError('This link has already been viewed and destroyed');
-      } else if (err.response?.data?.error) {
-        setError(err.response.data.error);
+      } else if (axiosError.response?.data?.error) {
+        setError(axiosError.response.data.error);
       } else {
         setError('Failed to load secret. Please try again.');
       }

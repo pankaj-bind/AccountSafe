@@ -185,9 +185,10 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
       setTimeout(() => {
         onSuccess();
       }, 800);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setAttempts(prev => prev + 1);
-      setError(err.response?.data?.error || 'Incorrect PIN');
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError(axiosError.response?.data?.error || 'Incorrect PIN');
       setIsShaking(true);
       setPin(['', '', '', '']);
       

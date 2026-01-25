@@ -5,9 +5,15 @@ import { useNavigate, Link } from 'react-router-dom';
 import { requestPasswordResetOTP, verifyPasswordResetOTP, setNewPasswordWithOTP } from '../services/authService';
 
 // Cloudflare Turnstile
+interface TurnstileInstance {
+    render: (element: HTMLElement, options: Record<string, unknown>) => string;
+    remove: (widgetId: string) => void;
+    reset: (widgetId: string) => void;
+}
+
 declare global {
     interface Window {
-        turnstile: any;
+        turnstile: TurnstileInstance | undefined;
     }
 }
 
@@ -163,6 +169,7 @@ const ForgotPasswordPage: React.FC = () => {
 
     if (window.turnstile) {
       renderWidget();
+      return undefined;
     } else {
       const interval = setInterval(() => {
         if (window.turnstile) {
@@ -193,13 +200,14 @@ const ForgotPasswordPage: React.FC = () => {
       setResendCooldown(60); // 60 second cooldown for resend
       setRemainingAttempts(null);
       setStep('otp');
-    } catch (err: any) {
-      const errorData = err.response?.data;
-      if (err.response?.status === 429) {
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { status?: number; data?: { error?: string; email?: string[]; retry_after?: number } } };
+      const errorData = axiosError.response?.data;
+      if (axiosError.response?.status === 429) {
         // Rate limited
         setError(errorData?.error || 'Please wait before requesting another code.');
         setResendCooldown(errorData?.retry_after || 60);
-      } else if (err.response?.status === 404) {
+      } else if (axiosError.response?.status === 404) {
         setError(errorData?.error || 'No account found with this email address.');
       } else {
         setError(errorData?.error || errorData?.email?.[0] || 'Failed to send verification code. Please try again.');
@@ -223,9 +231,10 @@ const ForgotPasswordPage: React.FC = () => {
       setResendCooldown(60);
       setOtp(''); // Clear old OTP
       setRemainingAttempts(null);
-    } catch (err: any) {
-      const errorData = err.response?.data;
-      if (err.response?.status === 429) {
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { status?: number; data?: { error?: string; retry_after?: number } } };
+      const errorData = axiosError.response?.data;
+      if (axiosError.response?.status === 429) {
         setError(errorData?.error || 'Please wait before requesting another code.');
         setResendCooldown(errorData?.retry_after || 60);
       } else {
@@ -245,8 +254,9 @@ const ForgotPasswordPage: React.FC = () => {
       await verifyPasswordResetOTP(email, otp);
       setMessage('Code verified! You can now set a new password.');
       setStep('password');
-    } catch (err: any) {
-      const errorData = err.response?.data;
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string; remaining_attempts?: number; code?: string } } };
+      const errorData = axiosError.response?.data;
       
       // Update remaining attempts if provided
       if (errorData?.remaining_attempts !== undefined) {
@@ -296,8 +306,9 @@ const ForgotPasswordPage: React.FC = () => {
       setMessage('Your password has been reset successfully!');
       setStep('success');
       setTimeout(() => navigate('/login'), 3000);
-    } catch (err: any) {
-      const errorData = err.response?.data;
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string; password?: string[]; code?: string } } };
+      const errorData = axiosError.response?.data;
       
       // Handle specific error codes
       switch (errorData?.code) {

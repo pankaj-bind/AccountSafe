@@ -8,9 +8,15 @@ import { initializeUserEncryption, storeKeyData } from '../services/encryptionSe
 import RecoveryKeyModal from '../components/RecoveryKeyModal';
 
 // Cloudflare Turnstile
+interface TurnstileInstance {
+    render: (element: HTMLElement, options: Record<string, unknown>) => string;
+    remove: (widgetId: string) => void;
+    reset: (widgetId: string) => void;
+}
+
 declare global {
     interface Window {
-        turnstile: any;
+        turnstile: TurnstileInstance | undefined;
     }
 }
 
@@ -194,13 +200,14 @@ const RegisterPage: React.FC = () => {
             } else {
                 setError('Registration succeeded but auto-login failed. Please log in manually.');
             }
-        } catch (err: any) {
-            if (err.response?.data) {
-                const errors = err.response.data;
+        } catch (err: unknown) {
+            const axiosError = err as { response?: { data?: { username?: string[]; email?: string[]; password?: string[]; error?: string } }; message?: string };
+            if (axiosError.response?.data) {
+                const errors = axiosError.response.data;
                 const errorMessage = errors.username?.[0] || errors.email?.[0] || errors.password?.[0] || errors.error || 'Registration failed.';
                 setError(errorMessage);
             } else {
-                setError(err.message || 'An unexpected error occurred.');
+                setError(axiosError.message || 'An unexpected error occurred.');
             }
         } finally {
             setIsLoading(false);

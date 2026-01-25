@@ -2,6 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api/apiClient';
 import { decryptCredentialFields } from '../utils/encryption';
 
+interface ProfileWithOrg {
+  id: number;
+  title: string;
+  organizationName: string;
+  organizationId: number;
+  password_encrypted?: string;
+  password_iv?: string;
+}
+
 interface DuplicateProfile {
   id: number;
   title: string;
@@ -51,7 +60,7 @@ export const useDuplicatePasswordCheck = (
   const [duplicates, setDuplicates] = useState<DuplicateProfile[]>([]);
   const [isChecking, setIsChecking] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [allProfiles, setAllProfiles] = useState<any[]>([]);
+  const [allProfiles, setAllProfiles] = useState<ProfileWithOrg[]>([]);
   const [profilesFetched, setProfilesFetched] = useState<boolean>(false);
 
   /**
@@ -67,10 +76,10 @@ export const useDuplicatePasswordCheck = (
       const categories = categoriesResponse.data;
 
       // Step 2: Fetch all profiles from all organizations IN PARALLEL
-      const allProfilesData: any[] = [];
+      const allProfilesData: ProfileWithOrg[] = [];
       
       // Collect all organization IDs first
-      const orgPromises: Promise<any>[] = [];
+      const orgPromises: Promise<{ data: ProfileWithOrg[] }>[] = [];
       const orgInfos: { orgId: number; orgName: string }[] = [];
       
       for (const category of categories) {
@@ -91,7 +100,7 @@ export const useDuplicatePasswordCheck = (
       // Combine results
       responses.forEach((response, index) => {
         const profiles = response.data || [];
-        profiles.forEach((profile: any) => {
+        profiles.forEach((profile) => {
           allProfilesData.push({
             ...profile,
             organizationName: orgInfos[index].orgName,
@@ -143,7 +152,7 @@ export const useDuplicatePasswordCheck = (
       const foundDuplicates: DuplicateProfile[] = [];
 
       // Decrypt all passwords in parallel for better performance
-      const decryptPromises = profiles.map(async (profile: any) => {
+      const decryptPromises = profiles.map(async (profile) => {
         // Skip the current profile being edited
         if (currentProfileId && profile.id === currentProfileId) {
           return null;

@@ -161,9 +161,10 @@ const UnifiedLockScreen: React.FC<UnifiedLockScreenProps> = ({ reason: propReaso
           if (input) input.focus();
         }, 100);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Unlock error:', err);
-      setError(err.message || 'Failed to unlock vault');
+      const message = err instanceof Error ? err.message : 'Failed to unlock vault';
+      setError(message);
       setPassword('');
       setIsUnlocking(false);
       setDerivationProgress(null);

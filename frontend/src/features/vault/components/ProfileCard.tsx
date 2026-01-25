@@ -156,6 +156,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [showMenu]);
 
   // Close expanded card when clicking outside
@@ -170,6 +171,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [isExpanded, onToggleExpand]);
 
   const hasCredentials = profile.username || profile.password || profile.email;

@@ -215,7 +215,7 @@ export async function encryptCredentialFields(
   recovery_codes_encrypted?: string;
   recovery_codes_iv?: string;
 }> {
-  const result: any = {};
+  const result: Record<string, string> = {};
 
   for (const [fieldName, value] of Object.entries(fields)) {
     if (value && value.trim() !== '') {
@@ -229,13 +229,37 @@ export async function encryptCredentialFields(
 }
 
 /**
+ * Encrypted credential data structure from the API
+ * Allows null to support API responses where fields may be explicitly null
+ */
+interface EncryptedCredentialData {
+  username_encrypted?: string | null;
+  username_iv?: string | null;
+  password_encrypted?: string | null;
+  password_iv?: string | null;
+  email_encrypted?: string | null;
+  email_iv?: string | null;
+  notes_encrypted?: string | null;
+  notes_iv?: string | null;
+  recovery_codes_encrypted?: string | null;
+  recovery_codes_iv?: string | null;
+  _plaintext?: {
+    username?: string | null;
+    password?: string | null;
+    email?: string | null;
+    notes?: string | null;
+    recovery_codes?: string | null;
+  };
+}
+
+/**
  * Decrypt an object's encrypted fields
  * If the data contains a _plaintext field (for duress mode), use that directly
  * 
  * Optimized: Decrypts all fields in parallel for better performance
  */
 export async function decryptCredentialFields(
-  encryptedData: any,
+  encryptedData: EncryptedCredentialData,
   key: CryptoKey
 ): Promise<{
   username?: string;
@@ -248,28 +272,35 @@ export async function decryptCredentialFields(
   // The frontend is unaware it's in duress mode - it just sees data
   if (encryptedData._plaintext) {
     return {
-      username: encryptedData._plaintext.username || null,
-      password: encryptedData._plaintext.password || null,
-      email: encryptedData._plaintext.email || null,
-      notes: encryptedData._plaintext.notes || null,
-      recovery_codes: encryptedData._plaintext.recovery_codes || null,
+      username: encryptedData._plaintext.username ?? undefined,
+      password: encryptedData._plaintext.password ?? undefined,
+      email: encryptedData._plaintext.email ?? undefined,
+      notes: encryptedData._plaintext.notes ?? undefined,
+      recovery_codes: encryptedData._plaintext.recovery_codes ?? undefined,
     };
   }
 
-  const fieldNames = ['username', 'password', 'email', 'notes', 'recovery_codes'];
+  const fieldNames = ['username', 'password', 'email', 'notes', 'recovery_codes'] as const;
+  
+  type FieldName = typeof fieldNames[number];
+  type EncryptedKey = `${FieldName}_encrypted`;
+  type IvKey = `${FieldName}_iv`;
   
   // Decrypt all fields in parallel for better performance
   const decryptionPromises = fieldNames.map(async (fieldName) => {
-    const ciphertext = encryptedData[`${fieldName}_encrypted`];
-    const iv = encryptedData[`${fieldName}_iv`];
+    const encryptedKey = `${fieldName}_encrypted` as EncryptedKey;
+    const ivKey = `${fieldName}_iv` as IvKey;
+    const ciphertext = encryptedData[encryptedKey];
+    const iv = encryptedData[ivKey];
     
+    // Check that both ciphertext and iv are non-null strings
     if (ciphertext && iv) {
       try {
         const value = await decryptData(ciphertext, iv, key);
         return { fieldName, value };
       } catch (error) {
         console.warn(`Failed to decrypt ${fieldName}:`, error);
-        return { fieldName, value: null };
+        return { fieldName, value: undefined };
       }
     }
     return { fieldName, value: undefined };
@@ -278,7 +309,7 @@ export async function decryptCredentialFields(
   const results = await Promise.all(decryptionPromises);
   
   // Convert array of results to object
-  const result: any = {};
+  const result: Record<string, string> = {};
   for (const { fieldName, value } of results) {
     if (value !== undefined) {
       result[fieldName] = value;
@@ -292,7 +323,7 @@ export async function decryptCredentialFields(
  * Store user's encryption key in session storage (memory-only)
  * WARNING: Key is lost when browser closes - this is intentional for security
  */
-export function storeMasterKey(key: CryptoKey): void {
+export function storeMasterKey(_key: CryptoKey): void {
   // We can't directly store CryptoKey, so we'll store the password temporarily
   // In a production app, you'd use a more sophisticated key management system
   console.warn('Master key stored in memory (session only)');

@@ -341,9 +341,10 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           return { success: false, error: 'Invalid password' };
         }
         console.log('✅ Password verified via zero-knowledge auth');
-      } catch (verifyError: any) {
+      } catch (verifyError: unknown) {
         // If verify endpoint returns 401, password is wrong
-        if (verifyError.response?.status === 401) {
+        const status = (verifyError as { response?: { status?: number } })?.response?.status;
+        if (status === 401) {
           console.log('❌ Auth hash verification failed - wrong password');
           return { success: false, error: 'Invalid password' };
         }
@@ -395,7 +396,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           console.log('📦 Creating new vault...');
           setVault(createEmptyVault());
         }
-      } catch (vaultError: any) {
+      } catch (vaultError: unknown) {
         // API error fetching vault
         console.error('Failed to fetch vault:', vaultError);
         masterKeyRef.current = null;
@@ -407,10 +408,11 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       resetInactivityTimer();
       
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Unlock failed:', error);
       masterKeyRef.current = null;
-      return { success: false, error: error.message || 'Unlock failed' };
+      const message = error instanceof Error ? error.message : 'Unlock failed';
+      return { success: false, error: message };
     } finally {
       setIsLoading(false);
     }
@@ -517,10 +519,11 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           try {
             const decryptedVault = await decryptVault(vaultResponse.data.vault_blob, masterKey);
             setVault(decryptedVault);
-          } catch (decryptError: any) {
+          } catch (decryptError: unknown) {
             // Decryption failed - this could happen if vault is corrupted
             // Since password was verified by switch-mode, create empty vault
-            console.warn('⚠️ Vault decryption failed, creating new vault:', decryptError.message);
+            const message = decryptError instanceof Error ? decryptError.message : 'Unknown error';
+            console.warn('⚠️ Vault decryption failed, creating new vault:', message);
             setVault(createEmptyVault());
           }
         } else {
@@ -528,7 +531,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           console.log('📦 Creating new vault...');
           setVault(createEmptyVault());
         }
-      } catch (vaultError: any) {
+      } catch (vaultError: unknown) {
         console.error('Failed to fetch vault:', vaultError);
         masterKeyRef.current = null;
         return { success: false, error: 'Failed to fetch vault from server' };
@@ -542,10 +545,11 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log(`✅ Fast unlock complete in ${Date.now() - startTime}ms`);
       
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Fast unlock failed:', error);
       masterKeyRef.current = null;
-      return { success: false, error: error.message || 'Unlock failed' };
+      const message = error instanceof Error ? error.message : 'Unlock failed';
+      return { success: false, error: message };
     } finally {
       setIsLoading(false);
     }
