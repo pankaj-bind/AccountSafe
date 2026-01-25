@@ -16,7 +16,6 @@ from .views import (
     ZeroKnowledgeSetDuressView,
     ZeroKnowledgeClearDuressView,
     ZeroKnowledgeSwitchModeView,
-    ZeroKnowledgeMigrateView,
 )
 
 urlpatterns = [
@@ -33,6 +32,6 @@ urlpatterns = [
     path('clear-duress/', ZeroKnowledgeClearDuressView.as_view(), name='zk-clear-duress'),
     path('switch-mode/', ZeroKnowledgeSwitchModeView.as_view(), name='zk-switch-mode'),
     
-    # Legacy Migration
-    path('migrate/', ZeroKnowledgeMigrateView.as_view(), name='zk-migrate'),
+    # REMOVED: Legacy Migration endpoint - Attack Surface Reduction
+    # path('migrate/', ...) - No legacy users to migrate in fresh deployment
 ]

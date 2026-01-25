@@ -73,7 +73,7 @@ from api.zero_knowledge_auth import (
     ZeroKnowledgeClearDuressView,
     ZeroKnowledgeVerifyView,
     ZeroKnowledgeSwitchModeView,
-    ZeroKnowledgeMigrateView,
+    # REMOVED: ZeroKnowledgeMigrateView - Attack Surface Reduction
 )
 
 urlpatterns = [

@@ -50,8 +50,6 @@ class CustomLoginView(APIView):
     
     Use /api/zk/login/ instead - password is NEVER sent to server,
     only auth_hash (derived from password) is transmitted.
-    
-    For existing users who need to migrate, use /api/zk/migrate/ endpoint.
     """
     permission_classes = [AllowAny]
 

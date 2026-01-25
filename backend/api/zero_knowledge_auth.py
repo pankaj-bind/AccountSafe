@@ -720,147 +720,15 @@ class ZeroKnowledgeSwitchModeView(APIView):
             })
 
 
-class ZeroKnowledgeMigrateView(APIView):
-    """
-    POST /api/zk/migrate/
-    
-    ⚠️ LEGACY MIGRATION ENDPOINT ⚠️
-    
-    Migrate an existing user from old password-based auth to TRUE zero-knowledge.
-    
-    IMPORTANT: This endpoint accepts plaintext password ONE LAST TIME for migration.
-    This is the ONLY endpoint that should accept password. After migration,
-    all authentication MUST go through auth_hash-based endpoints.
-    
-    This is a ONE-TIME migration endpoint. User authenticates with old password,
-    and we set up zero-knowledge auth with the provided auth_hash and salt.
-    
-    After migration:
-    - Old password auth is DISABLED (set_unusable_password)
-    - Only auth_hash verification works
-    - Password is NEVER stored on server
-    
-    Client sends:
-    - username: the username
-    - password: the OLD password (for one-time verification via Django auth)
-    - auth_hash: derived from password using Argon2id
-    - salt: the salt used for key derivation
-    
-    Security Note:
-    This is the LAST time password is sent to server. After migration,
-    all authentication uses auth_hash only.
-    
-    TODO: This endpoint should be removed once all users have migrated.
-    """
-    permission_classes = [AllowAny]
-    
-    def post(self, request):
-        # ⚠️ SECURITY WARNING: This endpoint accepts plaintext password for migration
-        # This is necessary to verify existing user's identity before migrating to ZK
-        # The password is NOT stored - only used for one-time Django authentication
-        print("[ZK-MIGRATE] ⚠️ Legacy migration request - password sent (one-time only)")
-        
-        username = request.data.get('username', '').strip()
-        password = request.data.get('password', '')  # Last time password is sent!
-        auth_hash = request.data.get('auth_hash', '').strip().lower()
-        salt = request.data.get('salt', '').strip()
-        turnstile_token = request.data.get('turnstile_token')
-        
-        # Validate required fields
-        if not username:
-            return Response({'error': 'Username is required'}, status=status.HTTP_400_BAD_REQUEST)
-        if not password:
-            return Response({'error': 'Password is required for migration'}, status=status.HTTP_400_BAD_REQUEST)
-        if not auth_hash:
-            return Response({'error': 'auth_hash is required'}, status=status.HTTP_400_BAD_REQUEST)
-        if not salt:
-            return Response({'error': 'salt is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Validate auth_hash format
-        if len(auth_hash) != 64 or not all(c in '0123456789abcdef' for c in auth_hash.lower()):
-            return Response({'error': 'Invalid auth_hash format'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Verify Turnstile token if provided
-        if turnstile_token:
-            remote_ip = get_client_ip(request)
-            result = verify_turnstile_token(turnstile_token, remote_ip)
-            if not result.get('success'):
-                return Response({'error': 'Verification failed. Please try again.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Authenticate with OLD password (one last time)
-        from django.contrib.auth import authenticate
-        user = authenticate(request, username=username, password=password)
-        
-        if user is None:
-            # Also check duress password for migration
-            try:
-                target_user = User.objects.get(username__iexact=username)
-                if hasattr(target_user, 'userprofile') and target_user.userprofile.verify_duress_password(password):
-                    # Don't allow migration with duress password
-                    return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-            except User.DoesNotExist:
-                pass
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-        
-        # Get or create user profile
-        try:
-            profile = user.userprofile
-        except UserProfile.DoesNotExist:
-            profile = UserProfile.objects.create(user=user)
-        
-        # Check if already migrated
-        if profile.auth_hash:
-            return Response({
-                'error': 'Account already migrated to zero-knowledge authentication',
-                'already_migrated': True
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # MIGRATE TO ZERO-KNOWLEDGE
-        with transaction.atomic():
-            # Store auth_hash and salt
-            profile.auth_hash = auth_hash
-            profile.encryption_salt = salt
-            profile.save()
-            
-            # DISABLE password authentication permanently
-            # After this, user can ONLY authenticate via auth_hash
-            user.set_unusable_password()
-            user.save()
-            
-            # Log in the user
-            login(request, user)
-            
-            # Create new token
-            token = MultiToken.objects.create(user=user)
-            
-            # Create session record
-            user_agent_str = request.META.get('HTTP_USER_AGENT', '')
-            ua_data = parse_user_agent(user_agent_str)
-            ip_address = get_client_ip(request)
-            location_data = get_ip_location(ip_address)
-            
-            UserSession.objects.create(
-                user=user,
-                token=token,
-                ip_address=ip_address,
-                user_agent=user_agent_str,
-                device_type=ua_data['device_type'],
-                browser=ua_data['browser'],
-                os=ua_data['os'],
-                location=location_data.get('location', ''),
-                country_code=location_data.get('country_code', ''),
-                is_active=True
-            )
-        
-        print(f"[ZK-AUTH] ✅ User migrated to zero-knowledge: {username}")
-        print(f"[ZK-AUTH] ⚠️ Password auth DISABLED - only auth_hash works now")
-        
-        return Response({
-            'key': token.key,
-            'user': {
-                'username': user.username,
-                'email': user.email
-            },
-            'message': 'Successfully migrated to zero-knowledge authentication',
-            'migrated': True
-        })
+# ═══════════════════════════════════════════════════════════════════════════════
+# REMOVED: ZeroKnowledgeMigrateView
+# 
+# This legacy migration endpoint was removed as part of Attack Surface Reduction.
+# Fresh deployments have no legacy users requiring migration.
+# The endpoint accepted plaintext passwords which violated ZK principles.
+#
+# If migration is ever needed, users should:
+# 1. Use password reset via email OTP
+# 2. Set new auth_hash during reset flow
+# This ensures password is NEVER sent to server.
+# ═══════════════════════════════════════════════════════════════════════════════

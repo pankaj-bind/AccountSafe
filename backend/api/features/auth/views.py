@@ -139,5 +139,5 @@ from api.zero_knowledge_auth import (
     ZeroKnowledgeSetDuressView,
     ZeroKnowledgeClearDuressView,
     ZeroKnowledgeSwitchModeView,
-    ZeroKnowledgeMigrateView,
+    # REMOVED: ZeroKnowledgeMigrateView - Attack Surface Reduction
 )
