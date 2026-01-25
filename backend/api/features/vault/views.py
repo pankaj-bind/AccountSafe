@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.models import Organization
 from .services import VaultService, ZeroKnowledgeVaultService
 from .serializers import CategorySerializer, OrganizationSerializer, ProfileSerializer
 
@@ -144,16 +145,32 @@ class OrganizationDetailView(APIView):
 
     def put(self, request, organization_id):
         is_duress = VaultService.is_duress_session(request)
-        organization = VaultService.update_organization(organization_id, request.user, request.data, is_duress)
-        
-        if not organization:
-            return Response({"error": "Organization not found"}, status=status.HTTP_404_NOT_FOUND)
         
         if is_duress:
+            organization = VaultService.update_organization(organization_id, request.user, request.data, is_duress)
+            if not organization:
+                return Response({"error": "Organization not found"}, status=status.HTTP_404_NOT_FOUND)
             return Response(organization)
         
-        serializer = OrganizationSerializer(organization)
-        return Response(serializer.data)
+        # Get the organization first
+        try:
+            organization = Organization.objects.get(pk=organization_id, category__user=request.user)
+        except Organization.DoesNotExist:
+            return Response({"error": "Organization not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Use serializer for update (handles category_id for moving between categories)
+        serializer = OrganizationSerializer(
+            organization, 
+            data=request.data, 
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            updated_org = serializer.save()
+            return Response(OrganizationSerializer(updated_org).data)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, organization_id):
         is_duress = VaultService.is_duress_session(request)

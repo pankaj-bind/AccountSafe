@@ -34,6 +34,7 @@ import BrandSearchInput from '../../../components/BrandSearchInput';
 
 // Types
 import type { 
+  Category,
   Organization, 
   CategoryFormData, 
   OrganizationFormData,
@@ -227,12 +228,12 @@ const CategoryManager: React.FC = () => {
     setShowOrgModal(true);
     clearError();
     setEditingOrgId(null);
-    setNewOrg({ name: '', logo_url: '', website_link: '' });
+    setNewOrg({ name: '', logo_url: '', website_link: '', category_id: undefined });
   }, [categories, clearError]);
 
   const closeOrgModal = useCallback(() => {
     setShowOrgModal(false);
-    setNewOrg({ name: '', logo_url: '', website_link: '' });
+    setNewOrg({ name: '', logo_url: '', website_link: '', category_id: undefined });
     setSelectedCategoryId(null);
     setSelectedCategoryName('');
     setEditingOrgId(null);
@@ -260,7 +261,13 @@ const CategoryManager: React.FC = () => {
     setEditingOrgId(org.id);
     setSelectedCategoryId(categoryId);
     setSelectedCategoryName(category?.name || '');
-    setNewOrg({ name: org.name, logo_url: org.logo_url || '', website_link: org.website_link || '' });
+    // Initialize form with current values including category_id for potential move
+    setNewOrg({ 
+      name: org.name, 
+      logo_url: org.logo_url || '', 
+      website_link: org.website_link || '',
+      category_id: categoryId  // Set current category as default
+    });
     setShowOrgModal(true);
     clearError();
   }, [categories, clearError]);
@@ -394,6 +401,8 @@ const CategoryManager: React.FC = () => {
           isEditing={!!editingOrgId}
           newOrg={newOrg}
           digitalWalletDocuments={digitalWalletDocuments}
+          categories={categories}
+          currentCategoryId={selectedCategoryId}
           onOrgChange={setNewOrg}
           onDocumentSelect={handleDocumentSelect}
           onBrandSelect={handleBrandSelect}
@@ -626,6 +635,8 @@ interface OrganizationModalProps {
   isEditing: boolean;
   newOrg: OrganizationFormData;
   digitalWalletDocuments: DocumentType[];
+  categories: Category[]; // All categories for the dropdown
+  currentCategoryId: number | null; // Current category of the organization
   onOrgChange: (data: OrganizationFormData) => void;
   onDocumentSelect: (doc: DocumentType) => void;
   onBrandSelect: (brand: BrandSearchResult) => void;
@@ -638,6 +649,8 @@ const OrganizationModal: React.FC<OrganizationModalProps> = ({
   isEditing,
   newOrg,
   digitalWalletDocuments,
+  categories,
+  currentCategoryId,
   onOrgChange,
   onDocumentSelect,
   onBrandSelect,
@@ -645,6 +658,9 @@ const OrganizationModal: React.FC<OrganizationModalProps> = ({
   onClose,
 }) => {
   const docMatch = isDigitalWallet && findDigitalWalletDocument(newOrg.name);
+  
+  // Filter out Digital Wallet from category options (can't move regular orgs to Digital Wallet)
+  const availableCategories = categories.filter(cat => cat.name !== 'Digital Wallet');
 
   return (
     <div 
@@ -739,6 +755,29 @@ const OrganizationModal: React.FC<OrganizationModalProps> = ({
               />
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
                 Auto-filled from brand selection or add manually
+              </p>
+            </div>
+          )}
+
+          {/* Category Selector (only when editing and not Digital Wallet) */}
+          {isEditing && !isDigitalWallet && availableCategories.length > 1 && (
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                Category <span className="text-zinc-500">(move to different category)</span>
+              </label>
+              <select
+                value={newOrg.category_id ?? currentCategoryId ?? ''}
+                onChange={(e) => onOrgChange({ ...newOrg, category_id: parseInt(e.target.value, 10) })}
+                className="as-input w-full text-sm sm:text-base cursor-pointer"
+              >
+                {availableCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                Move this organization and all its credentials to another category
               </p>
             </div>
           )}

@@ -166,18 +166,45 @@ export const useCategories = (): UseCategoriesReturn => {
     
     try {
       const updatedOrg = await categoryService.updateOrganization(orgId, data);
-      setCategories(prev =>
-        prev.map(cat =>
-          cat.id === categoryId
-            ? {
+      
+      // Check if organization is being moved to a different category
+      const newCategoryId = data.category_id;
+      const isMoving = newCategoryId !== undefined && newCategoryId !== categoryId;
+      
+      setCategories(prev => {
+        if (isMoving) {
+          // Remove from old category and add to new category
+          return prev.map(cat => {
+            if (cat.id === categoryId) {
+              // Remove from old category
+              return {
                 ...cat,
-                organizations: cat.organizations.map(org =>
-                  org.id === orgId ? updatedOrg : org
-                ),
-              }
-            : cat
-        )
-      );
+                organizations: cat.organizations.filter(org => org.id !== orgId),
+              };
+            } else if (cat.id === newCategoryId) {
+              // Add to new category
+              return {
+                ...cat,
+                organizations: [...cat.organizations, updatedOrg],
+              };
+            }
+            return cat;
+          });
+        } else {
+          // Just update in place
+          return prev.map(cat =>
+            cat.id === categoryId
+              ? {
+                  ...cat,
+                  organizations: cat.organizations.map(org =>
+                    org.id === orgId ? updatedOrg : org
+                  ),
+                }
+              : cat
+          );
+        }
+      });
+      
       return updatedOrg;
     } catch (err) {
       console.error('Error updating organization:', err);
