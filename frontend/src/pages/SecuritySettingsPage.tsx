@@ -5,6 +5,7 @@ import { getPinStatus, resetPin, clearPin } from "../services/pinService";
 import { useAuth } from "../contexts/AuthContext";
 import SecuritySettingsPanel from "../components/SecuritySettingsPanel";
 import ActiveSessionsList from "../components/ActiveSessionsList";
+import ImportCredentialsModal from "../features/vault/components/ImportCredentialsModal";
 
 // Icons
 const LockIcon = () => (
@@ -47,6 +48,9 @@ const SecuritySettingsPage: React.FC = () => {
   const [showClearPinModal, setShowClearPinModal] = useState(false);
   const [isClearingPin, setIsClearingPin] = useState(false);
   const [clearPinError, setClearPinError] = useState<string | null>(null);
+
+  // Import credentials modal state
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const { logout: authLogout } = useAuth();
   const navigate = useNavigate();
@@ -451,6 +455,69 @@ const SecuritySettingsPage: React.FC = () => {
           )}
         </div>
 
+        {/* Data Management Section */}
+        <div className="as-card p-4 md:p-6 mb-6">
+          <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
+            <span className="text-blue-500 dark:text-blue-400">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+            </span>
+            Data Management
+          </h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+            Import your passwords from browsers or other password managers
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Import from Browser */}
+            <button
+              type="button"
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <h4 className="font-semibold text-zinc-900 dark:text-white">Import from Browser</h4>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Chrome, Edge, Firefox CSV</p>
+              </div>
+              <svg className="w-5 h-5 text-zinc-400 ml-auto group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            
+            {/* Export Vault */}
+            <button
+              type="button"
+              className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-500/10 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <h4 className="font-semibold text-zinc-900 dark:text-white">Export Vault</h4>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Download encrypted backup</p>
+              </div>
+              <svg className="w-5 h-5 text-zinc-400 ml-auto group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+          
+          <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+            Zero-Knowledge: Files are processed locally and never sent to our servers unencrypted
+          </p>
+        </div>
+
         {/* Security & Safety Section (Panic Button + Ghost Vault) */}
         <div className="mb-6">
           <div className="mb-4">
@@ -844,6 +911,16 @@ const SecuritySettingsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Import Credentials Modal */}
+      <ImportCredentialsModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportComplete={() => {
+          setSuccess("Credentials imported successfully!");
+          setShowImportModal(false);
+        }}
+      />
     </div>
   );
 };

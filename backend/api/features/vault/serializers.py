@@ -96,3 +96,87 @@ class CategoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['name', 'description']
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SMART IMPORT SERIALIZERS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class SmartImportProfileSerializer(serializers.Serializer):
+    """
+    Serializer for a single profile in smart import.
+    
+    ZERO-KNOWLEDGE: Server stores encrypted ciphertext+IV pairs exactly as received.
+    No server-side decryption occurs.
+    """
+    title = serializers.CharField(max_length=255)
+    
+    # Client-encrypted fields with IVs
+    username_encrypted = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    username_iv = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
+    password_encrypted = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    password_iv = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
+    email_encrypted = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    email_iv = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
+    notes_encrypted = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    notes_iv = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+
+class SmartImportOrganizationSerializer(serializers.Serializer):
+    """
+    Serializer for an organization in smart import.
+    Includes nested profiles for bulk creation.
+    """
+    name = serializers.CharField(max_length=255)
+    # Use CharField instead of URLField to allow empty strings
+    logo_url = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=2048)
+    website_link = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=2048)
+    profiles = SmartImportProfileSerializer(many=True)
+
+
+class SmartImportSerializer(serializers.Serializer):
+    """
+    Main serializer for smart import payload.
+    
+    Structure:
+    {
+        "category_name": "Microsoft Edge Passwords",
+        "organizations": [
+            {
+                "name": "Google",
+                "logo_url": "https://...",
+                "website_link": "https://google.com",
+                "profiles": [
+                    {
+                        "title": "Personal Account",
+                        "username_encrypted": "...",
+                        "username_iv": "...",
+                        "password_encrypted": "...",
+                        "password_iv": "...",
+                        ...
+                    }
+                ]
+            }
+        ]
+    }
+    """
+    category_name = serializers.CharField(max_length=255)
+    organizations = SmartImportOrganizationSerializer(many=True)
+    
+    def validate_category_name(self, value):
+        """Validate category name is not empty."""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Category name cannot be empty.")
+        return value.strip()
+    
+    def validate_organizations(self, value):
+        """Validate organizations list."""
+        if not value:
+            raise serializers.ValidationError("At least one organization is required.")
+        if len(value) > 500:
+            raise serializers.ValidationError("Maximum 500 organizations per import.")
+        return value
+

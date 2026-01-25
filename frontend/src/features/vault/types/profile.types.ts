@@ -14,6 +14,7 @@
  */
 export interface Organization {
   id: number;
+  category: number;
   name: string;
   logo_url: string | null;
   logo_image: string | null;

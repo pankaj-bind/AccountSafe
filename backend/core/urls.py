@@ -63,6 +63,9 @@ from api.vault_views import (
     VaultImportView,
 )
 
+# Smart Import view
+from api.features.vault.views import SmartImportView
+
 # TRUE Zero-Knowledge Authentication views (password NEVER sent to server)
 from api.zero_knowledge_auth import (
     ZeroKnowledgeRegisterView,
@@ -157,6 +160,7 @@ urlpatterns = [
     path('api/vault/auth-hash/', VaultAuthHashView.as_view(), name='vault-auth-hash'),
     path('api/vault/export/', VaultExportView.as_view(), name='vault-export'),
     path('api/vault/import/', VaultImportView.as_view(), name='vault-import'),
+    path('api/vault/smart-import/', SmartImportView.as_view(), name='vault-smart-import'),
 
     # ═══════════════════════════════════════════════════════════════════════════
     # TRUE ZERO-KNOWLEDGE AUTHENTICATION

@@ -16,6 +16,7 @@ from .views import (
     VaultView,
     VaultExportView,
     VaultImportView,
+    SmartImportView,
     # Trash/Recycle Bin views
     TrashListView,
     ProfileRestoreView,
@@ -44,4 +45,7 @@ urlpatterns = [
     path('vault/', VaultView.as_view(), name='vault'),
     path('vault/export/', VaultExportView.as_view(), name='vault-export'),
     path('vault/import/', VaultImportView.as_view(), name='vault-import'),
+    
+    # Smart Import (Zero-Knowledge CSV Import)
+    path('vault/smart-import/', SmartImportView.as_view(), name='vault-smart-import'),
 ]

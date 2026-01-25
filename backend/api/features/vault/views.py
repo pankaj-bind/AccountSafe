@@ -439,3 +439,185 @@ class VaultImportView(APIView):
         
         http_status = result.pop('status', 200) if 'status' in result else 200
         return Response(result, status=http_status)
+
+
+# ===========================
+# SMART IMPORT VIEW
+# ===========================
+
+class SmartImportView(APIView):
+    """
+    Smart Import - Zero-Knowledge Bulk Password Import
+    
+    SECURITY: Server receives pre-encrypted credential blobs.
+    - Passwords are encrypted client-side (AES-256-GCM)
+    - Server stores encrypted ciphertext+IV exactly as received
+    - Server CANNOT decrypt the credentials
+    
+    Endpoint: POST /api/vault/smart-import/
+    
+    This endpoint:
+    1. Creates organizations if they don't exist
+    2. Reuses existing organizations (by name) if they do
+    3. Bulk creates profiles with encrypted credentials
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        from django.db import transaction
+        from .serializers import SmartImportSerializer
+        from api.models import Category, Organization, Profile
+        
+        # Check for duress mode
+        token_key = request.auth.key if hasattr(request.auth, 'key') else str(request.auth)
+        from api.models import DuressSession
+        is_duress = DuressSession.is_duress_token(token_key)
+        
+        # Duress mode doesn't support smart import (for security)
+        if is_duress:
+            return Response(
+                {'error': 'Smart import is not available in duress mode'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Validate payload
+        serializer = SmartImportSerializer(data=request.data, context={'request': request})
+        if not serializer.is_valid():
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Smart import validation failed: {serializer.errors}")
+            logger.error(f"Request data keys: {request.data.keys() if hasattr(request.data, 'keys') else 'N/A'}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = serializer.validated_data
+        category_name = validated_data['category_name']
+        organizations_data = validated_data['organizations']
+        
+        # Track results
+        organizations_created = 0
+        organizations_reused = 0
+        profiles_imported = 0
+        duplicates_skipped = 0
+        errors = []
+        
+        try:
+            with transaction.atomic():
+                # Get or create the category with the name from the file
+                category, category_created = Category.objects.get_or_create(
+                    user=request.user,
+                    name__iexact=category_name,
+                    defaults={'name': category_name}
+                )
+                
+                for org_data in organizations_data:
+                    org_name = org_data['name']
+                    org_logo = org_data.get('logo_url') or None
+                    org_website = org_data.get('website_link') or None
+                    profiles_data = org_data.get('profiles', [])
+                    
+                    # Check if organization already exists (case-insensitive)
+                    existing_org = Organization.objects.filter(
+                        category=category,
+                        name__iexact=org_name
+                    ).first()
+                    
+                    if existing_org:
+                        organization = existing_org
+                        organizations_reused += 1
+                        
+                        # Update logo/website if they're empty and we have new data
+                        updated = False
+                        if not organization.logo_url and org_logo:
+                            organization.logo_url = org_logo
+                            updated = True
+                        if not organization.website_link and org_website:
+                            organization.website_link = org_website
+                            updated = True
+                        if updated:
+                            organization.save()
+                    else:
+                        # Create new organization
+                        organization = Organization.objects.create(
+                            category=category,
+                            name=org_name,
+                            logo_url=org_logo,
+                            website_link=org_website
+                        )
+                        organizations_created += 1
+                    
+                    # Bulk create profiles (with duplicate detection)
+                    profiles_to_create = []
+                    org_duplicates = 0
+                    
+                    # Get existing profile titles for this organization to check for duplicates
+                    # Since credentials are encrypted with different IVs each time, we can't compare
+                    # encrypted values. Instead, we use title as a duplicate indicator.
+                    existing_titles = set(
+                        Profile.objects.filter(organization=organization).values_list('title', flat=True)
+                    )
+                    
+                    # Also track new profile titles being added in this batch to avoid duplicates within CSV
+                    batch_titles = set()
+                    
+                    for profile_data in profiles_data:
+                        try:
+                            title = profile_data.get('title', 'Imported Credential')
+                            
+                            # Skip if a profile with same title already exists in the organization
+                            if title in existing_titles:
+                                org_duplicates += 1
+                                continue
+                            
+                            # Skip if this title is already in the current batch (duplicate in CSV)
+                            if title in batch_titles:
+                                org_duplicates += 1
+                                continue
+                            
+                            batch_titles.add(title)
+                            
+                            profile = Profile(
+                                organization=organization,
+                                title=title,
+                                # Encrypted fields - stored exactly as received
+                                username_encrypted=profile_data.get('username_encrypted'),
+                                username_iv=profile_data.get('username_iv'),
+                                password_encrypted=profile_data.get('password_encrypted'),
+                                password_iv=profile_data.get('password_iv'),
+                                email_encrypted=profile_data.get('email_encrypted'),
+                                email_iv=profile_data.get('email_iv'),
+                                notes_encrypted=profile_data.get('notes_encrypted'),
+                                notes_iv=profile_data.get('notes_iv'),
+                            )
+                            profiles_to_create.append(profile)
+                        except Exception as e:
+                            errors.append(f"Failed to create profile for {org_name}: {str(e)}")
+                    
+                    # Bulk insert profiles
+                    if profiles_to_create:
+                        Profile.objects.bulk_create(profiles_to_create)
+                        profiles_imported += len(profiles_to_create)
+                    
+                    # Add org duplicates to total
+                    duplicates_skipped += org_duplicates
+                
+                return Response({
+                    'success': True,
+                    'message': f'Successfully imported {profiles_imported} credentials' + (f' ({duplicates_skipped} duplicates skipped)' if duplicates_skipped > 0 else ''),
+                    'organizations_created': organizations_created,
+                    'organizations_reused': organizations_reused,
+                    'profiles_imported': profiles_imported,
+                    'duplicates_skipped': duplicates_skipped,
+                    'errors': errors[:10]  # Limit errors to first 10
+                }, status=status.HTTP_201_CREATED)
+                
+        except Category.DoesNotExist:
+            return Response(
+                {'error': 'Category not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Import failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
