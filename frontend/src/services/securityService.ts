@@ -10,6 +10,7 @@
  */
 
 import apiClient from '../api/apiClient';
+import { logger } from '../utils/logger';
 import { 
   generateSalt, 
   deriveAuthHash, 
@@ -359,7 +360,7 @@ export async function setDuressPassword(
     duress_salt: duressSalt
   });
   
-  console.log('✅ Duress password and decoy vault set with zero-knowledge (password NEVER sent)');
+  logger.log('✅ Duress password and decoy vault set with zero-knowledge (password NEVER sent)');
   
   return response.data;
 }
@@ -394,7 +395,7 @@ export async function clearDuressPassword(masterPassword: string): Promise<void>
     master_auth_hash: masterAuthHash
   });
   
-  console.log('✅ Duress password cleared with zero-knowledge (password NEVER sent)');
+  logger.log('✅ Duress password cleared with zero-knowledge (password NEVER sent)');
 }
 
 /**

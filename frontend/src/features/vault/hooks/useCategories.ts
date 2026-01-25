@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as categoryService from '../services/categoryService';
+import { logger } from '../../../utils/logger';
 import type {
   Category,
   Organization,
@@ -266,7 +267,7 @@ export const useCategories = (): UseCategoriesReturn => {
   // Listen for vault mode changes (normal ↔ duress)
   useEffect(() => {
     const handleModeChange = () => {
-      console.log('🔄 Mode changed - refetching categories...');
+      logger.log('🔄 Mode changed - refetching categories...');
       fetchCategories();
     };
     

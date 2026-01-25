@@ -14,6 +14,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import zxcvbn from 'zxcvbn';
+import { logger } from '../../../utils/logger';
 
 // Services
 import * as profileService from '../services/profileService';
@@ -144,7 +145,7 @@ export function useProfiles(
       // Update password hash for uniqueness checking
       await updatePasswordHash(profileId, password);
 
-      console.log(`Security metrics updated for profile ${profileId}:`, {
+      logger.log(`Security metrics updated for profile ${profileId}:`, {
         strength: strengthResult.score,
         breached: breachResult.isBreached,
         breachCount: breachResult.breachCount
@@ -559,7 +560,7 @@ export function useProfiles(
   // ─────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     const handleModeChange = () => {
-      console.log('🔄 Mode changed - refetching profiles...');
+      logger.log('🔄 Mode changed - refetching profiles...');
       refreshOrganization();
       fetchProfiles();
     };

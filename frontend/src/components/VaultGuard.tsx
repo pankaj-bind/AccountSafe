@@ -18,6 +18,7 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrypto } from '../services/CryptoContext';
+import { logger } from '../utils/logger';
 import { usePanic } from '../contexts/PanicContext';
 import { useAuth } from '../contexts/AuthContext';
 import { storeKeyData } from '../services/encryptionService';
@@ -91,7 +92,7 @@ const VaultGuard: React.FC<VaultGuardProps> = ({ children }) => {
                 unlockPanic();
               }
               
-              console.log(`✅ Vault unlocked: ${isDuress ? 'DURESS' : 'NORMAL'} mode`);
+              logger.log(`✅ Vault unlocked: ${isDuress ? 'DURESS' : 'NORMAL'} mode`);
               
               setTimeout(() => {
                 window.dispatchEvent(new Event('vault-mode-changed'));
@@ -107,7 +108,7 @@ const VaultGuard: React.FC<VaultGuardProps> = ({ children }) => {
         // Master auth failed, try duress salt if available
         const axiosError = masterError as { response?: { status?: number } };
         if (axiosError.response?.status === 401 && duressSalt) {
-          console.log('🔄 Trying alternate password...');
+          logger.log('🔄 Trying alternate password...');
           
           const duressAuthHash = deriveAuthHash(password, duressSalt);
           
@@ -130,7 +131,7 @@ const VaultGuard: React.FC<VaultGuardProps> = ({ children }) => {
                   unlockPanic();
                 }
                 
-                console.log(`✅ Vault unlocked: ${isDuress ? 'DURESS' : 'NORMAL'} mode`);
+                logger.log(`✅ Vault unlocked: ${isDuress ? 'DURESS' : 'NORMAL'} mode`);
                 
                 setTimeout(() => {
                   window.dispatchEvent(new Event('vault-mode-changed'));
@@ -169,7 +170,7 @@ const VaultGuard: React.FC<VaultGuardProps> = ({ children }) => {
 
   // Show loading state while checking vault status
   if (isLoading) {
-    console.log('VaultGuard: Loading vault...');
+    logger.log('VaultGuard: Loading vault...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#09090b]">
         <div className="text-center">
@@ -182,7 +183,7 @@ const VaultGuard: React.FC<VaultGuardProps> = ({ children }) => {
 
   // If vault is locked (for ANY reason), show the Session Verification screen
   if (!isUnlocked) {
-    console.log('VaultGuard: Vault is locked, showing Session Verification');
+    logger.log('VaultGuard: Vault is locked, showing Session Verification');
     return (
       <PanicLockScreen
         isOpen={true}
@@ -192,7 +193,7 @@ const VaultGuard: React.FC<VaultGuardProps> = ({ children }) => {
     );
   }
   
-  console.log('VaultGuard: Vault is unlocked, rendering children');
+  logger.log('VaultGuard: Vault is unlocked, rendering children');
 
   // Vault is unlocked - render children
   return <>{children}</>;

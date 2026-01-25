@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { clearEncryptionKeys } from '../services/encryptionService';
+import { logger } from '../utils/logger';
 
 interface PanicContextType {
   isPanicLocked: boolean;
@@ -53,12 +54,12 @@ export const PanicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === PANIC_STATE_KEY) {
         const newValue = e.newValue === 'true';
-        console.log('[PanicContext] Storage change detected from another tab:', newValue);
+        logger.log('[PanicContext] Storage change detected from another tab:', newValue);
         setIsPanicLocked(newValue);
         
         // If panic was triggered in another tab, reload this tab to show lock screen
         if (newValue) {
-          console.log('🚨 PANIC MODE ACTIVATED IN ANOTHER TAB - Reloading...');
+          logger.log('🚨 PANIC MODE ACTIVATED IN ANOTHER TAB - Reloading...');
           window.location.reload();
         }
       }
@@ -72,7 +73,7 @@ export const PanicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const triggerPanic = useCallback((lockVault?: () => void) => {
-    console.log('🚨 PANIC MODE ACTIVATED - Locking ALL tabs');
+    logger.log('🚨 PANIC MODE ACTIVATED - Locking ALL tabs');
     
     // Store current location so we can return to it after unlock
     const currentPath = window.location.pathname;
@@ -94,7 +95,7 @@ export const PanicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const unlock = useCallback(() => {
-    console.log('✅ Panic mode unlocked');
+    logger.log('✅ Panic mode unlocked');
     setIsPanicLocked(false);
     localStorage.removeItem(PANIC_STATE_KEY);
     // Keep previousLocation in memory for navigation, but remove from storage

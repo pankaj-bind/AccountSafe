@@ -19,6 +19,7 @@
 
 import axios from 'axios';
 import apiClient from '../api/apiClient';
+import { logger } from '../utils/logger';
 import { broadcastLogout } from '../hooks/useGlobalLogout';
 import { generateSalt, deriveAuthHash, createEmptyVault, encryptVault, deriveMasterKey } from './cryptoService';
 
@@ -92,7 +93,7 @@ export const register = async (
       // Store encrypted vault on server (server cannot decrypt)
       await apiClient.put('/vault/', { vault_blob: encryptedVault });
       
-      console.log('✅ Zero-knowledge registration complete (password NEVER sent to server)');
+      logger.log('✅ Zero-knowledge registration complete (password NEVER sent to server)');
     } catch (error) {
       console.error('Failed to initialize vault (user can set up later):', error);
     }
@@ -169,10 +170,10 @@ export const login = async (username: string, password: string, turnstileToken?:
     localStorage.setItem(`encryption_salt_${username}`, responseSalt);
     
     if (isDuress) {
-      console.log('⚠️ Duress mode detected - will show decoy vault');
+      logger.log('⚠️ Duress mode detected - will show decoy vault');
     }
     
-    console.log('✅ Zero-knowledge login successful (password NEVER sent to server)');
+    logger.log('✅ Zero-knowledge login successful (password NEVER sent to server)');
     
     return {
       ...response.data,
@@ -182,7 +183,7 @@ export const login = async (username: string, password: string, turnstileToken?:
     // If login failed and duress_salt exists, try with duress salt
     const axiosError = error as { response?: { status?: number } };
     if (axiosError.response?.status === 401 && duressSalt) {
-      console.log('🔄 Master auth failed, trying duress salt...');
+      logger.log('🔄 Master auth failed, trying duress salt...');
       
       const duressAuthHash = deriveAuthHash(password, duressSalt);
       
@@ -201,10 +202,10 @@ export const login = async (username: string, password: string, turnstileToken?:
       localStorage.setItem(`encryption_salt_${username}`, responseSalt);
       
       if (isDuress) {
-        console.log('⚠️ Duress mode activated - showing decoy vault');
+        logger.log('⚠️ Duress mode activated - showing decoy vault');
       }
       
-      console.log('✅ Zero-knowledge login successful with duress mode (password NEVER sent to server)');
+      logger.log('✅ Zero-knowledge login successful with duress mode (password NEVER sent to server)');
       
       return {
         ...response.data,
@@ -231,7 +232,7 @@ export const logout = () => {
   // 📡 Broadcast logout to all other tabs
   broadcastLogout('USER_LOGOUT');
   
-  console.log('🔒 Logged out - all sensitive data cleared');
+  logger.log('🔒 Logged out - all sensitive data cleared');
 };
 
 /**
@@ -278,14 +279,14 @@ export const relogin = async (username: string, password: string): Promise<{ suc
       localStorage.setItem('username', username);
       localStorage.setItem(`encryption_salt_${username}`, responseSalt!);
       
-      console.log('✅ Zero-knowledge re-login successful (password NEVER sent to server)');
+      logger.log('✅ Zero-knowledge re-login successful (password NEVER sent to server)');
       
       return { success: true, salt: responseSalt, isDuress };
     } catch (error: unknown) {
       // If login failed and duress_salt exists, try with duress salt
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 401 && duressSalt) {
-        console.log('🔄 Master auth failed in relogin, trying duress salt...');
+        logger.log('🔄 Master auth failed in relogin, trying duress salt...');
         
         const duressAuthHash = deriveAuthHash(password, duressSalt);
         
@@ -303,7 +304,7 @@ export const relogin = async (username: string, password: string): Promise<{ suc
         localStorage.setItem('username', username);
         localStorage.setItem(`encryption_salt_${username}`, responseSalt!);
         
-        console.log('✅ Zero-knowledge re-login with duress mode successful (password NEVER sent to server)');
+        logger.log('✅ Zero-knowledge re-login with duress mode successful (password NEVER sent to server)');
         
         return { success: true, salt: responseSalt, isDuress };
       }
@@ -344,7 +345,7 @@ export const deleteAccount = async (password: string) => {
     auth_hash: authHash 
   });
   
-  console.log('✅ Account deleted with zero-knowledge verification (password NEVER sent)');
+  logger.log('✅ Account deleted with zero-knowledge verification (password NEVER sent)');
   
   return response.data;
 };
@@ -389,8 +390,8 @@ export const setNewPasswordWithOTP = async (email: string, otp: string, password
     new_salt: newSalt
   });
   
-  console.log('✅ Password reset complete with zero-knowledge (password NEVER sent)');
-  console.log('⚠️ WARNING: Old vault data cannot be decrypted with new password');
+  logger.log('✅ Password reset complete with zero-knowledge (password NEVER sent)');
+  logger.log('⚠️ WARNING: Old vault data cannot be decrypted with new password');
   
   return response.data;
 };
@@ -445,7 +446,7 @@ export const changePassword = async (currentPassword: string, newPassword: strin
   // Update local salt storage
   localStorage.setItem(`encryption_salt_${username}`, newSalt);
   
-  console.log('✅ Password changed with zero-knowledge (password NEVER sent)');
+  logger.log('✅ Password changed with zero-knowledge (password NEVER sent)');
   
   return response.data;
 };

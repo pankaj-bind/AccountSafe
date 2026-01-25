@@ -12,6 +12,7 @@
 
 import axios from 'axios';
 import apiClient from '../../../api/apiClient';
+import { logger } from '../../../utils/logger';
 import { 
   generateSalt, 
   deriveAuthHash, 
@@ -97,7 +98,7 @@ export async function register(
       const emptyVault = createEmptyVault();
       const encryptedVault = await encryptVault(emptyVault, masterKey);
       await apiClient.put('/vault/', { vault_blob: encryptedVault });
-      console.log('✅ Zero-knowledge registration complete');
+      logger.log('✅ Zero-knowledge registration complete');
     } catch (error) {
       console.error('Failed to initialize vault:', error);
     }
@@ -160,7 +161,7 @@ export async function login(
     localStorage.setItem('username', username);
     localStorage.setItem(`encryption_salt_${username}`, responseSalt);
     
-    console.log('✅ Zero-knowledge login successful');
+    logger.log('✅ Zero-knowledge login successful');
     
     return {
       ...response.data,

@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../utils/logger';
 import { usePanic } from '../contexts/PanicContext';
 import { useCrypto } from '../services/CryptoContext';
 import { storeKeyData } from '../services/encryptionService';
@@ -97,7 +98,7 @@ const GlobalPanicHandler: React.FC = () => {
               unlockPanic();
               
               const targetLocation = previousLocation || '/';
-              console.log(`✅ Mode switch complete: ${isDuress ? 'DURESS' : 'NORMAL'} mode`);
+              logger.log(`✅ Mode switch complete: ${isDuress ? 'DURESS' : 'NORMAL'} mode`);
               
               // Force navigation to refresh the page with new vault data
               navigate(targetLocation, { replace: true });
@@ -119,7 +120,7 @@ const GlobalPanicHandler: React.FC = () => {
         // Master auth failed, try duress salt if available
         const axiosError = masterError as { response?: { status?: number } };
         if (axiosError.response?.status === 401 && duressSalt) {
-          console.log('🔄 Trying alternate password...');
+          logger.log('🔄 Trying alternate password...');
           
           const duressAuthHash = deriveAuthHash(password, duressSalt);
           
@@ -142,7 +143,7 @@ const GlobalPanicHandler: React.FC = () => {
                 unlockPanic();
                 
                 const targetLocation = previousLocation || '/';
-                console.log(`✅ Mode switch complete: ${isDuress ? 'DURESS' : 'NORMAL'} mode`);
+                logger.log(`✅ Mode switch complete: ${isDuress ? 'DURESS' : 'NORMAL'} mode`);
                 
                 navigate(targetLocation, { replace: true });
                 

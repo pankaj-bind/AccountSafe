@@ -9,6 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { generateSalt, generateRecoveryKey } from '../utils/encryption';
+import { logger } from '../utils/logger';
 
 interface KeyData {
   salt: string;
@@ -59,7 +60,7 @@ export function getKeyData(): KeyData | null {
 export function clearEncryptionKeys(): void {
   // No session storage to clear - master key is in memory only (CryptoContext)
   // This function is kept for API compatibility
-  console.log('🔒 Clearing encryption state (zero-knowledge: nothing in storage)');
+  logger.log('🔒 Clearing encryption state (zero-knowledge: nothing in storage)');
 }
 
 /**

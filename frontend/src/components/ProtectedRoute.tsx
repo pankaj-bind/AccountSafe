@@ -1,6 +1,7 @@
 import React, { ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../utils/logger';
 import { usePanic } from '../contexts/PanicContext';
 import { useCrypto } from '../services/CryptoContext';
 
@@ -19,7 +20,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
    */
   useEffect(() => {
     if (isPanicLocked && isUnlocked) {
-      console.log('🚨 Panic mode active - locking vault');
+      logger.log('🚨 Panic mode active - locking vault');
       lock('panic');
     }
   }, [isPanicLocked, isUnlocked, lock]);
@@ -30,7 +31,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
    */
   useEffect(() => {
     if (isUnlocked && isPanicLocked) {
-      console.log('✅ Vault unlocked - clearing panic state');
+      logger.log('✅ Vault unlocked - clearing panic state');
       unlockPanic();
     }
   }, [isUnlocked, isPanicLocked, unlockPanic]);

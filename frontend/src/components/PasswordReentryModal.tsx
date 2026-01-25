@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { storeKeyData } from '../services/encryptionService';
+import { logger } from '../utils/logger';
 import { useCrypto } from '../services/CryptoContext';
 import axios from 'axios';
 
@@ -73,7 +74,7 @@ const PasswordReentryModal: React.FC<PasswordReentryModalProps> = ({
       
       // If master salt failed and duress_salt exists, try with duress salt
       if (duressSalt) {
-        console.log('🔄 Master password failed, trying duress password...');
+        logger.log('🔄 Master password failed, trying duress password...');
         result = await unlock(password, duressSalt);
         
         if (result.success) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { login } from '../services/authService';
+import { logger } from '../utils/logger';
 import { getPinStatus } from '../services/pinService';
 import { useAuth } from '../contexts/AuthContext';
 import { useCrypto } from '../services/CryptoContext';
@@ -137,7 +138,7 @@ const LoginPage: React.FC = () => {
                     setIsLoading(false);
                     return;
                 }
-                console.log('✅ Vault unlocked successfully after login');
+                logger.log('✅ Vault unlocked successfully after login');
             } else {
                 setError('No encryption salt found. Please contact support.');
                 setIsLoading(false);

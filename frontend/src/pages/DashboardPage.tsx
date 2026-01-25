@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useProfile } from '../contexts/ProfileContext';
+import { logger } from '../utils/logger';
 import apiClient from '../api/apiClient';
 import { formatLoginDateTime, formatNullableValue } from '../utils/formatters';
 import { DashboardSkeleton } from '../components/Skeleton';
@@ -205,7 +206,7 @@ const DashboardPage: React.FC = () => {
   // Listen for mode changes (normal ↔ duress) to refetch data
   useEffect(() => {
     const handleModeChange = () => {
-      console.log('🔄 Mode changed - refetching dashboard data...');
+      logger.log('🔄 Mode changed - refetching dashboard data...');
       fetchDashboardData();
     };
     

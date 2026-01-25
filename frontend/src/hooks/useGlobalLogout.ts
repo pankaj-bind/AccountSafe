@@ -1,5 +1,6 @@
 // hooks/useGlobalLogout.ts
 import { useEffect, useRef } from 'react';
+import { logger } from '../utils/logger';
 
 /**
  * Cross-Tab Global Logout Hook using Broadcast Channel API
@@ -35,24 +36,24 @@ export const useGlobalLogout = (onLogout: () => void) => {
     // Listen for logout messages from other tabs
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'LOGOUT') {
-        console.log('🔒 Cross-tab logout detected - logging out this tab');
+        logger.log('🔒 Cross-tab logout detected - logging out this tab');
         onLogout();
       } else if (event.data?.type === 'SESSION_EXPIRED') {
-        console.log('⏱️ Cross-tab session expiry detected - logging out this tab');
+        logger.log('⏱️ Cross-tab session expiry detected - logging out this tab');
         onLogout();
       }
     };
 
     channel.addEventListener('message', handleMessage);
 
-    console.log('✅ Global logout listener initialized');
+    logger.log('✅ Global logout listener initialized');
 
     // Cleanup: Close the channel when component unmounts
     return () => {
       channel.removeEventListener('message', handleMessage);
       channel.close();
       channelRef.current = null;
-      console.log('🧹 Global logout listener cleaned up');
+      logger.log('🧹 Global logout listener cleaned up');
     };
   }, [onLogout]);
 
@@ -82,7 +83,7 @@ export const broadcastLogout = (reason: 'USER_LOGOUT' | 'SESSION_EXPIRED' = 'USE
       reason,
     });
     
-    console.log(`📡 Broadcast sent: ${messageType}`);
+    logger.log(`📡 Broadcast sent: ${messageType}`);
     
     // Close the channel after sending the message
     channel.close();

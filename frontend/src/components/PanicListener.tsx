@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import { getPanicDuressSettings } from '../services/securityService';
 import { usePanic } from '../contexts/PanicContext';
+import { logger } from '../utils/logger';
 import { useCrypto } from '../services/CryptoContext';
 
 interface PanicListenerProps {
@@ -29,17 +30,17 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
   const fetchPanicSettings = useCallback(async () => {
     try {
       fetchCountRef.current += 1;
-      console.log(`[PanicListener] Fetching settings (attempt ${fetchCountRef.current})...`);
+      logger.log(`[PanicListener] Fetching settings (attempt ${fetchCountRef.current})...`);
       
       const settings = await getPanicDuressSettings();
       
       if (settings && settings.panic_shortcut && Array.isArray(settings.panic_shortcut) && settings.panic_shortcut.length > 0) {
         shortcutRef.current = settings.panic_shortcut;
-        console.log('[PanicListener] Panic shortcut loaded:', settings.panic_shortcut);
+        logger.log('[PanicListener] Panic shortcut loaded:', settings.panic_shortcut);
       } else {
         // Default fallback: Escape key
         shortcutRef.current = ['Escape'];
-        console.log('[PanicListener] Using default panic shortcut: Escape');
+        logger.log('[PanicListener] Using default panic shortcut: Escape');
       }
     } catch (error) {
       // Silently fail - use default shortcut
@@ -56,7 +57,7 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
   // Listen for shortcut updates from SecuritySettingsPanel
   useEffect(() => {
     const handleShortcutUpdate = () => {
-      console.log('[PanicListener] Received panicShortcutUpdated event, refetching...');
+      logger.log('[PanicListener] Received panicShortcutUpdated event, refetching...');
       fetchPanicSettings();
     };
 
@@ -72,7 +73,7 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
    * Uses zero-knowledge architecture - wipes master key from memory
    */
   const triggerPanic = useCallback(() => {
-    console.log('🚨 PANIC MODE ACTIVATED');
+    logger.log('🚨 PANIC MODE ACTIVATED');
     
     // 1. Call optional callback for additional cleanup
     if (onPanic) {
@@ -87,7 +88,7 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
   // Listen for panic mode trigger from the UI button
   useEffect(() => {
     const handleTriggerPanic = () => {
-      console.log('[PanicListener] Received triggerPanicMode event from UI button');
+      logger.log('[PanicListener] Received triggerPanicMode event from UI button');
       triggerPanic();
     };
 
@@ -130,7 +131,7 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
         if (!shortcut || !Array.isArray(shortcut) || shortcut.length === 0) {
           // Use Escape as emergency fallback
           if (mainKey === 'Escape') {
-            console.log('🚨 Emergency Escape key detected!');
+            logger.log('🚨 Emergency Escape key detected!');
             event.preventDefault();
             event.stopPropagation();
             triggerPanic();
@@ -148,7 +149,7 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
         const matches = normalizedPressed.every((key, index) => key === normalizedShortcut[index]);
         
         if (matches) {
-          console.log('🚨 Panic shortcut detected!', shortcut);
+          logger.log('🚨 Panic shortcut detected!', shortcut);
           event.preventDefault();
           event.stopPropagation();
           event.stopImmediatePropagation();
@@ -161,7 +162,7 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
 
     // Add listener with capture phase to catch events early
     // Keep listener active all the time - check isPanicLocked inside handler
-    console.log('[PanicListener] Setting up keyboard listener. Shortcut:', shortcutRef.current);
+    logger.log('[PanicListener] Setting up keyboard listener. Shortcut:', shortcutRef.current);
     window.addEventListener('keydown', handleKeyDown, true);
     document.addEventListener('keydown', handleKeyDown, true);
 
