@@ -69,16 +69,23 @@ export const createOrganization = async (
 
 /**
  * Update an existing organization.
+ * Supports moving to a different category via category_id.
  */
 export const updateOrganization = async (
   organizationId: number,
   data: Partial<OrganizationFormData>
 ): Promise<Organization> => {
-  const payload = {
+  const payload: Record<string, unknown> = {
     name: data.name,
     logo_url: data.logo_url || null,
     website_link: data.website_link || null,
   };
+  
+  // Include category_id only if provided (for moving organization)
+  if (data.category_id !== undefined) {
+    payload.category_id = data.category_id;
+  }
+  
   const response = await apiClient.put<Organization>(
     `organizations/${organizationId}/`,
     payload

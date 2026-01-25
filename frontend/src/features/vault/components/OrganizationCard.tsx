@@ -64,6 +64,7 @@ interface OrganizationCardProps {
 const OrganizationCard: React.FC<OrganizationCardProps> = ({ org, onDelete, onEdit, onClick }) => {
   const [imageError, setImageError] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [isCardHovered, setIsCardHovered] = useState(false);
 
   // Check if this org matches a Digital Wallet document type
   const docMatch = findDigitalWalletDocument(org.name);
@@ -72,18 +73,21 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({ org, onDelete, onEd
   return (
     <div
       onClick={onClick}
+      onMouseEnter={() => setIsCardHovered(true)}
+      onMouseLeave={() => {
+        setIsCardHovered(false);
+        setShowMenu(false);
+      }}
       className="group relative bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-800 rounded-lg sm:rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-300 hover:border-zinc-400 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-lg hover:shadow-zinc-300/50 dark:hover:shadow-zinc-950/50 hover:scale-[1.02]"
     >
       {/* Kebab Menu */}
       <div 
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-        onMouseEnter={() => setShowMenu(true)}
-        onMouseLeave={() => setShowMenu(false)}
+        className={`absolute top-2 right-2 transition-opacity duration-200 ${isCardHovered || showMenu ? 'opacity-100' : 'opacity-0'}`}
       >
         <div className="relative">
           <button
             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-            className="w-6 h-6 sm:w-7 sm:h-7 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-full flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+            className={`w-6 h-6 sm:w-7 sm:h-7 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-full flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors ${showMenu ? 'bg-zinc-100 dark:bg-zinc-700' : ''}`}
           >
             <DotsVerticalIcon className="w-4 h-4" />
           </button>

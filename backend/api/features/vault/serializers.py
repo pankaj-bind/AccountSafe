@@ -71,14 +71,42 @@ class ProfileSerializer(serializers.ModelSerializer):
 class OrganizationSerializer(serializers.ModelSerializer):
     """Serializer for Organization"""
     profile_count = serializers.SerializerMethodField()
+    # Accept category_id for moving organizations between categories
+    category_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
         model = Organization
-        fields = ['id', 'category', 'name', 'logo_url', 'website_link', 'logo_image', 'profile_count', 'created_at', 'updated_at']
+        fields = ['id', 'category', 'category_id', 'name', 'logo_url', 'website_link', 'logo_image', 'profile_count', 'created_at', 'updated_at']
         read_only_fields = ['category', 'created_at', 'updated_at']
     
     def get_profile_count(self, obj):
         return obj.profiles.count()
+    
+    def validate_category_id(self, value):
+        """Validate that the category_id belongs to the request user."""
+        request = self.context.get('request')
+        if request and request.user:
+            try:
+                Category.objects.get(id=value, user=request.user)
+            except Category.DoesNotExist:
+                raise serializers.ValidationError(
+                    "Category not found or does not belong to you."
+                )
+        return value
+    
+    def update(self, instance, validated_data):
+        """Handle category_id to move organization to a different category."""
+        category_id = validated_data.pop('category_id', None)
+        if category_id is not None:
+            request = self.context.get('request')
+            if request and request.user:
+                try:
+                    new_category = Category.objects.get(id=category_id, user=request.user)
+                    instance.category = new_category
+                except Category.DoesNotExist:
+                    pass  # Validation should have caught this
+        
+        return super().update(instance, validated_data)
 
 
 class CategorySerializer(serializers.ModelSerializer):

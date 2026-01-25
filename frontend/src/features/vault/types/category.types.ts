@@ -66,6 +66,8 @@ export interface OrganizationFormData {
   name: string;
   logo_url: string;
   website_link: string;
+  /** Optional: Set to move organization to a different category */
+  category_id?: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
