@@ -14,6 +14,8 @@
 // - Encryption/decryption happens entirely in browser
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { logger } from './logger';
+
 const PBKDF2_ITERATIONS = 600000; // OWASP 2023 recommendation
 const SALT_LENGTH = 16; // 128 bits
 const IV_LENGTH = 12; // 96 bits (recommended for GCM)
@@ -299,7 +301,7 @@ export async function decryptCredentialFields(
         const value = await decryptData(ciphertext, iv, key);
         return { fieldName, value };
       } catch (error) {
-        console.warn(`Failed to decrypt ${fieldName}:`, error);
+        logger.warn(`Failed to decrypt ${fieldName}:`, error);
         return { fieldName, value: undefined };
       }
     }
@@ -326,7 +328,7 @@ export async function decryptCredentialFields(
 export function storeMasterKey(_key: CryptoKey): void {
   // We can't directly store CryptoKey, so we'll store the password temporarily
   // In a production app, you'd use a more sophisticated key management system
-  console.warn('Master key stored in memory (session only)');
+  // Note: Master key is stored in memory only (CryptoContext.tsx)
 }
 
 /**
