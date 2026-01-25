@@ -1,0 +1,74 @@
+# =============================================================================
+# AccountSafe Frontend - Docker Build Context Exclusions
+# =============================================================================
+# These files are excluded from Docker build context to:
+# 1. Reduce build time (node_modules is HUGE)
+# 2. Reduce image size  
+# 3. Ensure clean builds
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (will be installed fresh in container)
+node_modules/
+.npm/
+.yarn/
+
+# Build output (created during Docker build)
+build/
+dist/
+.next/
+out/
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Documentation (not needed in image)
+*.md
+!README.md
+docs/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Storybook
+.storybook/
+storybook-static/
+
+# Local nginx configs (production uses separate)
+nginx.local.conf

@@ -1,0 +1,153 @@
+# =============================================================================
+# AccountSafe - Production Docker Compose
+# =============================================================================
+# AWS EC2 Deployment Configuration
+# 
+# Usage:
+#   1. Copy .env.production.example to .env and configure
+#   2. Run: ./init-letsencrypt.sh (first time only)
+#   3. Run: docker-compose -f docker-compose.prod.yml up -d
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # PostgreSQL Database
+  # ===========================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: accountsafe-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-accountsafe}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-accountsafe}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+    # Security: No exposed ports - internal network only
+
+  # ===========================================================================
+  # Django Backend (Gunicorn)
+  # ===========================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: accountsafe-backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Django Core
+      DEBUG: "False"
+      SECRET_KEY: ${SECRET_KEY:?Secret key required}
+      ALLOWED_HOSTS: ${DOMAIN},backend,localhost
+      
+      # Database (internal Docker network)
+      DB_NAME: ${DB_NAME:-accountsafe}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?Database password required}
+      DB_HOST: db
+      DB_PORT: "5432"
+      
+      # CORS (production domain with HTTPS)
+      CORS_ALLOWED_ORIGINS: https://${DOMAIN}
+      
+      # Email
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-}
+      
+      # Cloudflare Turnstile
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+    networks:
+      - internal
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate --noinput &&
+             gunicorn --bind 0.0.0.0:8000 
+                      --workers ${GUNICORN_WORKERS:-3} 
+                      --threads 2 
+                      --worker-class gthread
+                      --worker-tmp-dir /dev/shm
+                      --access-logfile -
+                      --error-logfile -
+                      --capture-output
+                      core.wsgi:application"
+    # Security: No exposed ports - internal network only
+
+  # ===========================================================================
+  # Nginx Frontend (SSL Termination + Static Files)
+  # ===========================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: accountsafe-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Nginx configuration
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # SSL certificates (Let's Encrypt)
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+      # Django static/media files
+      - static_files:/app/staticfiles:ro
+      - media_files:/app/media:ro
+    networks:
+      - internal
+      - external
+    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+
+  # ===========================================================================
+  # Certbot (SSL Certificate Management)
+  # ===========================================================================
+  certbot:
+    image: certbot/certbot:latest
+    container_name: accountsafe-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    # Renew certificates every 12 hours
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done;'"
+    networks:
+      - external
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  internal:
+    driver: bridge
+    internal: true  # No external access
+  external:
+    driver: bridge
+
+# =============================================================================
+# Volumes (Persistent Data)
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  static_files:
+    driver: local
+  media_files:
+    driver: local

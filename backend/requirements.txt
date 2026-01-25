@@ -19,5 +19,12 @@ Pillow
 
 # Encryption
 cryptography
+
 # User-Agent parsing for emails
 user-agents
+
+# PostgreSQL database adapter
+psycopg2-binary==2.9.9
+
+# Production WSGI server
+gunicorn==21.2.0

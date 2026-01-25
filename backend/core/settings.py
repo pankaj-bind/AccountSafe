@@ -1,29 +1,58 @@
 """
 Django settings for the core project.
+Production-ready configuration for AWS deployment.
 """
 
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables from .env file (development only)
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# =============================================================================
+# SECURITY SETTINGS
+# =============================================================================
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 # ALLOWED_HOSTS from environment variable (comma-separated)
 allowed_hosts_str = os.getenv('ALLOWED_HOSTS', '')
 if allowed_hosts_str:
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
 else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.236.183.183', 'accountsafe.pythonanywhere.com'] if DEBUG else ['accountsafe.pythonanywhere.com']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1'] if DEBUG else []
+
+# =============================================================================
+# PRODUCTION SECURITY MIDDLEWARE (when DEBUG=False)
+# =============================================================================
+if not DEBUG:
+    # HTTPS/SSL Settings
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # Cookie Security
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+    
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Content Security
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
 
 # --- Application Definitions ---
 INSTALLED_APPS = [
@@ -77,11 +106,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# --- Database ---
+# --- Database (PostgreSQL) ---
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'accountsafe'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -139,15 +172,66 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
 
 # --- CORS Settings ---
-default_cors = 'http://localhost:3000,https://accountsafe.vercel.app,https://accountsafe-git-main-pankaj-binds-projects.vercel.app,https://accountsafe-pankaj-binds-projects.vercel.app,app://.'
-cors_origins_str = os.getenv('CORS_ALLOWED_ORIGINS', default_cors)
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',') if origin.strip()]
+# Production: Set CORS_ALLOWED_ORIGINS via environment variable
+cors_origins_str = os.getenv('CORS_ALLOWED_ORIGINS', '')
+if cors_origins_str:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',') if origin.strip()]
+else:
+    # Default for development only
+    CORS_ALLOWED_ORIGINS = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ] if DEBUG else []
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
 
-# Allow all Vercel preview URLs and local network IPs for development
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://accountsafe.*\.vercel\.app$",
-    r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:3000$",  # Local network IPs (10.x.x.x)
-    r"^http://192\.168\.\d{1,3}\.\d{1,3}:3000$",     # Local network IPs (192.168.x.x)
-]
+# Regex patterns for dynamic subdomains (Vercel previews, etc.)
+if DEBUG:
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^https://accountsafe.*\.vercel\.app$",
+        r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:3000$",
+        r"^http://192\.168\.\d{1,3}\.\d{1,3}:3000$",
+    ]
+else:
+    CORS_ALLOWED_ORIGIN_REGEXES = []
+
+# =============================================================================
+# LOGGING CONFIGURATION (Production)
+# =============================================================================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO' if not DEBUG else 'DEBUG',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}

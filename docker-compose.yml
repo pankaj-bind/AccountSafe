@@ -1,0 +1,113 @@
+# AccountSafe Docker Compose Configuration
+# Production-ready with PostgreSQL + Django + React/Nginx + SSL (Certbot)
+
+version: '3.8'
+
+services:
+  # ===== Database Service =====
+  db:
+    image: postgres:15-alpine
+    container_name: accountsafe-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: accountsafe
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d accountsafe"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - accountsafe-network
+
+  # ===== Backend Service (Django + Gunicorn) =====
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: accountsafe-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Django settings
+      DEBUG: "False"
+      SECRET_KEY: "${SECRET_KEY:-django-insecure-change-this-in-production}"
+      ALLOWED_HOSTS: "${DOMAIN:-localhost},backend,127.0.0.1"
+      
+      # Database - use 'db' as host (Docker internal network)
+      DB_NAME: accountsafe
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db
+      DB_PORT: "5432"
+      
+      # CORS - allow frontend container (HTTPS in production)
+      CORS_ALLOWED_ORIGINS: "https://${DOMAIN:-localhost},http://localhost,http://localhost:80"
+      
+      # Email (pass from host .env or set directly)
+      EMAIL_HOST_USER: "${EMAIL_HOST_USER:-}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD:-}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL:-}"
+      
+      # Turnstile
+      TURNSTILE_SECRET_KEY: "${TURNSTILE_SECRET_KEY:-1x0000000000000000000000000000000AA}"
+    volumes:
+      # Persist media files
+      - backend-media:/app/media
+      # Persist static files
+      - backend-static:/app/staticfiles
+    networks:
+      - accountsafe-network
+    # Run migrations before starting the server
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate --noinput &&
+             gunicorn --bind 0.0.0.0:8000 --workers 3 --threads 2 core.wsgi:application"
+
+  # ===== Frontend Service (React + Nginx with SSL) =====
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: accountsafe-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # SSL certificates from Certbot
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    networks:
+      - accountsafe-network
+    # Reload nginx every 6 hours to pick up renewed certificates
+    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+
+  # ===== Certbot Service (SSL Certificate Management) =====
+  certbot:
+    image: certbot/certbot
+    container_name: accountsafe-certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    # Renew certificates every 12 hours
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+# ===== Networks =====
+networks:
+  accountsafe-network:
+    driver: bridge
+
+# ===== Volumes =====
+volumes:
+  backend-media:
+  backend-static:
