@@ -1,0 +1,109 @@
+# =============================================================================
+# AccountSafe Backend - Docker Build Context Exclusions
+# =============================================================================
+# These files are excluded from Docker build context to:
+# 1. Reduce build time
+# 2. Reduce image size  
+# 3. Prevent sensitive data leakage
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python cache and bytecode
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Python packaging
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+*.manifest
+*.spec
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+.env/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+*.cover
+pytest.ini
+setup.cfg
+tox.ini
+
+# Database (SQLite - not used in production)
+*.sqlite3
+db.sqlite3
+
+# Environment files (passed via docker-compose)
+.env
+.env.*
+!.env.example
+
+# Static files (generated at runtime via collectstatic)
+staticfiles/
+
+# Media files (mounted as volume)
+media/
+
+# Documentation
+*.md
+!README.md
+docs/
+LICENSE
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*~
+
+# Test files
+test_*.py
+tests/
+*_test.py
+staticfiles/
+
+# Media files (mounted as volume)
+media/
+
+# Misc
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

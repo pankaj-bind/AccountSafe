@@ -1,0 +1,27 @@
+# AccountSafe Docker Compose - Development Configuration
+# Use this for Phase 1: Database only (local development)
+# Usage: docker-compose -f docker-compose.dev.yml up -d
+
+version: '3.8'
+
+services:
+  # ===== Database Service (PostgreSQL) =====
+  db:
+    image: postgres:15-alpine
+    container_name: accountsafe-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: accountsafe
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    ports:
+      # Expose to host on port 5433 (avoiding conflict with local PostgreSQL)
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d accountsafe"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

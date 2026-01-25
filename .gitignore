@@ -1,48 +1,134 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-node_modules
-/node_modules
-frontend/node_modules
+# =============================================================================
+# DEPENDENCIES
+# =============================================================================
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.js
 
-# testing
-/coverage
+# =============================================================================
+# BUILD ARTIFACTS (NEVER COMMIT)
+# =============================================================================
+/build/
+/dist/
+frontend/build/
+frontend/dist/
+*.bundle.js
+*.bundle.js.map
 
-# production
-/build
-frontend/build
+# =============================================================================
+# TESTING
+# =============================================================================
+/coverage/
+.nyc_output/
+*.lcov
 
-# misc
+# =============================================================================
+# ENVIRONMENT FILES (CRITICAL - NEVER COMMIT)
+# =============================================================================
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.env
+*.env.local
+backend/.env
+frontend/.env
+frontend/.env.production
+frontend/.env.local
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+*.cover
+*.log
+venv/
+.venv/
+ENV/
+env/
+
+# =============================================================================
+# DATABASE (LOCAL DEVELOPMENT ONLY)
+# =============================================================================
+*.sqlite3
+db.sqlite3
+backend/db.sqlite3
+
+# =============================================================================
+# DOCKER VOLUMES (LOCAL DATA)
+# =============================================================================
+pg_data/
+postgres_data/
+certbot/
+nginx/certbot/
+
+# =============================================================================
+# USER UPLOADED FILES (NEVER COMMIT)
+# =============================================================================
+backend/media/
+media/
+
+# =============================================================================
+# IDE / EDITOR
+# =============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.project
+.classpath
+.settings/
+
+# =============================================================================
+# OS GENERATED
+# =============================================================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
 
+# =============================================================================
+# LOGS
+# =============================================================================
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# Environment files (NEVER commit these!)
-backend/.env
-frontend/.env.production
-*.env
-*.env.local
-*.env.production
-*.env.development.local
-*.env.test.local
-*.env.production.local
-
-# Local backend env
-/backend/.env
-
-# Python
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.sqlite3
-db.sqlite3
-
-# Test folder - local testing only
-/tests/
+# =============================================================================
+# MISC
+# =============================================================================
 .vercel
+/tests/
+*.tmp
+*.temp
+*.bak

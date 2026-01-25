@@ -1,0 +1,82 @@
+# AccountSafe Docker Compose - Local Full Stack (No SSL)
+# Use this for local testing of the full stack without SSL
+# Usage: docker-compose -f docker-compose.local.yml up --build
+
+version: '3.8'
+
+services:
+  # ===== Database Service =====
+  db:
+    image: postgres:15-alpine
+    container_name: accountsafe-db-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: accountsafe
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d accountsafe"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - accountsafe-network
+
+  # ===== Backend Service (Django + Gunicorn) =====
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: accountsafe-backend-local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DEBUG: "True"
+      SECRET_KEY: "django-insecure-local-dev-key"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      DB_NAME: accountsafe
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db
+      DB_PORT: "5432"
+      CORS_ALLOWED_ORIGINS: "http://localhost,http://localhost:80,http://localhost:3000"
+      EMAIL_HOST_USER: "${EMAIL_HOST_USER:-}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD:-}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL:-}"
+      TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA"
+    volumes:
+      - backend-media:/app/media
+      - backend-static:/app/staticfiles
+    networks:
+      - accountsafe-network
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate --noinput &&
+             gunicorn --bind 0.0.0.0:8000 --workers 2 core.wsgi:application"
+
+  # ===== Frontend Service (React + Nginx - NO SSL) =====
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.local
+    container_name: accountsafe-frontend-local
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - accountsafe-network
+
+networks:
+  accountsafe-network:
+    driver: bridge
+
+volumes:
+  backend-media:
+  backend-static:
