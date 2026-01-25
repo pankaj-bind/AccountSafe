@@ -5,7 +5,7 @@
 # 
 # Usage:
 #   1. Copy .env.production.example to .env and configure
-#   2. Run: ./init-letsencrypt.sh (first time only)
+#   2. Run: make init-ssl (first time only)
 #   3. Run: docker-compose -f docker-compose.prod.yml up -d
 # =============================================================================
 

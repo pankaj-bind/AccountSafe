@@ -2,6 +2,10 @@
 
 This document outlines the requirements for contributing to AccountSafe. Read it completely before submitting code.
 
+Before contributing, review the technical documentation in [`docs/`](docs/):
+- [API Reference](docs/API.md)
+- [Configuration Guide](docs/CONFIGURATION.md)
+
 ---
 
 ## Table of Contents
@@ -95,11 +99,12 @@ npm start
 ### Verify Installation
 
 ```bash
-# Backend tests
-cd backend && python -m pytest -v
+# Run all tests
+make test
 
-# Frontend tests
-cd frontend && npm test
+# Or run individually
+make test-backend
+make test-frontend
 
 # Type checking
 cd frontend && npx tsc --noEmit
