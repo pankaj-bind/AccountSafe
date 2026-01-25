@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import CategoryManager from '../components/CategoryManager';
+import { CategoryManager } from '../features/vault/components';
 
 const HomePage: React.FC = () => {
   const { token } = useAuth();

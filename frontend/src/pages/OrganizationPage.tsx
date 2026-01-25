@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ProfileManager from '../components/ProfileManager';
+import { ProfileManager } from '../features/vault/components';
 
 interface Organization {
   id: number;

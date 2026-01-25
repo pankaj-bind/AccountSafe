@@ -6,6 +6,25 @@
  * These types are for the Django REST API responses.
  */
 
+// Re-export profile-specific types
+export * from './profile.types';
+
+// Re-export category-specific types with explicit names to avoid conflicts
+export type {
+  Category as CategoryType,
+  Organization as OrganizationType,
+  CategoryFormData,
+  OrganizationFormData,
+  CategoryStats,
+  DocumentType as CategoryDocumentType,
+} from './category.types';
+
+export {
+  DIGITAL_WALLET_DOCUMENTS as CATEGORY_DIGITAL_WALLET_DOCUMENTS,
+  findDigitalWalletDocument,
+  isDigitalWalletCategory,
+} from './category.types';
+
 export interface Category {
   id: number;
   name: string;
