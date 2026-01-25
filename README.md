@@ -1,141 +1,297 @@
 # AccountSafe
 
-<div align="center">
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg)](frontend/)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776ab.svg)](backend/)
+[![Security: Zero-Knowledge](https://img.shields.io/badge/Security-Zero--Knowledge-green.svg)](#security-model)
 
-![AccountSafe](https://img.shields.io/badge/AccountSafe-Secure%20Vault-blue?style=for-the-badge&logo=shield&logoColor=white)
-[![Security](https://img.shields.io/badge/Security-AES--256%20Encryption-green?style=flat-square)](./backend/api/encryption.py)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](./frontend)
-[![Django](https://img.shields.io/badge/Django-5.x-green?style=flat-square&logo=django)](./backend)
-[![React](https://img.shields.io/badge/React-18-blue?style=flat-square&logo=react)](./frontend)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
+A self-hosted, zero-knowledge credential manager. The server stores only encrypted blobs. All cryptographic operations occur exclusively in the browser.
 
-**Self-hosted password manager with AES-256 encryption and modern web interface**
+---
 
-[Features](#features) • [Security](#security-architecture) • [Installation](#installation) • [Contributing](./CONTRIBUTING.md)
+## Table of Contents
 
-</div>
+- [Overview](#overview)
+- [Security Model](#security-model)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Deployment](#deployment)
+- [Development](#development)
+- [Configuration](#configuration)
+- [API Reference](#api-reference)
+- [Contributing](#contributing)
+- [Security Policy](#security-policy)
+- [License](#license)
 
 ---
 
 ## Overview
 
-AccountSafe is a self-hosted credential management system built with security-first principles. It provides encrypted storage for passwords, recovery codes, and sensitive documents with a responsive React frontend and Django REST backend.
+AccountSafe is a credential management system designed for users who require complete sovereignty over their sensitive data. Unlike commercial password managers, AccountSafe operates on a zero-knowledge architecture: the server functions as a blind storage node, receiving and returning encrypted payloads without the ability to decrypt them.
+
+The encryption key never leaves the client. The server never sees plaintext. A compromised database yields only ciphertext.
+
+---
+
+## Security Model
+
+### Zero-Knowledge Architecture
+
+```
++------------------+                              +------------------+
+|     Browser      |                              |      Server      |
+|                  |                              |                  |
+|  master_password |                              |                  |
+|        |         |                              |                  |
+|        v         |                              |                  |
+|  PBKDF2-SHA256   |                              |                  |
+|  (600k rounds)   |                              |                  |
+|        |         |                              |                  |
+|   +----+----+    |                              |                  |
+|   |         |    |                              |                  |
+|   v         v    |                              |                  |
+| auth_key  enc_key|                              |                  |
+|   |         |    |                              |                  |
+|   |         v    |                              |                  |
+|   |    AES-256-GCM ----> ciphertext -----+----> | Store(ciphertext)|
+|   |              |                       |      |                  |
+|   +-------+      |                       |      |                  |
+|           |      |                       |      |                  |
+|           v      |                       |      |                  |
+|      auth_hash --+---------------------> |----> | Verify(auth_hash)|
+|                  |                              |                  |
++------------------+                              +------------------+
+```
+
+### Cryptographic Parameters
+
+| Parameter | Value | Standard |
+|-----------|-------|----------|
+| Key Derivation | PBKDF2-SHA256 | RFC 8018 |
+| Iterations | 600,000 | OWASP 2023 |
+| Encryption | AES-256-GCM | NIST SP 800-38D |
+| Salt Length | 128 bits | - |
+| IV Length | 96 bits | NIST recommendation |
+| Auth Tag | 128 bits | - |
+
+### Key Derivation
+
+From a single master password, two independent keys are derived:
+
+1. **Authentication Key**: Sent to server for identity verification. Never used for encryption.
+2. **Encryption Key**: Used locally for AES-256-GCM. Never transmitted.
+
+```
+master_password + user_salt  -->  PBKDF2  -->  auth_key   -->  Server
+master_password + enc_salt   -->  PBKDF2  -->  enc_key    -->  Browser Memory Only
+```
+
+### Data Protection
+
+| Data Type | Client | Server | Protection |
+|-----------|--------|--------|------------|
+| Master Password | Memory | Never | - |
+| Encryption Key | Memory | Never | Session-scoped |
+| Auth Hash | Transmitted | Stored | Argon2id |
+| Credentials | Encrypted | Ciphertext | AES-256-GCM |
+| Documents | Encrypted | Ciphertext | AES-256-GCM |
+| Security PIN | - | Hashed | bcrypt |
+
+### Threat Model
+
+| Threat | Mitigation |
+|--------|------------|
+| Database breach | Server stores only ciphertext; no key material |
+| Network interception | TLS 1.3; HSTS; certificate pinning recommended |
+| Brute-force | Rate limiting; PBKDF2 cost factor; account lockout |
+| Session hijacking | Short-lived JWT; refresh rotation; secure cookies |
+| Coercion | Panic Mode: alternate PIN reveals decoy vault |
+| Memory extraction | Keys cleared on logout; no persistent storage |
+
+---
 
 ## Features
 
-### Core Functionality
-- **Secure Credential Storage**: Store usernames, passwords, recovery codes, and document attachments
-- **Category Organization**: Organize credentials by custom categories (Social Media, Finance, Work, etc.)
-- **Organization Management**: Group credentials by service/platform with metadata
-- **Smart Brand Detection**: Auto-complete with brand logos using integrated search API
-- **Credential Pinning**: Pin frequently used credentials for quick access
-- **Responsive Layout**: Optimized grid layout for desktop, tablet, and mobile viewports
+### Credential Management
 
-### Security Features
-- **AES-256 Encryption**: All sensitive data encrypted at rest using Fernet (AES-256-CBC mode)
-- **PIN Protection**: 4-digit security PIN hashed with bcrypt (server-side validation)
-- **JWT Authentication**: Token-based session management with refresh mechanism
-- **Cross-Tab Logout**: Instant synchronization across all browser tabs using Broadcast Channel API
-- **Login Activity Monitoring**: Track authentication attempts with IP geolocation
-- **Rate Limiting**: API throttling to prevent brute-force attacks
-- **Security Health Score**: Automated password strength analysis and breach detection
-- **Clipboard Auto-Clear**: Automatic clipboard clearing after copy operations
+- Encrypted storage for usernames, passwords, notes, and recovery codes
+- Document attachments with client-side encryption
+- Hierarchical organization: Categories > Organizations > Profiles
+- Credential search with client-side decryption
+- Password strength analysis (zxcvbn integration)
 
-### User Interface
-- **Dark/Light Mode**: System preference detection with manual override
-- **Skeleton Loading States**: Progressive loading indicators for improved perceived performance
-- **Framer Motion Animations**: Smooth page transitions and micro-interactions
-- **Keyboard Navigation**: Full accessibility support with ARIA labels
-- **Relative Timestamps**: Human-readable time formatting using date-fns
+### Digital Wallet
+
+- Visual credit card storage with masked display
+- Card number, expiry, CVV encrypted client-side
+- Copy-to-clipboard with auto-clear (configurable timeout)
+
+### Security Controls
+
+- **Panic Mode**: Alternate PIN triggers decoy vault under duress
+- **Breach Detection**: Integration with Have I Been Pwned API
+- **Session Management**: View and revoke active sessions
+- **Auto-Lock**: Configurable inactivity timeout
+- **Cross-Tab Sync**: Logout propagates via Broadcast Channel API
+
+### Shared Secrets
+
+- Time-limited secret sharing with unique URLs
+- Optional passphrase protection
+- Automatic expiration and deletion
 
 ---
 
-## Security Architecture
+## Architecture
 
-### Encryption Implementation
+### Technology Stack
 
-AccountSafe uses **Fernet symmetric encryption** (built on AES-256-CBC) for all sensitive data:
+| Layer | Technology | Version |
+|-------|------------|---------|
+| Frontend | React | 18.x |
+| Language | TypeScript | 5.x (strict mode) |
+| Styling | Tailwind CSS | 3.x |
+| Build | Create React App | 5.x |
+| Backend | Django | 5.x |
+| API | Django REST Framework | 3.14+ |
+| Database | PostgreSQL | 15+ |
+| Auth | JWT (simplejwt) | 5.x |
+| Proxy | Nginx | 1.24+ |
+| Container | Docker Compose | 2.x |
+| TLS | Let's Encrypt | - |
 
-```python
-# backend/api/encryption.py
-from cryptography.fernet import Fernet
+### Directory Structure
 
-def encrypt_data(plain_text):
-    """
-    Encrypts sensitive data using AES-256-CBC via Fernet.
-    Key derived from Django SECRET_KEY using SHA-256.
-    """
-    key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
-    fernet = Fernet(base64.urlsafe_b64encode(key))
-    return fernet.encrypt(plain_text.encode()).decode()
+```
+AccountSafe/
+├── backend/
+│   ├── api/
+│   │   ├── models.py
+│   │   ├── views.py
+│   │   ├── vault_views.py
+│   │   ├── serializers.py
+│   │   ├── authentication.py
+│   │   ├── zero_knowledge_auth.py
+│   │   └── encryption.py
+│   ├── core/
+│   │   ├── settings.py
+│   │   └── urls.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── features/
+│   │   │   └── vault/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── hooks/
+│   │   ├── contexts/
+│   │   ├── utils/
+│   │   │   └── encryption.ts
+│   │   └── types/
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── Dockerfile
+├── nginx/
+│   └── nginx.conf
+├── docker-compose.yml
+├── docker-compose.prod.yml
+└── init-letsencrypt.sh
 ```
 
-### What's Encrypted?
-| Field | Encryption Status | Notes |
-|-------|------------------|-------|
-| Passwords | ✅ Encrypted | AES-256 at rest |
-| Recovery Codes | ✅ Encrypted | AES-256 at rest |
-| Usernames | ✅ Encrypted | AES-256 at rest |
-| Notes | ✅ Encrypted | AES-256 at rest |
-| Email addresses | ✅ Encrypted | AES-256 at rest |
-| Security PIN | ✅ Hashed | bcrypt with salt |
+---
 
-### Security Best Practices Implemented
+## Deployment
 
-1. **Never store plaintext credentials** - All sensitive data encrypted before database storage
-2. **Secure key derivation** - Encryption key derived from SECRET_KEY using SHA-256
-3. **PIN hashing** - Security PIN hashed server-side with bcrypt (not stored in localStorage)
-4. **CSRF protection** - Django's built-in CSRF middleware
-5. **CORS configuration** - Restrictive CORS policies for API endpoints
-6. **Input validation** - Server-side validation for all user inputs
+### Production (Docker Compose)
+
+Prerequisites:
+- Docker Engine 24.0+
+- Docker Compose 2.0+
+- Domain with DNS configured
+- Ports 80 and 443 available
+
+**Step 1: Clone and Configure**
+
+```bash
+git clone https://github.com/pankaj-bind/AccountSafe.git
+cd AccountSafe
+
+# Configure environment
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+**Step 2: Set Environment Variables**
+
+`backend/.env`:
+```
+SECRET_KEY=<generate-64-char-random-string>
+DEBUG=False
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+DATABASE_URL=postgres://user:pass@db:5432/accountsafe
+CORS_ALLOWED_ORIGINS=https://yourdomain.com
+```
+
+`frontend/.env`:
+```
+REACT_APP_API_URL=https://yourdomain.com/api
+```
+
+**Step 3: Initialize TLS**
+
+```bash
+chmod +x init-letsencrypt.sh
+./init-letsencrypt.sh
+```
+
+**Step 4: Deploy**
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+**Step 5: Verify**
+
+```bash
+docker-compose ps
+curl -I https://yourdomain.com
+```
+
+### Production Hardening
+
+| Setting | Recommendation |
+|---------|---------------|
+| `DEBUG` | `False` |
+| `SECRET_KEY` | Minimum 64 characters, cryptographically random |
+| HTTPS | Mandatory; HSTS enabled |
+| CORS | Explicit origin whitelist |
+| Rate Limiting | Enable at Nginx level |
+| Database | Encrypted connections; regular backups |
+| Logs | Ship to external aggregator; no sensitive data |
 
 ---
 
-## Tech Stack
+## Development
 
-### Frontend
-| Technology | Purpose |
-|------------|---------|
-| React 18 | UI Framework |
-| TypeScript | Type Safety |
-| Tailwind CSS | Styling |
-| Framer Motion | Animations |
-| date-fns | Date Formatting |
-| Axios | HTTP Client |
+### Local Setup
 
-### Backend
-| Technology | Purpose |
-|------------|---------|
-| Django 5.x | Web Framework |
-| Django REST Framework | API |
-| Cryptography (Fernet) | AES-256 Encryption |
-| SQLite / PostgreSQL | Database |
-
----
-
-## Installation
-
-### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- npm or yarn
-
-### Backend Setup
+**Backend**
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate    # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env      # Edit with your values
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Backend API: http://localhost:8000
+Server: `http://localhost:8000`
 
-### Frontend Setup
+**Frontend**
 
 ```bash
 cd frontend
@@ -143,105 +299,102 @@ npm install
 npm start
 ```
 
-Frontend: http://localhost:3000
+Client: `http://localhost:3000`
 
----
+### Running Tests
 
-## Live Demo
+```bash
+# Backend
+cd backend
+python -m pytest -v
 
-- **Frontend:** [accountsafe.vercel.app](https://accountsafe.vercel.app)
-- **Backend API:** https://accountsafe.pythonanywhere.com/api/
-
-### Screenshots
-
-![Dashboard View](./screenshots/dashboard.png)
-*Main dashboard with category organization and credential grid*
-
-![Credential Detail](./screenshots/credential-detail.png)
-*Credential card with expandable fields and copy-to-clipboard functionality*
-
-![Mobile View](./screenshots/mobile-view.png)
-*Responsive mobile layout with touch-optimized controls*
-
----
-
-## Project Structure
-
+# Frontend
+cd frontend
+npm test
 ```
-AccountSafe/
-├── backend/
-│   ├── api/
-│   │   ├── encryption.py    # AES-256 encryption utilities
-│   │   ├── models.py        # Database models (Profile, Category, Organization)
-│   │   ├── views.py         # REST API endpoints
-│   │   ├── serializers.py   # DRF serializers
-│   │   └── health_score.py  # Password strength analyzer
-│   ├── core/
-│   │   ├── settings.py      # Django configuration
-│   │   └── urls.py          # URL routing
-│   ├── requirements.txt     # Python dependencies
-│   └── manage.py
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # Reusable React components
-│   │   ├── pages/           # Page-level components
-│   │   ├── contexts/        # React Context providers
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── utils/           # Helper functions
-│   │   ├── api/             # API client configuration
-│   │   └── services/        # API service layer
-│   ├── package.json         # Node dependencies
-│   └── tailwind.config.js   # Tailwind CSS configuration
-└── tests/
+
+### Code Quality
+
+```bash
+# TypeScript
+cd frontend
+npx tsc --noEmit
+
+# Python
+cd backend
+python -m black .
+python -m flake8 .
 ```
 
 ---
 
-## Environment Variables
+## Configuration
 
-### Backend (.env)
-```env
-SECRET_KEY=your-super-secret-key-min-50-chars
-DEBUG=False
-ALLOWED_HOSTS=localhost,127.0.0.1
-CORS_ALLOWED_ORIGINS=http://localhost:3000
-```
+### Backend Environment Variables
 
-### Frontend (.env)
-```env
-REACT_APP_API_URL=http://localhost:8000/api
-```
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `SECRET_KEY` | Django secret key | Yes |
+| `DEBUG` | Debug mode | Yes |
+| `ALLOWED_HOSTS` | Permitted hostnames | Yes |
+| `DATABASE_URL` | PostgreSQL connection | Yes |
+| `CORS_ALLOWED_ORIGINS` | CORS whitelist | Yes |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile | No |
+
+### Frontend Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `REACT_APP_API_URL` | Backend API URL | Yes |
+| `REACT_APP_TURNSTILE_SITE_KEY` | Turnstile public key | No |
 
 ---
 
-## API Endpoints
+## API Reference
+
+### Authentication
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/register/` | POST | User registration |
-| `/api/login/` | POST | User authentication |
-| `/api/categories/` | GET/POST | Category management |
-| `/api/organizations/` | GET/POST | Organization management |
-| `/api/profiles/` | GET/POST | Credential profiles |
-| `/api/dashboard/statistics/` | GET | Dashboard stats |
-| `/api/pin/verify/` | POST | PIN verification |
+| `/api/zk/register/` | POST | Create account |
+| `/api/zk/login/` | POST | Authenticate |
+| `/api/zk/logout/` | POST | End session |
+| `/api/token/refresh/` | POST | Refresh JWT |
+
+### Vault
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/categories/` | GET, POST | Category CRUD |
+| `/api/organizations/` | GET, POST | Organization CRUD |
+| `/api/profiles/` | GET, POST | Credential CRUD |
+| `/api/profiles/{id}/` | GET, PUT, DELETE | Single credential |
+
+### Security
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/pin/verify/` | POST | Verify PIN |
+| `/api/pin/set/` | POST | Set/update PIN |
+| `/api/sessions/` | GET | List sessions |
+| `/api/sessions/{id}/revoke/` | POST | Terminate session |
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and submission process.
+
+---
+
+## Security Policy
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting procedures.
+
+Do not open public issues for security vulnerabilities.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-
----
-
-## Support
-
-For bug reports and feature requests, please [open an issue](https://github.com/yourusername/accountsafe/issues).
-
-For security vulnerabilities, please email security@yourdomain.com instead of using the issue tracker.
+MIT License. See [LICENSE](LICENSE) for full text.

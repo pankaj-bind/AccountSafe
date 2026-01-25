@@ -1,141 +1,141 @@
 # Contributing to AccountSafe
 
-Thank you for considering contributing to AccountSafe! This document outlines the process and guidelines for contributing to this project.
+This document outlines the requirements for contributing to AccountSafe. Read it completely before submitting code.
+
+---
 
 ## Table of Contents
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Workflow](#development-workflow)
+- [Security Requirements](#security-requirements)
+- [Development Setup](#development-setup)
 - [Code Standards](#code-standards)
-- [Commit Message Guidelines](#commit-message-guidelines)
+- [Testing Requirements](#testing-requirements)
+- [Commit Guidelines](#commit-guidelines)
 - [Pull Request Process](#pull-request-process)
 - [Issue Reporting](#issue-reporting)
 
-## Code of Conduct
+---
 
-By participating in this project, you agree to maintain a respectful and inclusive environment. We expect all contributors to:
+## Security Requirements
 
-- Be respectful of differing viewpoints and experiences
-- Accept constructive criticism gracefully
-- Focus on what is best for the community
-- Show empathy towards other community members
+AccountSafe is a security product. All contributions must adhere to these non-negotiable rules.
 
-## Getting Started
+### The Iron Rules
+
+1. **No secrets in version control.** API keys, passwords, tokens, and private keys must never be committed. Use environment variables exclusively.
+
+2. **Client-side encryption only.** Sensitive data must be encrypted in the browser before transmission. The server must never receive plaintext credentials.
+
+3. **No `any` type in TypeScript.** All code must use explicit types. The `any` keyword circumvents the type system and introduces risk.
+
+4. **No `@ts-ignore` directives.** Fix the type error. Do not silence it.
+
+5. **No `console.log` in production code.** Use structured logging for the backend. Remove debugging statements before submission.
+
+6. **No disabled security headers.** CORS, CSRF, and CSP configurations must not be weakened.
+
+7. **Dependencies require justification.** New packages must be reviewed for security posture. Prefer well-maintained libraries with minimal transitive dependencies.
+
+8. **Cryptographic code is off-limits.** Do not modify encryption algorithms, key derivation parameters, or cryptographic primitives without explicit maintainer approval and security review.
+
+### Security Review Triggers
+
+The following changes require mandatory security review before merge:
+
+- Any modification to `encryption.ts` or `encryption.py`
+- Authentication or session management changes
+- New API endpoints handling sensitive data
+- Changes to CORS, CSRF, or CSP policies
+- Database schema changes involving encrypted fields
+- Dependency updates to security-critical packages
+
+---
+
+## Development Setup
 
 ### Prerequisites
 
-- **Node.js** 18.x or higher
-- **Python** 3.10 or higher
-- **Git** for version control
-- Code editor (VS Code recommended)
+| Tool | Version |
+|------|---------|
+| Python | 3.10+ |
+| Node.js | 18+ |
+| PostgreSQL | 15+ (or SQLite for development) |
+| Git | 2.40+ |
 
-### Fork and Clone
+### Repository Setup
 
-1. Fork the repository on GitHub
-2. Clone your fork locally:
-   ```bash
-   git clone https://github.com/YOUR-USERNAME/accountsafe.git
-   cd accountsafe
-   ```
+```bash
+# Fork the repository on GitHub, then:
+git clone https://github.com/YOUR-USERNAME/AccountSafe.git
+cd AccountSafe
+git remote add upstream https://github.com/pankaj-bind/AccountSafe.git
+```
 
-3. Add the upstream repository:
-   ```bash
-   git remote add upstream https://github.com/ORIGINAL-OWNER/accountsafe.git
-   ```
+### Backend Setup
 
-### Local Setup
-
-#### Backend Setup
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate    # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env        # Configure local settings
 python manage.py migrate
 python manage.py runserver
 ```
 
-#### Frontend Setup
+### Frontend Setup
+
 ```bash
 cd frontend
 npm install
+cp .env.example .env        # Configure API URL
 npm start
 ```
 
-## Development Workflow
-
-### 1. Create a Branch
-
-Always create a new branch for your work. Use descriptive branch names:
+### Verify Installation
 
 ```bash
-git checkout -b feature/add-password-generator
-git checkout -b fix/mobile-menu-overflow
-git checkout -b refactor/improve-encryption-performance
+# Backend tests
+cd backend && python -m pytest -v
+
+# Frontend tests
+cd frontend && npm test
+
+# Type checking
+cd frontend && npx tsc --noEmit
 ```
 
-**Branch Naming Convention:**
-- `feature/` - New features
-- `fix/` - Bug fixes
-- `refactor/` - Code refactoring
-- `docs/` - Documentation updates
-- `test/` - Adding or updating tests
-
-### 2. Make Your Changes
-
-- Write clean, readable code
-- Follow the project's code standards (see below)
-- Add tests for new functionality
-- Update documentation if needed
-
-### 3. Test Your Changes
-
-#### Frontend Testing
-```bash
-cd frontend
-npm test
-npm run build  # Ensure production build works
-```
-
-#### Backend Testing
-```bash
-cd backend
-python manage.py test
-```
-
-### 4. Commit Your Changes
-
-See [Commit Message Guidelines](#commit-message-guidelines) below.
-
-### 5. Push and Create Pull Request
-
-```bash
-git push origin feature/your-feature-name
-```
-
-Then create a pull request on GitHub.
+---
 
 ## Code Standards
 
-### Frontend (React/TypeScript)
+### TypeScript (Frontend)
 
-#### Component Structure
-- Use **functional components** with hooks (no class components)
-- One component per file
-- Component files should use PascalCase: `ProfileCard.tsx`
+Configuration: `tsconfig.json` with strict mode enabled.
 
-#### Styling
-- Use **Tailwind CSS** for all styling
-- No raw CSS files or inline styles (except for dynamic values)
-- Follow the existing design system (colors, spacing, typography)
+**Required compiler options:**
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true
+  }
+}
+```
 
-#### TypeScript
-- Use proper type annotations
-- Avoid `any` type unless absolutely necessary
-- Define interfaces for all props and data structures
+**Style requirements:**
+
+- Functional components only. No class components.
+- Explicit return types on all functions.
+- Interface definitions for all props and state.
+- Error handling with typed catch blocks (`catch (error: unknown)`).
+- Imports grouped: React, external, internal, types.
 
 **Example:**
+
 ```typescript
 interface ProfileCardProps {
   profile: Profile;
@@ -143,70 +143,133 @@ interface ProfileCardProps {
   onDelete: (id: number) => void;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onDelete }) => {
+export const ProfileCard: React.FC<ProfileCardProps> = ({
+  profile,
+  onEdit,
+  onDelete,
+}): JSX.Element => {
+  const handleEdit = (): void => {
+    onEdit(profile.id);
+  };
+
   return (
-    <div className="as-card p-4 rounded-lg">
-      <h3 className="text-lg font-semibold">{profile.title}</h3>
-      {/* ... */}
+    <div className="rounded-lg border p-4">
+      <h3>{profile.title}</h3>
+      <button onClick={handleEdit}>Edit</button>
     </div>
   );
 };
 ```
 
-#### Code Organization
-- Group related functionality together
-- Extract reusable logic into custom hooks
-- Use meaningful variable and function names
-- Add comments for complex logic
+### Python (Backend)
 
-### Backend (Django/Python)
+Configuration: PEP 8 compliance. Black formatter. Flake8 linting.
 
-#### Python Standards
-- Follow **PEP 8** style guide
-- Use 4 spaces for indentation
-- Maximum line length: 88 characters (Black formatter standard)
-- Use docstrings for all functions and classes
+**Style requirements:**
+
+- Type hints on all function signatures.
+- Docstrings for all public functions and classes.
+- Maximum line length: 88 characters.
+- Imports sorted with isort.
 
 **Example:**
+
 ```python
-def encrypt_data(plain_text: str) -> str:
+from typing import Optional
+
+from rest_framework import status
+from rest_framework.response import Response
+
+
+def encrypt_credential(plaintext: str, key: bytes) -> Optional[str]:
     """
-    Encrypts sensitive data using AES-256-CBC via Fernet.
-    
+    Encrypt a credential using AES-256-GCM.
+
     Args:
-        plain_text: The plaintext string to encrypt
-        
+        plaintext: The string to encrypt.
+        key: The 256-bit encryption key.
+
     Returns:
-        The encrypted string in base64 encoding
-        
+        Base64-encoded ciphertext, or None if encryption fails.
+
     Raises:
-        ValueError: If plain_text is empty
+        ValueError: If plaintext is empty.
     """
-    if not plain_text:
-        raise ValueError("Plain text cannot be empty")
+    if not plaintext:
+        raise ValueError("Plaintext cannot be empty")
     
-    key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
-    fernet = Fernet(base64.urlsafe_b64encode(key))
-    return fernet.encrypt(plain_text.encode()).decode()
+    # Implementation
+    ...
 ```
 
-#### Django Best Practices
-- Use Django ORM for all database operations
-- Validate all user inputs in serializers
-- Use DRF's permission classes for access control
-- Add proper error handling and logging
+### File Organization
 
-#### Security Guidelines
-- Never log sensitive data (passwords, tokens, etc.)
-- Always use environment variables for secrets
-- Sanitize all user inputs
-- Use parameterized queries (ORM handles this)
+```
+# Frontend component structure
+src/
+├── components/           # Shared UI components
+├── features/
+│   └── vault/
+│       ├── components/   # Feature-specific components
+│       ├── hooks/        # Feature-specific hooks
+│       ├── services/     # API layer
+│       └── types/        # Type definitions
+├── pages/                # Route components
+├── hooks/                # Shared hooks
+├── services/             # Shared services
+├── contexts/             # React context providers
+├── utils/                # Utility functions
+└── types/                # Shared type definitions
+```
 
-## Commit Message Guidelines
+---
 
-We follow the **Conventional Commits** specification for clear and semantic commit messages.
+## Testing Requirements
 
-### Format
+### Coverage Expectations
+
+| Area | Minimum Coverage |
+|------|------------------|
+| Encryption utilities | 90% |
+| Authentication flows | 85% |
+| API endpoints | 80% |
+| UI components | 70% |
+
+### Backend Testing
+
+Framework: pytest with Django test client.
+
+```bash
+cd backend
+python -m pytest -v --cov=api --cov-report=term-missing
+```
+
+Required test categories:
+- Unit tests for encryption/decryption
+- Integration tests for API endpoints
+- Authentication flow tests
+- Permission and access control tests
+
+### Frontend Testing
+
+Framework: Jest with React Testing Library.
+
+```bash
+cd frontend
+npm test -- --coverage
+```
+
+Required test categories:
+- Component rendering tests
+- Hook behavior tests
+- Encryption utility tests
+- Error boundary tests
+
+---
+
+## Commit Guidelines
+
+Format: Conventional Commits specification.
 
 ```
 <type>(<scope>): <subject>
@@ -216,127 +279,127 @@ We follow the **Conventional Commits** specification for clear and semantic comm
 <footer>
 ```
 
-### Type
+### Types
 
-Must be one of the following:
+| Type | Description |
+|------|-------------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `security` | Security fix or improvement |
+| `refactor` | Code change with no functional difference |
+| `perf` | Performance improvement |
+| `test` | Test addition or modification |
+| `docs` | Documentation |
+| `chore` | Build, dependency, or tooling changes |
 
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code formatting (no functional changes)
-- `refactor`: Code refactoring (no functional changes)
-- `perf`: Performance improvements
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks (dependencies, build config)
+### Rules
+
+- Subject line: imperative mood, no period, under 50 characters.
+- Body: explain what and why, not how. Wrap at 72 characters.
+- Reference issues: `Closes #123` or `Fixes #456`.
 
 ### Examples
 
-```bash
-feat: add password strength indicator to credential form
+```
+feat(vault): add credential export functionality
 
-fix: resolve mobile menu overflow issue on small screens
+Implement encrypted export of credentials to JSON format.
+Export uses the existing encryption key for consistency.
 
-refactor: extract encryption logic into separate service
-
-docs: update installation instructions for Windows users
-
-perf: optimize credential search query with database indexing
-
-test: add unit tests for encryption module
+Closes #234
 ```
 
-### Additional Guidelines
+```
+security(auth): enforce rate limiting on login endpoint
 
-- Use the imperative mood ("add feature" not "added feature")
-- Keep the subject line under 50 characters
-- Capitalize the subject line
-- No period at the end of the subject line
-- Add a blank line between subject and body
-- Wrap the body at 72 characters
-- Use the body to explain *what* and *why*, not *how*
+Add per-IP rate limiting to prevent brute-force attacks.
+Limit: 5 attempts per minute, lockout for 15 minutes.
+
+Refs #189
+```
+
+---
 
 ## Pull Request Process
 
 ### Before Submitting
 
-- [ ] Code follows the project's style guidelines
-- [ ] All tests pass locally
-- [ ] New tests added for new functionality
-- [ ] Documentation updated (if applicable)
-- [ ] No console errors or warnings
-- [ ] Commits follow the commit message guidelines
+Verify the following:
 
-### Submitting a PR
+- [ ] Code compiles without errors (`tsc --noEmit`)
+- [ ] All tests pass (`pytest`, `npm test`)
+- [ ] No linting errors (`flake8`, `eslint`)
+- [ ] Commits follow conventional format
+- [ ] Documentation updated if applicable
+- [ ] No secrets or credentials in diff
 
-1. **Use a clear title** following the same format as commit messages:
-   ```
-   feat: add two-factor authentication support
-   ```
+### Submission
 
-2. **Fill out the PR template** with:
-   - Description of changes
-   - Related issue number (e.g., "Closes #123")
-   - Screenshots for UI changes
-   - Testing steps
+1. Push your branch to your fork.
+2. Open a pull request against `main`.
+3. Fill out the PR template completely.
+4. Request review from maintainers.
 
-3. **Request review** from maintainers
+### PR Title Format
 
-4. **Respond to feedback** promptly and professionally
+Same as commit message format:
 
-### After Submission
+```
+feat(vault): add credential search functionality
+fix(auth): resolve session timeout race condition
+security(api): patch IDOR vulnerability in profile endpoint
+```
 
-- Be patient - reviews may take a few days
-- Be open to suggestions and feedback
-- Make requested changes in new commits (don't force-push)
-- Update your branch if main has moved forward:
-  ```bash
-  git fetch upstream
-  git rebase upstream/main
-  ```
+### Review Process
 
-## Issue Reporting
+1. Automated checks must pass (CI/CD).
+2. At least one maintainer approval required.
+3. Security-sensitive changes require two approvals.
+4. Address all review comments before merge.
+5. Squash commits on merge.
 
-### Before Creating an Issue
+### After Merge
 
-- **Search existing issues** to avoid duplicates
-- Check if it's already fixed in the latest version
-- Verify it's not a configuration issue
-
-### Creating a Bug Report
-
-Use the bug report template and include:
-
-1. **Clear title**: "Mobile: Credential menu not clickable on iOS Safari"
-2. **Description**: What happened and what you expected
-3. **Steps to reproduce**:
-   ```
-   1. Open AccountSafe on iPhone
-   2. Navigate to a credential
-   3. Click the kebab menu (three dots)
-   4. Menu appears but buttons are not clickable
-   ```
-4. **Environment**:
-   - OS: iOS 16.5
-   - Browser: Safari 16.5
-   - App version: 1.2.0
-5. **Screenshots/Logs**: Attach relevant images or console errors
-
-### Creating a Feature Request
-
-Use the feature request template and include:
-
-1. **Problem statement**: What problem does this solve?
-2. **Proposed solution**: How should it work?
-3. **Alternatives considered**: What other approaches did you think about?
-4. **Additional context**: Mockups, examples from other apps, etc.
+- Delete your feature branch.
+- Verify deployment to staging (if applicable).
+- Monitor for regressions.
 
 ---
 
-## Questions?
+## Issue Reporting
 
-If you have questions about contributing, feel free to:
-- Open a discussion on GitHub Discussions
-- Ask in the issue comments
-- Contact the maintainers directly
+### Bug Reports
 
-Thank you for contributing to AccountSafe! 🎉
+Use the bug report template. Include:
+
+1. **Title**: Clear, specific description.
+2. **Environment**: OS, browser, versions.
+3. **Steps to reproduce**: Numbered, minimal steps.
+4. **Expected behavior**: What should happen.
+5. **Actual behavior**: What happens instead.
+6. **Logs/Screenshots**: Relevant output (sanitize sensitive data).
+
+### Feature Requests
+
+Use the feature request template. Include:
+
+1. **Problem statement**: What problem does this solve?
+2. **Proposed solution**: How should it work?
+3. **Alternatives considered**: Other approaches evaluated.
+4. **Security implications**: Any security considerations.
+
+### Security Vulnerabilities
+
+Do not open public issues for security vulnerabilities.
+
+See [SECURITY.md](SECURITY.md) for responsible disclosure procedures.
+
+---
+
+## Questions
+
+For questions about contributing:
+
+1. Check existing issues and discussions.
+2. Open a GitHub Discussion for general questions.
+3. Contact maintainers for security-related questions.
