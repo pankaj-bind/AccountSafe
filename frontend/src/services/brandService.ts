@@ -69,6 +69,64 @@ export const getFallbackLogoUrl = (domain: string): string => {
 };
 
 /**
+ * Check if a string looks like a URL or domain
+ */
+export const isUrlOrDomain = (input: string): boolean => {
+  const trimmed = input.trim().toLowerCase();
+  
+  // Check for common URL patterns
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return true;
+  }
+  
+  // Check for domain-like patterns (contains a dot and valid TLD)
+  const domainPattern = /^[a-z0-9][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)+$/i;
+  if (domainPattern.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for subdomain patterns like accounts.x.ai
+  const subdomainPattern = /^[a-z0-9-]+\.[a-z0-9][a-z0-9-]*\.[a-z]{2,}$/i;
+  if (subdomainPattern.test(trimmed)) {
+    return true;
+  }
+  
+  return false;
+};
+
+/**
+ * Look up organization info by URL/domain
+ * Extracts domain and fetches organization name and logo
+ */
+export const lookupOrganizationByUrl = async (url: string): Promise<BrandSearchResult | null> => {
+  if (!url || url.trim().length < 3) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api/organizations/lookup/?url=${encodeURIComponent(url.trim())}`
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        name: data.name,
+        domain: data.domain,
+        logo: data.logo,
+        website_link: data.website_link,
+        isFallback: data.source === 'fallback'
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('URL lookup error:', error);
+    return null;
+  }
+};
+
+/**
  * Create fallback suggestions based on common domain patterns
  */
 const createFallbackSuggestions = (query: string): BrandSearchResult[] => {

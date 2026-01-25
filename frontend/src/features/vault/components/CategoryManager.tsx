@@ -713,14 +713,14 @@ const OrganizationModal: React.FC<OrganizationModalProps> = ({
                 value={newOrg.name}
                 onChange={(value) => onOrgChange({ ...newOrg, name: value })}
                 onBrandSelect={onBrandSelect}
-                placeholder="e.g., Google, GitHub, Netflix"
+                placeholder="e.g., Google, GitHub, or paste URL"
                 className="as-input w-full text-sm sm:text-base"
               />
             )}
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
               {isDigitalWallet 
                 ? 'Selected from above or enter a custom name' 
-                : 'Start typing to see brand suggestions with logos'
+                : 'Type a brand name or paste a URL (e.g., accounts.x.ai) to auto-detect'
               }
             </p>
           </div>

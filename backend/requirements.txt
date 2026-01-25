@@ -8,6 +8,9 @@ django-cors-headers
 # HTTP requests
 requests
 
+# HTML parsing for website title extraction
+beautifulsoup4
+
 # Timezone support
 pytz
 

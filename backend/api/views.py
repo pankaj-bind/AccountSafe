@@ -2210,6 +2210,160 @@ class SecuritySettingsView(APIView):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def lookup_organization_by_url(request):
+    """
+    Look up organization info by URL/domain.
+    Extracts domain from URL and fetches organization name and logo.
+    
+    Query Parameters:
+        url (str): Full URL or domain (e.g., accounts.x.ai, www.google.com, https://github.com)
+    
+    Returns:
+        JSON object with name, domain, logo, website_link
+    """
+    from urllib.parse import urlparse
+    import re
+    from bs4 import BeautifulSoup
+    
+    url_input = request.GET.get('url', '').strip()
+    
+    if not url_input:
+        return Response(
+            {"error": "URL parameter is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Extract domain from URL
+    # Handle various formats: accounts.x.ai, www.google.com, https://github.com/path
+    url_clean = url_input.lower().strip()
+    
+    # Add protocol if missing for proper parsing
+    if not url_clean.startswith(('http://', 'https://')):
+        url_clean = 'https://' + url_clean
+    
+    try:
+        parsed = urlparse(url_clean)
+        domain = parsed.netloc or parsed.path.split('/')[0]
+    except Exception:
+        # Fallback: extract domain manually
+        domain = re.sub(r'^(https?://)?', '', url_input.lower())
+        domain = domain.split('/')[0].split('?')[0]
+    
+    if not domain:
+        return Response(
+            {"error": "Could not extract domain from URL"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Remove common subdomains to get the main domain
+    subdomain_patterns = ['www.', 'accounts.', 'auth.', 'login.', 'signin.', 'app.', 
+                          'my.', 'portal.', 'console.', 'dashboard.', 'api.', 'm.', 'mobile.']
+    main_domain = domain
+    for pattern in subdomain_patterns:
+        if main_domain.startswith(pattern):
+            main_domain = main_domain[len(pattern):]
+            break
+    
+    # Try to extract organization name from domain
+    # e.g., x.ai -> X, github.com -> GitHub
+    domain_name = main_domain.split('.')[0]
+    
+    def fetch_website_title(url):
+        """Try to fetch the website title from the page"""
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            resp = requests.get(url, headers=headers, timeout=5, allow_redirects=True)
+            if resp.status_code == 200:
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                title_tag = soup.find('title')
+                if title_tag and title_tag.string:
+                    title = title_tag.string.strip()
+                    # Clean up common title patterns
+                    # Remove " - Home", " | Official Site", etc.
+                    for suffix in [' - Home', ' | Home', ' - Official', ' | Official', 
+                                   ' - Welcome', ' | Welcome', ' – Home', ' – Official']:
+                        if title.endswith(suffix):
+                            title = title[:-len(suffix)]
+                    # Take first part if title has separators
+                    for sep in [' | ', ' - ', ' – ', ' :: ', ' : ']:
+                        if sep in title:
+                            title = title.split(sep)[0].strip()
+                            break
+                    if title and len(title) < 100:  # Sanity check
+                        return title
+        except Exception:
+            pass
+        return None
+    
+    # Step 1: Search local database by domain
+    try:
+        local_org = CuratedOrganization.objects.filter(
+            domain__icontains=main_domain
+        ).first()
+        
+        if local_org:
+            return Response({
+                'name': local_org.name,
+                'domain': local_org.domain,
+                'logo': local_org.get_logo(),
+                'website_link': local_org.website_link or f'https://{local_org.domain}',
+                'source': 'local',
+                'is_verified': local_org.is_verified
+            })
+    except Exception:
+        pass
+    
+    # Step 2: Try Clearbit API - search with FULL domain first for exact match
+    try:
+        # First try with full domain for exact match
+        clearbit_url = f'https://autocomplete.clearbit.com/v1/companies/suggest?query={main_domain}'
+        response = requests.get(clearbit_url, timeout=3)
+        
+        if response.status_code == 200:
+            clearbit_data = response.json()
+            
+            # Find exact domain match ONLY
+            for item in clearbit_data:
+                item_domain = item.get('domain', '').lower()
+                # Only accept if the domain matches exactly or is very close
+                if item_domain == main_domain or item_domain == domain:
+                    return Response({
+                        'name': item.get('name', domain_name.capitalize()),
+                        'domain': item_domain,
+                        'logo': item.get('logo', f'https://www.google.com/s2/favicons?domain={item_domain}&sz=128'),
+                        'website_link': f'https://{item_domain}',
+                        'source': 'clearbit',
+                        'is_verified': False
+                    })
+    except requests.RequestException:
+        pass
+    
+    # Step 3: Fallback - Use the ACTUAL domain entered
+    # Try to fetch the website title for a better name
+    website_url = f'https://{main_domain}'
+    fetched_title = fetch_website_title(website_url)
+    
+    if fetched_title:
+        org_name = fetched_title
+    else:
+        # Generate a readable name from the domain
+        # e.g., utu.ac.in -> "Utu", github.com -> "Github"
+        org_name = ' '.join(word.capitalize() for word in domain_name.replace('-', ' ').replace('_', ' ').split())
+    
+    return Response({
+        'name': org_name or main_domain.split('.')[0].capitalize(),
+        'domain': main_domain,
+        'logo': f'https://www.google.com/s2/favicons?domain={main_domain}&sz=128',
+        'website_link': f'https://{main_domain}',
+        'source': 'fallback',
+        'is_verified': False
+    })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def search_organizations(request):
     """
     Hybrid organization search: Local database first, then Clearbit API fallback.

@@ -39,6 +39,7 @@ from api.views import (
     BatchUpdateSecurityMetricsView,
     SecuritySettingsView,
     search_organizations,
+    lookup_organization_by_url,
     ActiveSessionsView,
     ValidateSessionView,
     RevokeSessionView,
@@ -139,6 +140,7 @@ urlpatterns = [
 
     # Hybrid Organization Search (Local + Clearbit API)
     path('api/organizations/search/', search_organizations, name='search-organizations'),
+    path('api/organizations/lookup/', lookup_organization_by_url, name='lookup-organization-by-url'),
 
     # Shared Secret endpoints (Secure Link Sharing)
     path('api/shared-secrets/create/', create_shared_secret, name='create-shared-secret'),
