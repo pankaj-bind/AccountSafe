@@ -1,5 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+// Type-safe toast interface for global window.toast
+interface ToastFunction {
+  info: (message: string, options?: { duration?: number }) => void;
+  success: (message: string, options?: { duration?: number }) => void;
+  error: (message: string, options?: { duration?: number }) => void;
+}
+
+// Extend Window interface for toast
+declare global {
+  interface Window {
+    toast?: ToastFunction;
+  }
+}
+
 interface UseClipboardOptions {
   clearAfter?: number; // milliseconds (default: 30000 = 30s)
   feedbackDuration?: number; // how long isCopied stays true (default: 2000ms)
@@ -75,8 +89,8 @@ export const useClipboard = (options: UseClipboardOptions = {}): UseClipboardRet
       await navigator.clipboard.writeText('');
       
       // Show info toast
-      if (typeof window !== 'undefined' && (window as any).toast) {
-        (window as any).toast.info('Clipboard cleared.', { duration: 2000 });
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.info('Clipboard cleared.', { duration: 2000 });
       }
 
       // Fire onClear callback
@@ -124,8 +138,8 @@ export const useClipboard = (options: UseClipboardOptions = {}): UseClipboardRet
     if (!isSupported) {
       console.error('[useClipboard] Clipboard API not supported');
       // Fallback toast
-      if (typeof window !== 'undefined' && (window as any).toast) {
-        (window as any).toast.error('Clipboard not supported in this browser');
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Clipboard not supported in this browser');
       }
       return false;
     }
@@ -146,8 +160,8 @@ export const useClipboard = (options: UseClipboardOptions = {}): UseClipboardRet
       }, feedbackDuration);
 
       // Show success toast
-      if (typeof window !== 'undefined' && (window as any).toast) {
-        (window as any).toast.success(
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.success(
           `Copied to clipboard! Will clear in ${clearAfter / 1000} seconds.`,
           { duration: 3000 }
         );
@@ -178,8 +192,8 @@ export const useClipboard = (options: UseClipboardOptions = {}): UseClipboardRet
       console.error('[useClipboard] Failed to copy:', error);
       
       // Show error toast
-      if (typeof window !== 'undefined' && (window as any).toast) {
-        (window as any).toast.error('Failed to copy to clipboard');
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.error('Failed to copy to clipboard');
       }
       
       return false;

@@ -34,6 +34,7 @@ const SessionVerificationModal: React.FC<SessionVerificationModalProps> = ({ isO
         document.body.style.overflow = 'unset';
       };
     }
+    return undefined;
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {

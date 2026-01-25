@@ -115,9 +115,10 @@ const GlobalPanicHandler: React.FC = () => {
             }
           }
         }
-      } catch (masterError: any) {
+      } catch (masterError: unknown) {
         // Master auth failed, try duress salt if available
-        if (masterError.response?.status === 401 && duressSalt) {
+        const axiosError = masterError as { response?: { status?: number } };
+        if (axiosError.response?.status === 401 && duressSalt) {
           console.log('🔄 Trying alternate password...');
           
           const duressAuthHash = deriveAuthHash(password, duressSalt);
@@ -163,9 +164,10 @@ const GlobalPanicHandler: React.FC = () => {
       }
       
       throw new Error('Invalid password');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Unlock failed:', err);
-      throw new Error(err.response?.data?.error || err.message || 'Incorrect password');
+      const axiosError = err as { response?: { data?: { error?: string } }; message?: string };
+      throw new Error(axiosError.response?.data?.error || axiosError.message || 'Incorrect password');
     }
   }, [fastUnlockForModeSwitch, unlockPanic, previousLocation, navigate]);
   

@@ -132,10 +132,11 @@ export async function login(
     if (!salt) {
       throw new Error('LEGACY_ACCOUNT_NEEDS_RESET');
     }
-  } catch (error: any) {
-    if (error.response?.status === 404) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { status?: number }; message?: string };
+    if (axiosError.response?.status === 404) {
       throw new Error('Invalid credentials');
-    } else if (error.message === 'LEGACY_ACCOUNT_NEEDS_RESET') {
+    } else if (axiosError.message === 'LEGACY_ACCOUNT_NEEDS_RESET') {
       throw new Error('Your account needs to be upgraded. Please use "Forgot Password" to reset your password.');
     }
     throw error;
@@ -153,7 +154,7 @@ export async function login(
     
     const token = response.data.key;
     const responseSalt = response.data.salt || salt;
-    const _isDuress = response.data.is_duress || false; // eslint-disable-line @typescript-eslint/no-unused-vars
+    // Note: is_duress flag available in response.data.is_duress for duress mode detection
     
     localStorage.setItem('authToken', token);
     localStorage.setItem('username', username);
@@ -165,9 +166,10 @@ export async function login(
       ...response.data,
       salt: responseSalt
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Try duress salt if master auth failed
-    if (error.response?.status === 401 && duressSalt) {
+    const axiosError = error as { response?: { status?: number } };
+    if (axiosError.response?.status === 401 && duressSalt) {
       const duressAuthHash = deriveAuthHash(password, duressSalt);
       
       const response = await apiClient.post('/zk/login/', { 

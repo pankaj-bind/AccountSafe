@@ -108,9 +108,10 @@ const ProfilePage: React.FC = () => {
       });
       setGlobalProfilePicture(profileData.profile_picture_url);
       setGlobalDisplayName(profileData.display_name || profileData.username || 'User');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Profile fetch error:", err);
-      if (err.response?.status === 404) {
+      const axiosError = err as { response?: { status?: number } };
+      if (axiosError.response?.status === 404) {
         setError("Profile not found. Please contact support.");
       } else {
         setError("Failed to load profile data");
@@ -217,12 +218,13 @@ const ProfilePage: React.FC = () => {
       setProfilePicture(null);
       setPreviewUrl(null);
       setIsUsernameAvailable(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Profile update error:", err);
+      const axiosError = err as { response?: { data?: { username?: string[]; email?: string[]; error?: string } } };
       const errorMessage =
-        err.response?.data?.username?.[0] ||
-        err.response?.data?.email?.[0] ||
-        err.response?.data?.error ||
+        axiosError.response?.data?.username?.[0] ||
+        axiosError.response?.data?.email?.[0] ||
+        axiosError.response?.data?.error ||
         "Failed to update profile";
       setError(errorMessage);
     } finally {

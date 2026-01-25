@@ -37,9 +37,10 @@ export const useSessionMonitor = ({
         await apiClient.get('/sessions/validate/');
         
         // Session is valid, continue
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Session is invalid (401/403) or network error
-        if (error.response?.status === 401 || error.response?.status === 403) {
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 401 || axiosError.response?.status === 403) {
           // Call custom callback if provided, otherwise force logout
           if (onSessionInvalid) {
             onSessionInvalid();

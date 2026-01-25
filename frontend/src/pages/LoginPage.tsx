@@ -8,9 +8,15 @@ import { storeKeyData } from '../services/encryptionService';
 import PinSetupModal from '../components/PinSetupModal';
 
 // Cloudflare Turnstile
+interface TurnstileInstance {
+    render: (element: HTMLElement, options: Record<string, unknown>) => string;
+    remove: (widgetId: string) => void;
+    reset: (widgetId: string) => void;
+}
+
 declare global {
     interface Window {
-        turnstile: any;
+        turnstile: TurnstileInstance | undefined;
     }
 }
 

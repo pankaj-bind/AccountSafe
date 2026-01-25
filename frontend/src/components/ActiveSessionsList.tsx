@@ -46,9 +46,10 @@ const ActiveSessionsList: React.FC<ActiveSessionsListProps> = ({ onSessionRevoke
       setError(null);
       const data = await getActiveSessions();
       setSessions(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch sessions:', err);
-      setError(err.response?.data?.error || 'Failed to load active sessions');
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError(axiosError.response?.data?.error || 'Failed to load active sessions');
     } finally {
       setIsLoading(false);
     }
@@ -72,9 +73,10 @@ const ActiveSessionsList: React.FC<ActiveSessionsListProps> = ({ onSessionRevoke
       if (onSessionRevoked) {
         onSessionRevoked();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to revoke session:', err);
-      setError(err.response?.data?.error || 'Failed to revoke session');
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError(axiosError.response?.data?.error || 'Failed to revoke session');
     } finally {
       setRevokingId(null);
     }
@@ -97,9 +99,10 @@ const ActiveSessionsList: React.FC<ActiveSessionsListProps> = ({ onSessionRevoke
       if (onSessionRevoked) {
         onSessionRevoked();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to revoke all sessions:', err);
-      setError(err.response?.data?.error || 'Failed to revoke sessions');
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError(axiosError.response?.data?.error || 'Failed to revoke sessions');
     } finally {
       setIsRevokingAll(false);
     }

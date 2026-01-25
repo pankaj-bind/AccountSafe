@@ -57,6 +57,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onL
         window.removeEventListener('popstate', handlePopState);
       };
     }
+    return undefined;
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,7 +74,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onL
     try {
       await onUnlock(password);
       setPassword('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('Incorrect password. Please try again.');
       setIsUnlocking(false);
       setPassword('');

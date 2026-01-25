@@ -64,7 +64,7 @@ const SecuritySettingsPage: React.FC = () => {
         } catch {
           // Ignore PIN status errors
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Profile fetch error:", err);
         setError("Failed to load profile data");
       } finally {
@@ -98,9 +98,10 @@ const SecuritySettingsPage: React.FC = () => {
       setPasswordSuccess("Password changed successfully!");
       setCurrentPassword("");
       setNewPassword("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Password change error:", err);
-      const errorMessage = err.response?.data?.error || "Failed to change password";
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      const errorMessage = axiosError.response?.data?.error || "Failed to change password";
       setPasswordError(errorMessage);
     } finally {
       setIsChangingPassword(false);
@@ -120,8 +121,9 @@ const SecuritySettingsPage: React.FC = () => {
     try {
       await requestPasswordResetOTP(email);
       setPinResetStep('verify');
-    } catch (err: any) {
-      setPinResetError(err.response?.data?.error || "Failed to send OTP");
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setPinResetError(axiosError.response?.data?.error || "Failed to send OTP");
     } finally {
       setIsPinResetting(false);
     }
@@ -139,8 +141,9 @@ const SecuritySettingsPage: React.FC = () => {
     try {
       await verifyPasswordResetOTP(email, pinResetOtp);
       setPinResetStep('newpin');
-    } catch (err: any) {
-      setPinResetError(err.response?.data?.error || "Invalid OTP");
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setPinResetError(axiosError.response?.data?.error || "Invalid OTP");
     } finally {
       setIsPinResetting(false);
     }
@@ -175,8 +178,9 @@ const SecuritySettingsPage: React.FC = () => {
         setConfirmNewPin(['', '', '', '']);
         setPinResetSuccess(null);
       }, 2000);
-    } catch (err: any) {
-      setPinResetError(err.response?.data?.error || "Failed to reset PIN");
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setPinResetError(axiosError.response?.data?.error || "Failed to reset PIN");
     } finally {
       setIsPinResetting(false);
     }
@@ -201,8 +205,9 @@ const SecuritySettingsPage: React.FC = () => {
       await clearPin();
       setHasPin(false);
       setShowClearPinModal(false);
-    } catch (err: any) {
-      setClearPinError(err.response?.data?.error || "Failed to clear PIN");
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setClearPinError(axiosError.response?.data?.error || "Failed to clear PIN");
     } finally {
       setIsClearingPin(false);
     }
@@ -222,8 +227,9 @@ const SecuritySettingsPage: React.FC = () => {
       await deleteAccount(deletePassword);
       authLogout();
       navigate("/login", { state: { message: "Your account has been deleted successfully" } });
-    } catch (err: any) {
-      setDeleteError(err.response?.data?.error || "Failed to delete account. Please check your password.");
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setDeleteError(axiosError.response?.data?.error || "Failed to delete account. Please check your password.");
     } finally {
       setIsDeletingAccount(false);
     }

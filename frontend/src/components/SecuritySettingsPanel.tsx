@@ -66,7 +66,7 @@ const SecuritySettingsPanel: React.FC = () => {
       try {
         const data = await getPanicDuressSettings();
         setSettings(data);
-      } catch (err: any) {
+      } catch (_err: unknown) {
         setError('Failed to load security settings');
       } finally {
         setIsLoading(false);
@@ -153,6 +153,7 @@ const SecuritySettingsPanel: React.FC = () => {
         window.removeEventListener('keyup', handleKeyUp, true);
       };
     }
+    return undefined;
   }, [isRecordingShortcut, handleKeyDown, handleKeyUp]);
 
   const startRecording = () => {
@@ -178,8 +179,9 @@ const SecuritySettingsPanel: React.FC = () => {
       
       // Notify PanicListener to refetch the shortcut
       window.dispatchEvent(new CustomEvent('panicShortcutUpdated'));
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to save shortcut');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError(axiosError.response?.data?.error || 'Failed to save shortcut');
     } finally {
       setRecordedKeys([]);
     }
@@ -194,7 +196,7 @@ const SecuritySettingsPanel: React.FC = () => {
       
       // Notify PanicListener to refetch the shortcut
       window.dispatchEvent(new CustomEvent('panicShortcutUpdated'));
-    } catch (err: any) {
+    } catch (_err: unknown) {
       setError('Failed to clear shortcut');
     }
   };
@@ -235,8 +237,9 @@ const SecuritySettingsPanel: React.FC = () => {
       setDuressFormData({ masterPassword: '', duressPassword: '', confirmDuressPassword: '', sosEmail: '' });
       setSuccess('Ghost Vault configured successfully!');
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err: any) {
-      setDuressError(err.response?.data?.error || 'Failed to save duress settings');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setDuressError(axiosError.response?.data?.error || 'Failed to save duress settings');
     } finally {
       setIsSavingDuress(false);
     }
@@ -257,8 +260,9 @@ const SecuritySettingsPanel: React.FC = () => {
       setClearMasterPassword('');
       setSuccess('Ghost Vault disabled');
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err: any) {
-      setDuressError(err.response?.data?.error || 'Failed to clear duress settings');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setDuressError(axiosError.response?.data?.error || 'Failed to clear duress settings');
     } finally {
       setIsClearingDuress(false);
     }

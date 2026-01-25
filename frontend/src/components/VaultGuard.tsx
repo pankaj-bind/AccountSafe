@@ -103,9 +103,10 @@ const VaultGuard: React.FC<VaultGuardProps> = ({ children }) => {
             }
           }
         }
-      } catch (masterError: any) {
+      } catch (masterError: unknown) {
         // Master auth failed, try duress salt if available
-        if (masterError.response?.status === 401 && duressSalt) {
+        const axiosError = masterError as { response?: { status?: number } };
+        if (axiosError.response?.status === 401 && duressSalt) {
           console.log('🔄 Trying alternate password...');
           
           const duressAuthHash = deriveAuthHash(password, duressSalt);
@@ -146,7 +147,7 @@ const VaultGuard: React.FC<VaultGuardProps> = ({ children }) => {
         // Re-throw error for handling
         throw masterError;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Unlock error:', error);
       throw new Error('Incorrect password. Please try again.');
     }

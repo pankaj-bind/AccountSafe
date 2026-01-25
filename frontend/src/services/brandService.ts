@@ -21,6 +21,14 @@ export const searchBrands = async (query: string): Promise<BrandSearchResult[]> 
     return [];
   }
 
+  interface BrandApiResponse {
+    name: string;
+    domain: string;
+    logo?: string;
+    website_link?: string;
+    source?: string;
+  }
+
   try {
     // Use the hybrid search API (Local Database + Clearbit)
     const response = await fetch(
@@ -28,8 +36,8 @@ export const searchBrands = async (query: string): Promise<BrandSearchResult[]> 
     );
 
     if (response.ok) {
-      const data = await response.json();
-      return data.map((item: any) => ({
+      const data: BrandApiResponse[] = await response.json();
+      return data.map((item) => ({
         name: item.name,
         domain: item.domain,
         logo: item.logo,

@@ -20,6 +20,13 @@ import '@testing-library/jest-dom';
 // @ts-ignore - Node.js crypto module
 import { webcrypto } from 'crypto';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// TextEncoder/TextDecoder Polyfill
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// @ts-ignore - Node.js util module
+import { TextEncoder, TextDecoder } from 'util';
+
 // Polyfill globalThis.crypto for Node.js environment
 if (typeof globalThis.crypto === 'undefined') {
   Object.defineProperty(globalThis, 'crypto', {
@@ -29,20 +36,12 @@ if (typeof globalThis.crypto === 'undefined') {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TextEncoder/TextDecoder Polyfill
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// @ts-ignore - Node.js util module
-import { TextEncoder, TextDecoder } from 'util';
-
 if (typeof globalThis.TextEncoder === 'undefined') {
-  globalThis.TextEncoder = TextEncoder;
+  (globalThis as { TextEncoder: typeof TextEncoder }).TextEncoder = TextEncoder;
 }
 
 if (typeof globalThis.TextDecoder === 'undefined') {
-  // @ts-ignore
-  globalThis.TextDecoder = TextDecoder;
+  (globalThis as { TextDecoder: typeof TextDecoder }).TextDecoder = TextDecoder as typeof globalThis.TextDecoder;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -79,7 +78,7 @@ Object.defineProperty(window, 'matchMedia', {
 
 const originalError = console.error;
 beforeAll(() => {
-  console.error = (...args: any[]) => {
+  console.error = (...args: unknown[]) => {
     // Suppress React act() warnings in tests
     if (typeof args[0] === 'string' && args[0].includes('act(')) {
       return;

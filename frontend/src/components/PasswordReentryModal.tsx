@@ -89,8 +89,9 @@ const PasswordReentryModal: React.FC<PasswordReentryModalProps> = ({
       
       // Both passwords failed
       setError('Invalid password. Please try again.');
-    } catch (err: any) {
-      if (err.response?.status === 401) {
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { status?: number } };
+      if (axiosError.response?.status === 401) {
         setError('Session expired. Please log in again.');
         window.location.href = '/login';
       } else {

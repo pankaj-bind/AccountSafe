@@ -89,8 +89,9 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onClose, onSucces
     try {
       await setupPin(pinValue);
       onSuccess();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to set PIN');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError(axiosError.response?.data?.error || 'Failed to set PIN');
     } finally {
       setIsLoading(false);
     }
