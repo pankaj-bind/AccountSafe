@@ -26,6 +26,7 @@ import { trackAccess } from '../../../utils/frequencyTracker';
 
 // Components
 import ProfileList from './ProfileList';
+import ImportCredentialsModal from './ImportCredentialsModal';
 import PasswordReentryModal from '../../../components/PasswordReentryModal';
 import BreachWarning from '../../../components/BreachWarning';
 import DuplicatePasswordWarning from '../../../components/DuplicatePasswordWarning';
@@ -174,6 +175,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
   // Local UI State
   // ─────────────────────────────────────────────────────────────────────────────
   const [showModal, setShowModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [showPassword, setShowPassword] = useState<FieldVisibility>({});
   const [showUsername, setShowUsername] = useState<FieldVisibility>({});
@@ -501,7 +503,10 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
 
         {/* Empty State */}
         {!isLoading && profiles.length === 0 && (
-          <EmptyState onAddClick={() => { setShowModal(true); clearError(); }} />
+          <EmptyState 
+            onAddClick={() => { setShowModal(true); clearError(); }} 
+            onImportClick={() => setShowImportModal(true)}
+          />
         )}
 
         {/* Profile List */}
@@ -559,6 +564,16 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
           }}
         />
       )}
+
+      {/* Import Credentials Modal */}
+      <ImportCredentialsModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportComplete={() => {
+          setShowImportModal(false);
+          fetchProfiles();
+        }}
+      />
     </div>
   );
 };
@@ -601,7 +616,7 @@ const LoadingSpinner: React.FC = () => (
   </div>
 );
 
-const EmptyState: React.FC<{ onAddClick: () => void }> = ({ onAddClick }) => (
+const EmptyState: React.FC<{ onAddClick: () => void; onImportClick?: () => void }> = ({ onAddClick, onImportClick }) => (
   <div className="as-card p-12 text-center">
     <div className="w-20 h-20 bg-zinc-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
       <KeyIcon className="w-10 h-10 text-zinc-600" />
@@ -610,10 +625,20 @@ const EmptyState: React.FC<{ onAddClick: () => void }> = ({ onAddClick }) => (
     <p className="text-zinc-400 mb-6 max-w-md mx-auto">
       Add your first credential to start storing passwords, emails, and recovery codes securely.
     </p>
-    <button onClick={onAddClick} className="as-btn-primary inline-flex items-center gap-2">
-      <span className="sm:hidden"><PlusIcon className="w-5 h-5" /></span>
-      <span className="hidden sm:inline">+ Add New Credentials</span>
-    </button>
+    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <button onClick={onAddClick} className="as-btn-primary inline-flex items-center justify-center gap-2">
+        <span className="sm:hidden"><PlusIcon className="w-5 h-5" /></span>
+        <span className="hidden sm:inline">+ Add New Credentials</span>
+      </button>
+      {onImportClick && (
+        <button onClick={onImportClick} className="as-btn-secondary inline-flex items-center justify-center gap-2">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
+          <span>Import from Browser</span>
+        </button>
+      )}
+    </div>
   </div>
 );
 
