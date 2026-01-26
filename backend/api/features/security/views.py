@@ -389,8 +389,101 @@ class CanaryTrapDetailView(APIView):
 
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.core.cache import cache
 import time
 import random
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# RATE LIMITING FOR CANARY TRAPS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class CanaryTrapRateLimiter:
+    """
+    In-memory rate limiter for canary trap endpoints.
+    
+    Policy: 5 requests per minute per IP address.
+    
+    Uses Django's cache backend for storage, falling back to a simple
+    in-memory dict if cache is unavailable.
+    
+    Security Note:
+    - Prevents attackers from flooding the endpoint after discovery
+    - Silently drops requests (no error messages that reveal rate limiting)
+    - Rate-limited requests do NOT trigger email alerts (prevents alert fatigue)
+    """
+    
+    # Configuration
+    MAX_REQUESTS = 5      # Max requests allowed
+    WINDOW_SECONDS = 60   # Time window in seconds
+    CACHE_PREFIX = 'canary_trap_rl_'
+    
+    # Fallback in-memory storage if cache unavailable
+    _memory_store: dict = {}
+    
+    @classmethod
+    def is_rate_limited(cls, ip_address: str) -> bool:
+        """
+        Check if an IP address has exceeded the rate limit.
+        
+        Args:
+            ip_address: The client's IP address
+            
+        Returns:
+            True if rate limited (should block), False if allowed
+        """
+        if not ip_address:
+            return False
+        
+        cache_key = f"{cls.CACHE_PREFIX}{ip_address}"
+        current_time = time.time()
+        
+        try:
+            # Try to use Django cache
+            request_log = cache.get(cache_key, [])
+        except Exception:
+            # Fallback to memory if cache unavailable
+            request_log = cls._memory_store.get(cache_key, [])
+        
+        # Clean old entries outside the window
+        window_start = current_time - cls.WINDOW_SECONDS
+        request_log = [ts for ts in request_log if ts > window_start]
+        
+        # Check if over limit
+        if len(request_log) >= cls.MAX_REQUESTS:
+            return True
+        
+        # Add current request
+        request_log.append(current_time)
+        
+        try:
+            # Store in cache with TTL
+            cache.set(cache_key, request_log, timeout=cls.WINDOW_SECONDS * 2)
+        except Exception:
+            # Fallback to memory
+            cls._memory_store[cache_key] = request_log
+            # Clean old entries from memory store periodically
+            if len(cls._memory_store) > 10000:
+                cls._cleanup_memory_store()
+        
+        return False
+    
+    @classmethod
+    def _cleanup_memory_store(cls):
+        """Remove expired entries from memory store."""
+        current_time = time.time()
+        window_start = current_time - cls.WINDOW_SECONDS
+        
+        expired_keys = []
+        for key, timestamps in cls._memory_store.items():
+            valid = [ts for ts in timestamps if ts > window_start]
+            if not valid:
+                expired_keys.append(key)
+            else:
+                cls._memory_store[key] = valid
+        
+        for key in expired_keys:
+            del cls._memory_store[key]
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -400,7 +493,7 @@ class CanaryTrapTriggerView(APIView):
     
     When an attacker accesses this URL, it:
     1. Logs everything (IP, User-Agent, Referer, Timestamp)
-    2. Fires an alert email to the trap owner
+    2. Fires an alert email to the trap owner (ASYNC - non-blocking)
     3. Returns a deceptive response (403 Forbidden or fake login page)
     
     CRITICAL: This endpoint must be UNAUTHENTICATED so attackers can trigger it.
@@ -409,6 +502,8 @@ class CanaryTrapTriggerView(APIView):
     - CSRF exempt (allows POST from any origin)
     - Timing attack protection (random delay)
     - Consistent response for all cases (no information leakage)
+    - Rate limiting (5 req/min per IP - prevents flooding)
+    - Async email sending (instant response, email in background)
     """
     permission_classes = []  # No authentication required!
     authentication_classes = []  # No authentication classes!
@@ -425,7 +520,19 @@ class CanaryTrapTriggerView(APIView):
         """Process the trap trigger."""
         from .models import CanaryTrap
         from .services import SecurityService
-        from django.http import HttpResponse
+        from api.utils.concurrency import fire_and_forget
+        
+        # Get client IP first (needed for rate limiting)
+        ip_address = self._get_client_ip(request)
+        
+        # ═══════════════════════════════════════════════════════════════════════
+        # RATE LIMITING CHECK
+        # If rate limited, silently return 403 WITHOUT triggering alert
+        # This prevents alert fatigue from flooding attacks
+        # ═══════════════════════════════════════════════════════════════════════
+        if CanaryTrapRateLimiter.is_rate_limited(ip_address):
+            # Silently drop - same response as normal, no email
+            return self._deceptive_response()
         
         # Timing attack protection: Add random delay to prevent
         # attackers from distinguishing valid vs invalid tokens
@@ -442,7 +549,6 @@ class CanaryTrapTriggerView(APIView):
             return self._deceptive_response()
         
         # Capture all forensic data
-        ip_address = self._get_client_ip(request)
         user_agent = request.META.get('HTTP_USER_AGENT', '')
         referer = request.META.get('HTTP_REFERER', '')
         
@@ -455,7 +561,7 @@ class CanaryTrapTriggerView(APIView):
             'accept_encoding': request.META.get('HTTP_ACCEPT_ENCODING', ''),
         }
         
-        # Record the trigger
+        # Record the trigger (synchronous - we need the trigger object)
         trigger = trap.trigger(
             ip_address=ip_address,
             user_agent=user_agent,
@@ -463,14 +569,27 @@ class CanaryTrapTriggerView(APIView):
             additional_data=additional_data
         )
         
-        # Send alert email asynchronously (best effort)
-        try:
-            SecurityService.send_canary_alert(trap, trigger)
-            trigger.alert_sent = True
-            trigger.save(update_fields=['alert_sent'])
-        except Exception as e:
-            print(f"[CANARY ALERT] Failed to send: {e}")
+        # ═══════════════════════════════════════════════════════════════════════
+        # ASYNC EMAIL SENDING
+        # Fire-and-forget: Send email in background thread
+        # Response returns instantly (<50ms), email sends separately
+        # ═══════════════════════════════════════════════════════════════════════
+        def send_alert_async():
+            """Background task to send email and update trigger."""
+            try:
+                SecurityService.send_canary_alert(trap, trigger)
+                trigger.alert_sent = True
+                trigger.save(update_fields=['alert_sent'])
+            except Exception as e:
+                print(f"[CANARY ALERT] Failed to send: {e}")
         
+        # Start background thread (non-blocking)
+        fire_and_forget(
+            target=send_alert_async,
+            task_name=f"canary_alert_{trap.label}"
+        )
+        
+        # Return IMMEDIATELY - don't wait for email
         return self._deceptive_response()
     
     def _get_client_ip(self, request):

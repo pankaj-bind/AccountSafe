@@ -1,41 +1,58 @@
-# Django and related packages
-django
-djangorestframework
-dj-rest-auth[with_social]
-django-allauth
-django-cors-headers
+# ═══════════════════════════════════════════════════════════════════════════════
+# AccountSafe - Pinned Dependencies (Supply Chain Hardened)
+# Last Updated: 2026-01-26
+# Policy: All versions pinned to prevent supply chain attacks
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Django Core (LTS 5.2.x - supported until April 2028)
+Django==5.2
+djangorestframework==3.15.2
+
+# Authentication packages
+dj-rest-auth[with_social]==7.0.0
+django-allauth==65.3.0
+
+# CORS handling
+django-cors-headers==4.6.0
 
 # HTTP requests
-requests
+requests==2.32.3
 
 # HTML parsing for website title extraction
-beautifulsoup4
+beautifulsoup4==4.12.3
 
 # Timezone support
-pytz
+pytz==2024.2
 
 # Environment variables
-python-dotenv
+python-dotenv==1.0.1
 
 # Image support
-Pillow
+Pillow==11.0.0
 
 # Encryption
-cryptography
+cryptography==44.0.0
 
 # User-Agent parsing for emails
-user-agents
+user-agents==2.2.0
 
 # PostgreSQL database adapter
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
 
 # Production WSGI server
-gunicorn==21.2.0
+gunicorn==23.0.0
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Security Dependencies (NEW)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Rate limiting for API protection
+django-ratelimit==4.1.0
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Testing Dependencies
 # ═══════════════════════════════════════════════════════════════════════════════
-pytest>=7.4.0
-pytest-django>=4.5.0
-factory-boy>=3.3.0
-pytest-cov>=4.1.0
+pytest==8.3.4
+pytest-django==4.9.0
+factory-boy==3.3.1
+pytest-cov==6.0.0
