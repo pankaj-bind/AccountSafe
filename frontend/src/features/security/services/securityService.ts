@@ -10,7 +10,11 @@ import type {
   HealthScore, 
   LoginRecord, 
   UserSession, 
-  SecuritySettings 
+  SecuritySettings,
+  CanaryTrap,
+  CanaryTrapsResponse,
+  CanaryTrapDetailResponse,
+  CanaryTrapCreateRequest
 } from '../types';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -188,13 +192,6 @@ export async function resetPin(currentPassword: string, newPin: string): Promise
 // ═══════════════════════════════════════════════════════════════════════════════
 // Canary Traps (Honeytokens)
 // ═══════════════════════════════════════════════════════════════════════════════
-
-import type { 
-  CanaryTrap, 
-  CanaryTrapsResponse, 
-  CanaryTrapDetailResponse,
-  CanaryTrapCreateRequest 
-} from '../types';
 
 /**
  * Get all canary traps for the authenticated user.
