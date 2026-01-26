@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import SecuritySettingsPanel from "../components/SecuritySettingsPanel";
 import ActiveSessionsList from "../components/ActiveSessionsList";
 import ImportCredentialsModal from "../features/vault/components/ImportCredentialsModal";
+import ExportVaultModal from "../features/vault/components/ExportVaultModal";
 
 // Icons
 const LockIcon = () => (
@@ -51,6 +52,9 @@ const SecuritySettingsPage: React.FC = () => {
 
   // Import credentials modal state
   const [showImportModal, setShowImportModal] = useState(false);
+
+  // Export vault modal state
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const { logout: authLogout } = useAuth();
   const navigate = useNavigate();
@@ -493,6 +497,7 @@ const SecuritySettingsPage: React.FC = () => {
             {/* Export Vault */}
             <button
               type="button"
+              onClick={() => setShowExportModal(true)}
               className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-500/10 transition-all group"
             >
               <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -920,6 +925,12 @@ const SecuritySettingsPage: React.FC = () => {
           setSuccess("Credentials imported successfully!");
           setShowImportModal(false);
         }}
+      />
+
+      {/* Export Vault Modal */}
+      <ExportVaultModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
       />
     </div>
   );
