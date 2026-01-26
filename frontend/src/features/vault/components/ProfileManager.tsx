@@ -505,7 +505,6 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
         {!isLoading && profiles.length === 0 && (
           <EmptyState 
             onAddClick={() => { setShowModal(true); clearError(); }} 
-            onImportClick={() => setShowImportModal(true)}
           />
         )}
 
