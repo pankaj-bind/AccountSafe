@@ -42,12 +42,29 @@ The encryption key never leaves your device.
 
 ## Features
 
+### Zero-Knowledge Security
 - **Zero-Knowledge Encryption**: AES-256-GCM with PBKDF2 key derivation (600k iterations)
-- **Panic Mode**: Alternate PIN reveals a decoy vault under duress
-- **Digital Wallet**: Visual credit card storage with masked display
-- **Breach Detection**: Integration with Have I Been Pwned
-- **Shared Secrets**: Time-limited, passphrase-protected sharing
+- **Zero-Knowledge Authentication**: Password never leaves your device; only derived `auth_hash` is transmitted
+- **Zero-Knowledge Export/Import**: Encrypted vault backup that only you can decrypt
+
+### Active Defense
+- **Duress Mode (Ghost Vault)**: Alternate password reveals a decoy vault with fake low-value credentials. Attacker sees "Netflix" and "Spotify" logins while your real vault remains hidden.
+- **Canary Trap Credentials**: Plant fake credentials that trigger silent alerts when accessed. Know immediately if your exported data is compromised.
+- **SOS Email Alerts**: Automatic notification to a trusted contact when duress mode is activated
+
+### Security Intelligence
+- **Security Health Score**: Real-time vault security assessment (password strength, reuse, age, breach status)
+- **Breach Detection**: Integration with Have I Been Pwned API
 - **Session Management**: View and revoke active sessions across devices
+
+### Secure Sharing
+- **Shared Secrets**: Time-limited, passphrase-protected credential sharing
+- **Auto-Expiry**: Shared links automatically expire and self-destruct
+
+### Convenience
+- **Digital Wallet**: Visual credit card storage with masked display
+- **Smart Import**: Bulk import from browser password exports (Chrome, Firefox, Edge)
+- **Brand Detection**: Automatic logo fetching for organizations
 
 ---
 
@@ -58,16 +75,16 @@ The encryption key never leaves your device.
 ```bash
 git clone https://github.com/pankaj-bind/AccountSafe.git
 cd AccountSafe
-cp backend/.env.example backend/.env    # Configure
-cp frontend/.env.example frontend/.env  # Configure
-make init-ssl
-make deploy
+cp backend/.env.example backend/.env    # Configure backend settings
+cp frontend/.env.example frontend/.env  # Configure frontend API URL
+make init-ssl                            # Initialize Let's Encrypt certificates
+docker compose -f docker-compose.prod.yml up -d  # Deploy production stack
 ```
 
 ### Development
 
 ```bash
-make dev
+make dev  # Starts both backend and frontend with hot reload
 ```
 
 Or manually:

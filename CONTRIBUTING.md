@@ -36,22 +36,29 @@ AccountSafe is a security product. All contributions must adhere to these non-ne
 
 5. **No `console.log` in production code.** Use structured logging for the backend. Remove debugging statements before submission.
 
-6. **No disabled security headers.** CORS, CSRF, and CSP configurations must not be weakened.
+6. **No `print()` statements in Python.** Use the `logging` module exclusively. Debug prints will be rejected.
 
-7. **Dependencies require justification.** New packages must be reviewed for security posture. Prefer well-maintained libraries with minimal transitive dependencies.
+7. **No disabled security headers.** CORS, CSRF, and CSP configurations must not be weakened.
 
-8. **Cryptographic code is off-limits.** Do not modify encryption algorithms, key derivation parameters, or cryptographic primitives without explicit maintainer approval and security review.
+8. **Strict dependency versioning.** No `^` or `~` in `package.json`. All versions must be pinned exactly (e.g., `"react": "18.3.1"` not `"^18.3.1"`). This prevents supply chain attacks via automatic updates.
+
+9. **Dependencies require justification.** New packages must be reviewed for security posture. Prefer well-maintained libraries with minimal transitive dependencies.
+
+10. **Cryptographic code is off-limits.** Do not modify encryption algorithms, key derivation parameters, or cryptographic primitives without explicit maintainer approval and security review.
 
 ### Security Review Triggers
 
 The following changes require mandatory security review before merge:
 
-- Any modification to `encryption.ts` or `encryption.py`
+- Any modification to `frontend/src/utils/encryption.ts`
+- Any modification to `backend/api/features/auth/zero_knowledge.py`
+- Any modification to `backend/api/features/security/` (canary traps, sessions)
 - Authentication or session management changes
 - New API endpoints handling sensitive data
 - Changes to CORS, CSRF, or CSP policies
 - Database schema changes involving encrypted fields
 - Dependency updates to security-critical packages
+- Changes to duress mode or canary trap logic
 
 ---
 
@@ -210,22 +217,48 @@ def encrypt_credential(plaintext: str, key: bytes) -> Optional[str]:
 ### File Organization
 
 ```
-# Frontend component structure
-src/
+# Backend structure (Domain-Driven Design)
+backend/
+├── api/
+│   ├── features/              # Feature modules (ALL business logic goes here)
+│   │   ├── auth/              # Authentication & Zero-Knowledge
+│   │   │   ├── views.py       # Login, register, password reset, PIN
+│   │   │   ├── zero_knowledge.py  # ZK auth, duress mode
+│   │   │   ├── services.py    # Business logic
+│   │   │   ├── serializers.py # Request/response schemas
+│   │   │   └── urls.py        # Route definitions
+│   │   ├── vault/             # Vault management
+│   │   │   ├── views.py       # Categories, organizations, profiles
+│   │   │   ├── zk_views.py    # Zero-knowledge vault operations
+│   │   │   └── services.py    # Business logic
+│   │   ├── security/          # Security features
+│   │   │   ├── views.py       # Health score, sessions, canary traps
+│   │   │   └── services.py    # Business logic
+│   │   └── shared_secret/     # Secure sharing
+│   │       ├── views.py       # Create/retrieve shared secrets
+│   │       └── services.py    # Business logic
+│   ├── models.py              # Database models (shared across features)
+│   ├── utils/                 # Shared utilities
+│   │   └── concurrency.py     # Fire-and-forget task execution
+│   └── views.py               # DEPRECATED - minimal legacy views only
+├── core/
+│   ├── settings.py            # Django configuration
+│   └── urls.py                # Master URL router
+└── requirements.txt           # Pinned dependencies
+
+# Frontend structure
+frontend/src/
 ├── components/           # Shared UI components
-├── features/
-│   └── vault/
-│       ├── components/   # Feature-specific components
-│       ├── hooks/        # Feature-specific hooks
-│       ├── services/     # API layer
-│       └── types/        # Type definitions
-├── pages/                # Route components
-├── hooks/                # Shared hooks
-├── services/             # Shared services
+├── features/             # Feature-specific components (if complex)
+├── pages/                # Route components (one per page)
+├── hooks/                # Custom React hooks
+├── services/             # API client layer
 ├── contexts/             # React context providers
-├── utils/                # Utility functions
-└── types/                # Shared type definitions
+├── utils/                # Utility functions (encryption, validation)
+└── types/                # TypeScript type definitions
 ```
+
+** IMPORTANT:** Do NOT add new views to `backend/api/views.py`. All new features must be implemented in the appropriate `backend/api/features/{module}/` directory.
 
 ---
 

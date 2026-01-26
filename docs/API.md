@@ -11,8 +11,14 @@ Base URL: `/api/`
 - [Authentication](#authentication)
 - [Vault Operations](#vault-operations)
 - [Security Controls](#security-controls)
+  - [Security PIN](#security-pin)
+  - [Session Management](#session-management)
+  - [Duress Mode (Ghost Vault)](#duress-mode-ghost-vault)
+  - [Canary Trap Credentials](#canary-trap-credentials)
+  - [Zero-Knowledge Vault Export/Import](#zero-knowledge-vault-exportimport)
 - [Shared Secrets](#shared-secrets)
 - [User Management](#user-management)
+- [Error Responses](#error-responses)
 
 ---
 
@@ -382,9 +388,52 @@ Authorization: Token <jwt>
 
 **Response:** `200 OK`
 
-### Panic Mode
+### Duress Mode (Ghost Vault)
 
-Switch to duress vault using alternate authentication.
+Duress Mode allows you to set up a secondary password that reveals a fake vault with decoy credentials. This protects your real vault under coercion.
+
+#### Set Duress Password
+
+```
+POST /api/zk/set-duress/
+Authorization: Token <jwt>
+```
+
+**Request Body:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `master_auth_hash` | string | Current master password auth hash (for verification) |
+| `duress_auth_hash` | string | Duress password auth hash |
+| `duress_salt` | string | Salt for duress key derivation |
+| `sos_email` | string | Optional: Email to notify on duress login |
+
+**Response:** `200 OK`
+
+```json
+{
+  "message": "Duress mode configured successfully"
+}
+```
+
+#### Clear Duress Password
+
+```
+POST /api/zk/clear-duress/
+Authorization: Token <jwt>
+```
+
+**Request Body:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `auth_hash` | string | Master password auth hash (for verification) |
+
+**Response:** `200 OK`
+
+#### Switch to Duress Mode
+
+Login with duress credentials returns a valid token but serves fake vault data.
 
 ```
 POST /api/zk/switch-mode/
@@ -396,6 +445,129 @@ Authorization: Token <jwt>
 | Field | Type | Description |
 |-------|------|-------------|
 | `auth_hash` | string | Duress authentication hash |
+
+**Response:** `200 OK`
+
+```json
+{
+  "message": "Mode switched successfully",
+  "is_duress": true
+}
+```
+
+### Canary Trap Credentials
+
+Canary Traps are decoy credentials that trigger alerts when accessed. Use them to detect unauthorized access to your exported data.
+
+#### List Canary Traps
+
+```
+GET /api/security/canary-traps/
+Authorization: Token <jwt>
+```
+
+**Response:** `200 OK`
+
+```json
+[
+  {
+    "id": 1,
+    "service_name": "FakeBank Login",
+    "trigger_email": "user@example.com",
+    "created_at": "2025-01-01T00:00:00Z",
+    "last_triggered_at": null,
+    "trigger_count": 0
+  }
+]
+```
+
+#### Create Canary Trap
+
+```
+POST /api/security/canary-traps/
+Authorization: Token <jwt>
+```
+
+**Request Body:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `service_name` | string | Descriptive name for the canary |
+| `trigger_email` | string | Email to notify on trigger |
+| `canary_username` | string | Fake username to distribute |
+| `canary_password_hash` | string | Hashed fake password |
+
+**Response:** `201 Created`
+
+#### Trigger Canary (Public Endpoint)
+
+This endpoint is called when a canary credential is used. It logs the attempt and sends alerts.
+
+```
+POST /api/security/canary-traps/trigger/
+```
+
+**Request Body:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `canary_token` | string | The canary identifier token |
+
+**Response:** `200 OK` (always succeeds to avoid detection)
+
+#### Delete Canary Trap
+
+```
+DELETE /api/security/canary-traps/{id}/
+Authorization: Token <jwt>
+```
+
+**Response:** `204 No Content`
+
+### Zero-Knowledge Vault Export/Import
+
+Export and import encrypted vault backups. The server never sees decrypted data.
+
+#### Export Vault
+
+```
+GET /api/zk/vault/export/
+Authorization: Token <jwt>
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "encrypted_vault": "base64-encoded-encrypted-blob",
+  "salt": "base64-encoded-salt",
+  "version": 1,
+  "exported_at": "2025-01-01T00:00:00Z"
+}
+```
+
+#### Import Vault
+
+```
+POST /api/zk/vault/import/
+Authorization: Token <jwt>
+```
+
+**Request Body:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `encrypted_vault` | string | Previously exported encrypted blob |
+| `auth_hash` | string | Auth hash for verification |
+
+**Response:** `200 OK`
+
+```json
+{
+  "message": "Vault imported successfully",
+  "items_imported": 42
+}
+```
 
 ---
 

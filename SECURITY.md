@@ -19,17 +19,71 @@ Only the latest minor release receives security updates. Users are expected to m
 
 AccountSafe implements a zero-knowledge architecture. Understanding this model is essential for accurate vulnerability assessment.
 
+### Zero-Knowledge Architecture
+
+The server **never** has access to your plaintext credentials. Here's how it works:
+
+```
+Master Password (client-side only)
+        │
+        ▼
+    PBKDF2 (600,000 iterations)
+        │
+   ┌────┴────┐
+   ▼         ▼
+auth_key   enc_key
+   │         │
+   │         └──► AES-256-GCM Encrypt ──► Ciphertext ──► Server stores blob
+   │
+   └──► SHA-256 ──► auth_hash ──► Server verifies identity
+```
+
+**Key Points:**
+- `enc_key` (encryption key) **never** leaves the browser
+- `auth_hash` (authentication hash) is derived separately and only used for identity verification
+- Server stores only encrypted blobs; a database breach yields no usable data
+
+### Active Defense Features
+
+#### Duress Mode (Ghost Vault)
+
+AccountSafe supports a secondary "duress password" that reveals a **decoy vault** containing fake, low-value credentials. If you are forced to reveal your password:
+
+1. Enter your duress password instead of your master password
+2. You will be logged in normally (no visible difference)
+3. The vault displays fake credentials (Netflix, Spotify, etc.)
+4. Your real vault remains completely hidden
+5. Optionally, an **SOS email** is silently sent to a trusted contact
+
+**Security Consideration:** The duress password should be memorable but distinct from your master password. It should appear plausible under coercion.
+
+#### Canary Trap Credentials
+
+Canary Traps are "honey credentials" you can plant in exports or share intentionally. If an attacker attempts to use them:
+
+1. The service receiving the login attempt triggers an alert
+2. You receive an email notification with:
+   - Timestamp of the access attempt
+   - IP address and geolocation
+   - User-agent of the attacker's browser
+3. You know your data has been compromised before any real damage occurs
+
+** WARNING:** Do NOT use canary credentials on real services. They are designed to trigger alerts when accessed. Using a canary password on a real account will lock you out.
+
 ### In Scope
 
 The following are considered security-relevant:
 
-- Client-side encryption implementation (`encryption.ts`)
+- Client-side encryption implementation (`frontend/src/utils/encryption.ts`)
+- Zero-knowledge authentication (`backend/api/features/auth/zero_knowledge.py`)
 - Key derivation and management
 - Authentication and session handling
 - Authorization and access control
 - Server-side input validation
 - Cryptographic parameter choices
 - Secret storage and transmission
+- Duress mode implementation
+- Canary trap trigger mechanism
 - Cross-site scripting (XSS) vectors
 - Cross-site request forgery (CSRF)
 - SQL injection and ORM misuse
