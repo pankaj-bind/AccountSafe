@@ -7,6 +7,7 @@ import SecuritySettingsPanel from "../components/SecuritySettingsPanel";
 import ActiveSessionsList from "../components/ActiveSessionsList";
 import ImportCredentialsModal from "../features/vault/components/ImportCredentialsModal";
 import ExportVaultModal from "../features/vault/components/ExportVaultModal";
+import { CanaryTrapManager } from "../features/security";
 
 // Icons
 const LockIcon = () => (
@@ -535,6 +536,20 @@ const SecuritySettingsPage: React.FC = () => {
             <p className="text-sm text-zinc-500 mt-1">Advanced security features for emergency situations</p>
           </div>
           <SecuritySettingsPanel />
+        </div>
+
+        {/* Security Traps (Honeytokens) Section */}
+        <div className="mb-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+              <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285zM12 12.75h.007v.008H12v-.008z" />
+              </svg>
+              Breach Detection
+            </h2>
+            <p className="text-sm text-zinc-500 mt-1">Create honeytokens to detect when your credentials are stolen</p>
+          </div>
+          <CanaryTrapManager />
         </div>
 
         {/* Active Sessions Section */}

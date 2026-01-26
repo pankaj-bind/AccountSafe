@@ -10,7 +10,11 @@ import type {
   HealthScore, 
   LoginRecord, 
   UserSession, 
-  SecuritySettings 
+  SecuritySettings,
+  CanaryTrap,
+  CanaryTrapsResponse,
+  CanaryTrapDetailResponse,
+  CanaryTrapCreateRequest
 } from '../types';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -183,4 +187,50 @@ export async function verifyPin(pin: string): Promise<boolean> {
  */
 export async function resetPin(currentPassword: string, newPin: string): Promise<void> {
   await apiClient.post('/pin/reset/', { password: currentPassword, new_pin: newPin });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Canary Traps (Honeytokens)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get all canary traps for the authenticated user.
+ */
+export async function getCanaryTraps(): Promise<CanaryTrapsResponse> {
+  const response = await apiClient.get('/security/traps/');
+  return response.data;
+}
+
+/**
+ * Create a new canary trap.
+ */
+export async function createCanaryTrap(data: CanaryTrapCreateRequest): Promise<CanaryTrap> {
+  const response = await apiClient.post('/security/traps/', data);
+  return response.data;
+}
+
+/**
+ * Get a specific canary trap with its trigger history.
+ */
+export async function getCanaryTrapDetail(trapId: number): Promise<CanaryTrapDetailResponse> {
+  const response = await apiClient.get(`/security/traps/${trapId}/`);
+  return response.data;
+}
+
+/**
+ * Update a canary trap.
+ */
+export async function updateCanaryTrap(
+  trapId: number, 
+  data: Partial<Pick<CanaryTrap, 'label' | 'description' | 'is_active'>>
+): Promise<CanaryTrap> {
+  const response = await apiClient.patch(`/security/traps/${trapId}/`, data);
+  return response.data;
+}
+
+/**
+ * Delete a canary trap.
+ */
+export async function deleteCanaryTrap(trapId: number): Promise<void> {
+  await apiClient.delete(`/security/traps/${trapId}/`);
 }

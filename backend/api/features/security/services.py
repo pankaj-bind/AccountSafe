@@ -513,3 +513,97 @@ class SecurityService:
             'message': 'Panic shortcut cleared',
             'panic_shortcut': []
         }
+    
+    # ===========================
+    # CANARY TRAP (HONEYTOKEN) ALERTS
+    # ===========================
+    
+    @staticmethod
+    def send_canary_alert(trap, trigger):
+        """
+        Send alert email when a canary trap is triggered.
+        
+        Args:
+            trap: The CanaryTrap object that was triggered
+            trigger: The CanaryTrapTrigger record with forensic data
+        """
+        try:
+            user = trap.user
+            recipient_email = user.email
+            
+            if not recipient_email:
+                print(f"[CANARY ALERT] No email for user {user.username}")
+                return
+            
+            # Get geolocation for IP if possible
+            if trigger.ip_address and trigger.ip_address not in ['Unknown', '127.0.0.1']:
+                location_data = SecurityService._get_location_data(trigger.ip_address)
+                trigger.country = location_data.get('country', '')
+                trigger.isp = location_data.get('isp', '')
+                trigger.save(update_fields=['country', 'isp'])
+            
+            device = parse_user_agent(trigger.user_agent)
+            timestamp_str = trigger.triggered_at.strftime('%B %d, %Y at %I:%M %p UTC')
+            
+            # Build email context
+            context = {
+                'trap_label': trap.label,
+                'trap_type': trap.get_trap_type_display(),
+                'triggered_count': trap.triggered_count,
+                'username': user.username,
+                'device': device,
+                'timestamp': timestamp_str,
+                'ip_address': trigger.ip_address or 'Unknown',
+                'location': trigger.country if trigger.country not in ['Unknown', 'N/A', ''] else None,
+                'isp': trigger.isp if trigger.isp not in ['Unknown', 'N/A', ''] else None,
+                'referer': trigger.referer if trigger.referer else None,
+                'user_agent': trigger.user_agent[:200] if trigger.user_agent else None,
+            }
+            
+            html_content = render_to_string('canary_trap_alert.html', context)
+            
+            text_content = f"""
+🚨 CANARY TRAP TRIGGERED - AccountSafe
+
+CRITICAL SECURITY ALERT: Your trap credential was accessed!
+
+Trap: {trap.label}
+Type: {trap.get_trap_type_display()}
+Trigger Count: {trap.triggered_count}
+
+ACCESS DETAILS:
+Time: {timestamp_str}
+IP Address: {trigger.ip_address or 'Unknown'}
+{f'Location: {trigger.country}' if trigger.country else ''}
+{f'ISP: {trigger.isp}' if trigger.isp else ''}
+Device: {device['device_name']}
+{f'Referer: {trigger.referer}' if trigger.referer else ''}
+
+This indicates that someone has accessed a trap credential you placed.
+This is likely an indicator of a security breach.
+
+RECOMMENDED ACTIONS:
+1. Change all passwords in your vault immediately
+2. Check for unauthorized access to your accounts
+3. Enable 2FA on all critical accounts
+4. Review the IP address and location for suspicious activity
+5. Consider if your vault password has been compromised
+
+Stay safe,
+AccountSafe Security
+            """
+            
+            email = EmailMultiAlternatives(
+                subject=f"🚨 BREACH ALERT: Trap '{trap.label}' Triggered - AccountSafe",
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[recipient_email]
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send(fail_silently=False)
+            
+            print(f"[CANARY ALERT] Sent alert for trap '{trap.label}' to {recipient_email}")
+            
+        except Exception as e:
+            print(f"[CANARY ALERT] Failed to send: {e}")
+            raise

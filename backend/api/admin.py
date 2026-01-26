@@ -2,6 +2,7 @@
 
 from django.contrib import admin
 from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile, CuratedOrganization
+from .features.security.models import CanaryTrap, CanaryTrapTrigger
 
 @admin.register(PasswordResetOTP)
 class PasswordResetOTPAdmin(admin.ModelAdmin):
@@ -78,5 +79,48 @@ class CuratedOrganizationAdmin(admin.ModelAdmin):
         css = {
             'all': ('admin/css/curated_org_admin.css',)
         }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CANARY TRAPS (HONEYTOKENS)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@admin.register(CanaryTrap)
+class CanaryTrapAdmin(admin.ModelAdmin):
+    list_display = ['label', 'user', 'trap_type', 'is_active', 'triggered_count', 'last_triggered_at', 'created_at']
+    list_filter = ['trap_type', 'is_active', 'created_at']
+    search_fields = ['label', 'user__username', 'user__email', 'token']
+    ordering = ['-created_at']
+    readonly_fields = ['token', 'triggered_count', 'last_triggered_at', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Trap Information', {
+            'fields': ('user', 'label', 'description', 'trap_type')
+        }),
+        ('Status', {
+            'fields': ('is_active', 'token', 'triggered_count', 'last_triggered_at')
+        }),
+        ('Metadata', {
+            'fields': ('vault_profile_id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(CanaryTrapTrigger)
+class CanaryTrapTriggerAdmin(admin.ModelAdmin):
+    list_display = ['trap', 'ip_address', 'country', 'alert_sent', 'triggered_at']
+    list_filter = ['alert_sent', 'triggered_at', 'country']
+    search_fields = ['trap__label', 'ip_address', 'country', 'isp']
+    ordering = ['-triggered_at']
+    readonly_fields = ['trap', 'ip_address', 'user_agent', 'referer', 'country', 'isp', 'additional_data', 'alert_sent', 'triggered_at']
+    
+    def has_add_permission(self, request):
+        """Triggers are only created by the tripwire endpoint"""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Triggers are read-only forensic records"""
+        return False
         js = ('admin/js/curated_org_admin.js',)
 

@@ -292,3 +292,230 @@ def login_records(request):
         'count': records.count(),
         'records': serializer.data
     })
+
+
+# ===========================
+# CANARY TRAP (HONEYTOKEN) VIEWS
+# ===========================
+
+class CanaryTrapListCreateView(APIView):
+    """List and create canary traps."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get all canary traps for the authenticated user."""
+        from .models import CanaryTrap
+        from .serializers import CanaryTrapSerializer
+        
+        traps = CanaryTrap.objects.filter(user=request.user)
+        serializer = CanaryTrapSerializer(traps, many=True, context={'request': request})
+        
+        return Response({
+            'count': traps.count(),
+            'traps': serializer.data
+        })
+    
+    def post(self, request):
+        """Create a new canary trap."""
+        from .serializers import CanaryTrapSerializer
+        
+        serializer = CanaryTrapSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            trap = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CanaryTrapDetailView(APIView):
+    """Get, update, or delete a specific canary trap."""
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self, trap_id, user):
+        """Get trap object with ownership check."""
+        from .models import CanaryTrap
+        try:
+            return CanaryTrap.objects.get(id=trap_id, user=user)
+        except CanaryTrap.DoesNotExist:
+            return None
+    
+    def get(self, request, trap_id):
+        """Get a specific canary trap with its trigger history."""
+        from .serializers import CanaryTrapSerializer, CanaryTrapTriggerSerializer
+        
+        trap = self.get_object(trap_id, request.user)
+        if not trap:
+            return Response({'error': 'Trap not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        trap_serializer = CanaryTrapSerializer(trap, context={'request': request})
+        triggers = trap.triggers.all()[:20]  # Last 20 triggers
+        trigger_serializer = CanaryTrapTriggerSerializer(triggers, many=True)
+        
+        return Response({
+            'trap': trap_serializer.data,
+            'triggers': trigger_serializer.data
+        })
+    
+    def patch(self, request, trap_id):
+        """Update a canary trap (label, description, is_active)."""
+        from .serializers import CanaryTrapSerializer
+        
+        trap = self.get_object(trap_id, request.user)
+        if not trap:
+            return Response({'error': 'Trap not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Only allow updating certain fields
+        allowed_fields = {'label', 'description', 'is_active'}
+        update_data = {k: v for k, v in request.data.items() if k in allowed_fields}
+        
+        serializer = CanaryTrapSerializer(trap, data=update_data, partial=True, context={'request': request})
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, trap_id):
+        """Delete a canary trap."""
+        trap = self.get_object(trap_id, request.user)
+        if not trap:
+            return Response({'error': 'Trap not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        trap.delete()
+        return Response({'message': 'Trap deleted successfully'}, status=status.HTTP_200_OK)
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+import time
+import random
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CanaryTrapTriggerView(APIView):
+    """
+    The "Tripwire" endpoint - PUBLICLY ACCESSIBLE.
+    
+    When an attacker accesses this URL, it:
+    1. Logs everything (IP, User-Agent, Referer, Timestamp)
+    2. Fires an alert email to the trap owner
+    3. Returns a deceptive response (403 Forbidden or fake login page)
+    
+    CRITICAL: This endpoint must be UNAUTHENTICATED so attackers can trigger it.
+    
+    Security Features:
+    - CSRF exempt (allows POST from any origin)
+    - Timing attack protection (random delay)
+    - Consistent response for all cases (no information leakage)
+    """
+    permission_classes = []  # No authentication required!
+    authentication_classes = []  # No authentication classes!
+    
+    def get(self, request, token):
+        """Handle trap trigger via GET request."""
+        return self._trigger_trap(request, token)
+    
+    def post(self, request, token):
+        """Handle trap trigger via POST request (for form submissions)."""
+        return self._trigger_trap(request, token)
+    
+    def _trigger_trap(self, request, token):
+        """Process the trap trigger."""
+        from .models import CanaryTrap
+        from .services import SecurityService
+        from django.http import HttpResponse
+        
+        # Timing attack protection: Add random delay to prevent
+        # attackers from distinguishing valid vs invalid tokens
+        time.sleep(random.uniform(0.1, 0.3))
+        
+        try:
+            trap = CanaryTrap.objects.get(token=token)
+        except CanaryTrap.DoesNotExist:
+            # DECEPTION: Don't reveal it's a trap - return same response as valid trap
+            return self._deceptive_response()
+        
+        if not trap.is_active:
+            # Trap is disabled, still return deceptive response
+            return self._deceptive_response()
+        
+        # Capture all forensic data
+        ip_address = self._get_client_ip(request)
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        referer = request.META.get('HTTP_REFERER', '')
+        
+        # Additional data
+        additional_data = {
+            'method': request.method,
+            'path': request.path,
+            'query_string': request.META.get('QUERY_STRING', ''),
+            'accept_language': request.META.get('HTTP_ACCEPT_LANGUAGE', ''),
+            'accept_encoding': request.META.get('HTTP_ACCEPT_ENCODING', ''),
+        }
+        
+        # Record the trigger
+        trigger = trap.trigger(
+            ip_address=ip_address,
+            user_agent=user_agent,
+            referer=referer,
+            additional_data=additional_data
+        )
+        
+        # Send alert email asynchronously (best effort)
+        try:
+            SecurityService.send_canary_alert(trap, trigger)
+            trigger.alert_sent = True
+            trigger.save(update_fields=['alert_sent'])
+        except Exception as e:
+            print(f"[CANARY ALERT] Failed to send: {e}")
+        
+        return self._deceptive_response()
+    
+    def _get_client_ip(self, request):
+        """Extract client IP from request."""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0].strip()
+        return request.META.get('REMOTE_ADDR', 'Unknown')
+    
+    def _deceptive_response(self):
+        """
+        Return a deceptive response that doesn't reveal this is a trap.
+        
+        Options:
+        1. 403 Forbidden (looks like access denied)
+        2. Fake login page HTML
+        3. Generic error page
+        
+        Using 403 is recommended - it's believable and doesn't confirm/deny the trap.
+        """
+        from django.http import HttpResponse
+        
+        # Option 1: Simple 403 response
+        html = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Access Denied</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+               display: flex; align-items: center; justify-content: center; 
+               height: 100vh; margin: 0; background: #f5f5f5; }
+        .container { text-align: center; padding: 40px; background: white; 
+                     border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #dc2626; margin-bottom: 16px; }
+        p { color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>403 Forbidden</h1>
+        <p>You don't have permission to access this resource.</p>
+        <p style="font-size: 12px; margin-top: 20px; color: #9ca3af;">Error Code: AUTH-403-DENIED</p>
+    </div>
+</body>
+</html>
+        """
+        return HttpResponse(html, status=403, content_type='text/html')

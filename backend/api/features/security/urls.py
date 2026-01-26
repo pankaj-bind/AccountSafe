@@ -2,7 +2,7 @@
 """
 Security URL Configuration
 
-All security-related endpoints (health score, sessions, settings).
+All security-related endpoints (health score, sessions, settings, canary traps).
 """
 
 from django.urls import path
@@ -18,6 +18,10 @@ from .views import (
     RevokeAllSessionsView,
     SecuritySettingsView,
     login_records,
+    # Canary Traps
+    CanaryTrapListCreateView,
+    CanaryTrapDetailView,
+    CanaryTrapTriggerView,
 )
 
 urlpatterns = [
@@ -39,4 +43,12 @@ urlpatterns = [
     
     # Login Records
     path('login-records/', login_records, name='login-records'),
+    
+    # Canary Traps (Honeytokens)
+    path('traps/', CanaryTrapListCreateView.as_view(), name='canary-trap-list'),
+    path('traps/<int:trap_id>/', CanaryTrapDetailView.as_view(), name='canary-trap-detail'),
+    
+    # Tripwire Endpoint (PUBLICLY ACCESSIBLE - No Auth Required)
+    # This is the URL that attackers will access, triggering alerts
+    path('trap/<uuid:token>/', CanaryTrapTriggerView.as_view(), name='canary-trap-trigger'),
 ]

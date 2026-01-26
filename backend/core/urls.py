@@ -66,6 +66,13 @@ from api.vault_views import (
 # Smart Import view
 from api.features.vault.views import SmartImportView
 
+# Canary Trap (Honeytoken) views
+from api.features.security.views import (
+    CanaryTrapListCreateView,
+    CanaryTrapDetailView,
+    CanaryTrapTriggerView,
+)
+
 # TRUE Zero-Knowledge Authentication views (password NEVER sent to server)
 from api.zero_knowledge_auth import (
     ZeroKnowledgeRegisterView,
@@ -134,6 +141,12 @@ urlpatterns = [
     
     # Panic & Duress Security Settings
     path('api/security/settings/', SecuritySettingsView.as_view(), name='security-settings'),
+    
+    # Canary Traps (Honeytokens) - Breach Detection
+    path('api/security/traps/', CanaryTrapListCreateView.as_view(), name='canary-trap-list'),
+    path('api/security/traps/<int:trap_id>/', CanaryTrapDetailView.as_view(), name='canary-trap-detail'),
+    # Tripwire Endpoint (PUBLICLY ACCESSIBLE - No Auth Required for attackers to trigger)
+    path('api/security/trap/<uuid:token>/', CanaryTrapTriggerView.as_view(), name='canary-trap-trigger'),
 
     # Session Management (Multi-Device)
     path('api/sessions/', ActiveSessionsView.as_view(), name='active-sessions'),
