@@ -3,8 +3,12 @@
 IP geolocation utilities.
 """
 
+import logging
 import requests
 from functools import lru_cache
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=1000)
@@ -53,7 +57,7 @@ def get_ip_location(ip_address: str) -> dict:
                     'location': location
                 }
     except Exception as e:
-        print(f"[IP Location] Error getting location for {ip_address}: {e}")
+        logger.warning(f"[IP Location] Error getting location for {ip_address}: {e}")
     
     return {
         'city': '',

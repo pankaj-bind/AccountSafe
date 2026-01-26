@@ -6,6 +6,7 @@ Views handle HTTP request/response only.
 Business logic is delegated to SecurityService.
 """
 
+import logging
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -14,6 +15,9 @@ from rest_framework.views import APIView
 
 from .services import SecurityService
 from .serializers import LoginRecordSerializer, UserSessionSerializer
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 
 # ===========================
@@ -581,7 +585,7 @@ class CanaryTrapTriggerView(APIView):
                 trigger.alert_sent = True
                 trigger.save(update_fields=['alert_sent'])
             except Exception as e:
-                print(f"[CANARY ALERT] Failed to send: {e}")
+                logger.error(f"[CANARY ALERT] Failed to send: {e}", exc_info=True)
         
         # Start background thread (non-blocking)
         fire_and_forget(

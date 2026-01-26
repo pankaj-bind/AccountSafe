@@ -1,6 +1,7 @@
 # api/views.py
 
 import os
+import logging
 import requests
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -13,6 +14,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile, LoginRecord, CuratedOrganization, UserSession, DuressSession
 from .features.common import parse_user_agent, get_alert_context
@@ -286,16 +290,9 @@ If you didn't request this, please ignore this email.
 AccountSafe - Secure Password Manager
 """
                 
-                # Print OTP to console for development/testing
-                print(f"\n{'='*60}")
-                print(f"📧 PASSWORD RESET OTP")
-                print(f"{'='*60}")
-                print(f"Email: {email}")
-                print(f"User: {display_name}")
-                print(f"OTP Code: {otp_code}")
-                print(f"Valid for: 5 minutes")
-                print(f"Max attempts: 5")
-                print(f"{'='*60}\n")
+                # Log OTP for development/testing (only visible in DEBUG mode)
+                if settings.DEBUG:
+                    logger.debug(f"PASSWORD RESET OTP - Email: {email}, User: {display_name}, OTP: {otp_code}, Valid: 5 min, Max attempts: 5")
                 
                 email_message = EmailMultiAlternatives(
                     subject="AccountSafe - Password Reset Code",
@@ -322,19 +319,11 @@ AccountSafe - Secure Password Manager
                     })
                     
             except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
                 logger.error(f"Email Error for {email}: {str(e)}")
                 
-                # Even if email fails, print OTP to console for testing
-                print(f"\n{'='*60}")
-                print(f"⚠️ PASSWORD RESET OTP (Email failed, but OTP is valid)")
-                print(f"{'='*60}")
-                print(f"Email: {email}")
-                print(f"OTP Code: {otp_code}")
-                print(f"Valid for: 5 minutes")
-                print(f"Error: {str(e)}")
-                print(f"{'='*60}\n")
+                # Log OTP for development/testing when email fails
+                if settings.DEBUG:
+                    logger.warning(f"PASSWORD RESET OTP (Email failed) - Email: {email}, OTP: {otp_code}, Valid: 5 min, Error: {str(e)}")
                 
                 # Still return success to not reveal email configuration issues
                 return Response({
@@ -1523,7 +1512,7 @@ def get_location_data(ip_address):
                 'timezone': data.get('timezone', None)  # e.g., 'Asia/Kolkata'
             }
     except Exception as e:
-        print(f"Error fetching location data: {e}")
+        logger.warning(f"Error fetching location data: {e}")
     
     return {
         'country': 'Unknown',
@@ -1607,12 +1596,10 @@ def send_login_notification_email(record, user):
         email.attach_alternative(html_content, "text/html")
         email.send(fail_silently=False)
         
-        print(f"[LOGIN NOTIFICATION] Email sent successfully to {recipient_email}")
+        logger.info(f"[LOGIN NOTIFICATION] Email sent successfully to {recipient_email}")
         
     except Exception as e:
-        print(f"[LOGIN NOTIFICATION] Failed to send email: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"[LOGIN NOTIFICATION] Failed to send email: {str(e)}", exc_info=True)
 
 
 def track_login_attempt(request, username, password=None, is_success=False, user=None, is_duress=False, send_notification=True):
@@ -1668,7 +1655,7 @@ def send_duress_alert_email(user, request):
         from django.template.loader import render_to_string
         
         if not hasattr(user, 'userprofile') or not user.userprofile.sos_email:
-            print(f"[DURESS ALERT] No SOS email configured for user {user.username}")
+            logger.warning(f"[DURESS ALERT] No SOS email configured for user {user.username}")
             return
         
         sos_email = user.userprofile.sos_email
@@ -1677,16 +1664,8 @@ def send_duress_alert_email(user, request):
         user_agent = request.META.get('HTTP_USER_AGENT', '')
         timestamp = timezone.now()
         
-        # Log to console for debugging
-        print(f"\n{'='*60}")
-        print(f"🚨 DURESS LOGIN ALERT")
-        print(f"{'='*60}")
-        print(f"User: {user.username}")
-        print(f"SOS Email: {sos_email}")
-        print(f"IP Address: {ip_address}")
-        print(f"Location: {location_data.get('country', 'Unknown')}")
-        print(f"Time: {timestamp}")
-        print(f"{'='*60}\n")
+        # Log duress alert for audit trail
+        logger.warning(f"[DURESS ALERT] User: {user.username}, SOS Email: {sos_email}, IP: {ip_address}, Location: {location_data.get('country', 'Unknown')}, Time: {timestamp}")
         
         # Parse user agent
         device = parse_user_agent(user_agent)
@@ -1745,12 +1724,10 @@ def send_duress_alert_email(user, request):
         email.attach_alternative(html_content, "text/html")
         email.send(fail_silently=False)
         
-        print(f"[DURESS ALERT] SOS email sent successfully to {sos_email}")
+        logger.info(f"[DURESS ALERT] SOS email sent successfully to {sos_email}")
         
     except Exception as e:
-        print(f"[DURESS ALERT] Failed to send SOS email: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"[DURESS ALERT] Failed to send SOS email: {str(e)}", exc_info=True)
 
 
 # ===========================
@@ -2444,7 +2421,7 @@ def search_organizations(request):
         
         except requests.RequestException as e:
             # If Clearbit fails, just return local results
-            print(f"Clearbit API error: {e}")
+            logger.debug(f"Clearbit API error: {e}")
     
     return Response(results)
 

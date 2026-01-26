@@ -1,4 +1,10 @@
+// ═══════════════════════════════════════════════════════════════════════════════
 // Password Generator Utility
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// SECURITY: Uses crypto.getRandomValues() for cryptographically secure randomness.
+// NEVER use Math.random() for password generation - it's predictable!
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export interface PasswordOptions {
   length: number;
@@ -13,9 +19,47 @@ const LOWERCASE = 'abcdefghijklmnopqrstuvwxyz';
 const NUMBERS = '0123456789';
 const SYMBOLS = '!@#$%^&*()_+-=[]{}|;:,.<>?';
 
+/**
+ * Generate a cryptographically secure random index
+ * Uses rejection sampling to avoid modulo bias
+ * 
+ * @param max - Maximum value (exclusive)
+ * @returns Cryptographically secure random integer in range [0, max)
+ */
+function secureRandomIndex(max: number): number {
+  if (max <= 0) return 0;
+  
+  const array = new Uint32Array(1);
+  const maxUint32 = 0xFFFFFFFF;
+  const limit = maxUint32 - (maxUint32 % max);
+  
+  // Rejection sampling to avoid modulo bias
+  let randomValue: number;
+  do {
+    crypto.getRandomValues(array);
+    randomValue = array[0];
+  } while (randomValue >= limit);
+  
+  return randomValue % max;
+}
+
+/**
+ * Cryptographically secure Fisher-Yates shuffle
+ * 
+ * @param array - Array to shuffle (mutates in place)
+ * @returns Shuffled array
+ */
+function secureShuffleArray<T>(array: T[]): T[] {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = secureRandomIndex(i + 1);
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 export const generatePassword = (options: PasswordOptions): string => {
   let charset = '';
-  let password = '';
+  let passwordChars: string[] = [];
   
   if (options.uppercase) charset += UPPERCASE;
   if (options.lowercase) charset += LOWERCASE;
@@ -24,27 +68,27 @@ export const generatePassword = (options: PasswordOptions): string => {
   
   if (!charset) charset = LOWERCASE + NUMBERS; // Default if none selected
   
-  // Ensure at least one character from each selected type
+  // Ensure at least one character from each selected type (using secure random)
   if (options.uppercase && UPPERCASE.length > 0) {
-    password += UPPERCASE[Math.floor(Math.random() * UPPERCASE.length)];
+    passwordChars.push(UPPERCASE[secureRandomIndex(UPPERCASE.length)]);
   }
   if (options.lowercase && LOWERCASE.length > 0) {
-    password += LOWERCASE[Math.floor(Math.random() * LOWERCASE.length)];
+    passwordChars.push(LOWERCASE[secureRandomIndex(LOWERCASE.length)]);
   }
   if (options.numbers && NUMBERS.length > 0) {
-    password += NUMBERS[Math.floor(Math.random() * NUMBERS.length)];
+    passwordChars.push(NUMBERS[secureRandomIndex(NUMBERS.length)]);
   }
   if (options.symbols && SYMBOLS.length > 0) {
-    password += SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+    passwordChars.push(SYMBOLS[secureRandomIndex(SYMBOLS.length)]);
   }
   
-  // Fill remaining length with random characters from charset
-  for (let i = password.length; i < options.length; i++) {
-    password += charset[Math.floor(Math.random() * charset.length)];
+  // Fill remaining length with random characters from charset (using secure random)
+  while (passwordChars.length < options.length) {
+    passwordChars.push(charset[secureRandomIndex(charset.length)]);
   }
   
-  // Shuffle the password to avoid predictable patterns
-  return password.split('').sort(() => Math.random() - 0.5).join('');
+  // Shuffle the password using cryptographically secure shuffle
+  return secureShuffleArray(passwordChars).join('');
 };
 
 export const getPasswordStrength = (password: string): {

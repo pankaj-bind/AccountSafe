@@ -6,6 +6,7 @@ Business logic for security features: health scores, sessions, duress mode, logi
 """
 
 import hashlib
+import logging
 import requests
 from datetime import timedelta
 from typing import Dict, Tuple
@@ -22,6 +23,9 @@ from api.models import (
 from api.features.common.ip_location import get_ip_location
 from api.features.common.user_agent import parse_user_agent
 from api.features.common.email_utils import get_alert_context
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 
 class SecurityService:
@@ -125,7 +129,7 @@ class SecurityService:
             email.send(fail_silently=False)
             
         except Exception as e:
-            print(f"[DURESS ALERT] Failed to send: {e}")
+            logger.error(f"[DURESS ALERT] Failed to send: {e}", exc_info=True)
     
     @staticmethod
     def _send_login_notification(record, user):
@@ -176,7 +180,7 @@ class SecurityService:
             email.send(fail_silently=False)
             
         except Exception as e:
-            print(f"[LOGIN NOTIFICATION] Failed: {e}")
+            logger.error(f"[LOGIN NOTIFICATION] Failed: {e}", exc_info=True)
     
     @staticmethod
     def _get_location_data(ip_address: str) -> dict:
@@ -220,7 +224,7 @@ class SecurityService:
                     'timezone': data.get('timezone', None)
                 }
         except Exception as e:
-            print(f"Error fetching location data: {e}")
+            logger.warning(f"Error fetching location data: {e}")
         
         return {
             'country': 'Unknown',
@@ -347,7 +351,7 @@ class SecurityService:
                 return False, 0
                 
         except Exception as e:
-            print(f"HIBP API error: {e}")
+            logger.debug(f"HIBP API error: {e}")
             return False, 0
     
     @staticmethod
@@ -532,7 +536,7 @@ class SecurityService:
             recipient_email = user.email
             
             if not recipient_email:
-                print(f"[CANARY ALERT] No email for user {user.username}")
+                logger.warning(f"[CANARY ALERT] No email for user {user.username}")
                 return
             
             # Get geolocation for IP if possible
@@ -602,8 +606,8 @@ AccountSafe Security
             email.attach_alternative(html_content, "text/html")
             email.send(fail_silently=False)
             
-            print(f"[CANARY ALERT] Sent alert for trap '{trap.label}' to {recipient_email}")
+            logger.info(f"[CANARY ALERT] Sent alert for trap '{trap.label}' to {recipient_email}")
             
         except Exception as e:
-            print(f"[CANARY ALERT] Failed to send: {e}")
+            logger.error(f"[CANARY ALERT] Failed to send: {e}", exc_info=True)
             raise

@@ -34,6 +34,14 @@ services:
     networks:
       - internal
     # Security: No exposed ports - internal network only
+    # Resource limits for production stability
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          memory: 256M
 
   # ===========================================================================
   # Django Backend (Gunicorn)
@@ -75,6 +83,14 @@ services:
       - media_files:/app/media
     networks:
       - internal
+    # Resource limits for production stability
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          memory: 512M
     command: >
       sh -c "python manage.py collectstatic --noinput &&
              python manage.py migrate --noinput &&
@@ -115,6 +131,14 @@ services:
     networks:
       - internal
       - external
+    # Resource limits for production stability
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 128M
     command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
 
   # ===========================================================================
@@ -130,6 +154,14 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done;'"
     networks:
       - external
+    # Resource limits for production stability
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          memory: 64M
 
 # =============================================================================
 # Networks
