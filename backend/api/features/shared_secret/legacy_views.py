@@ -30,8 +30,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import SharedSecret, Profile
-from .decorators import no_store
+from api.models import SharedSecret, Profile
+from api.features.common import no_store
 
 
 def secure_erase_blob(blob: str) -> str:

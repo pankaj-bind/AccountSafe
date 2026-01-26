@@ -16,8 +16,8 @@ def parse_user_agent(user_agent_string: str) -> dict:
             'device_type': 'unknown',
             'device_icon': '💻',
             'device_name': 'Unknown Device',
-            'browser': None,
-            'os': None
+            'browser': 'Unknown',
+            'os': 'Unknown'
         }
     
     try:
@@ -38,8 +38,8 @@ def parse_user_agent(user_agent_string: str) -> dict:
             device_icon = '💻'
         
         # Build device name
-        browser_name = ua.browser.family if ua.browser.family != 'Other' else None
-        os_name = ua.os.family if ua.os.family != 'Other' else None
+        browser_name = ua.browser.family if ua.browser.family != 'Other' else 'Unknown'
+        os_name = ua.os.family if ua.os.family != 'Other' else 'Unknown'
         
         # Create clean device name
         parts = []
@@ -62,8 +62,8 @@ def parse_user_agent(user_agent_string: str) -> dict:
             'device_type': 'unknown',
             'device_icon': '💻',
             'device_name': 'Unknown Device',
-            'browser': None,
-            'os': None
+            'browser': 'Unknown',
+            'os': 'Unknown'
         }
 
 

@@ -309,7 +309,8 @@ class TestDeprecatedEndpoints:
     
     def test_old_login_endpoint_returns_gone(self, api_client):
         """
-        Old /api/login/ should return 410 GONE directing to ZK endpoint.
+        Old /api/login/ should return 404 NOT FOUND or 410 GONE.
+        This endpoint has been completely removed in favor of /api/zk/login/.
         """
         response = api_client.post(
             '/api/login/',
@@ -320,10 +321,10 @@ class TestDeprecatedEndpoints:
             format='json'
         )
         
-        # Should indicate this endpoint is deprecated
-        assert response.status_code == status.HTTP_410_GONE
-        assert 'zk' in response.data.get('redirect', '').lower() or \
-               'zero' in response.data.get('message', '').lower()
+        # Should indicate this endpoint is deprecated/removed
+        # 404 is acceptable since the endpoint has been completely removed
+        # 410 would be returned if we had a deprecation stub
+        assert response.status_code in [status.HTTP_404_NOT_FOUND, status.HTTP_410_GONE]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

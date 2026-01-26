@@ -134,8 +134,8 @@ class ZeroKnowledgeDeleteAccountView(APIView):
         return Response(result, status=http_status)
 
 
-# Re-export for backward compatibility
-from api.zero_knowledge_auth import (
+# Re-export from zero_knowledge module (now in same feature folder)
+from .zero_knowledge import (
     ZeroKnowledgeSetDuressView,
     ZeroKnowledgeClearDuressView,
     ZeroKnowledgeSwitchModeView,

@@ -32,10 +32,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import UserProfile, LoginRecord, MultiToken, DuressSession, UserSession
-from .turnstile import verify_turnstile_token, get_client_ip
-from .user_agent_parser import parse_user_agent
-from .ip_location import get_ip_location
+from api.models import UserProfile, LoginRecord, MultiToken, DuressSession, UserSession
+from api.features.common import verify_turnstile_token, get_client_ip
+from api.features.common import parse_user_agent
+from api.features.common import get_ip_location
 
 # Logger for zero-knowledge auth events
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ def constant_time_compare(a: str, b: str) -> bool:
 
 def track_zk_login_attempt(request, username: str, is_success: bool, user=None, is_duress: bool = False, send_notification: bool = True):
     """Track login attempt for zero-knowledge auth."""
-    from .views import track_login_attempt
+    from api.views import track_login_attempt
     # We don't pass password since we never have it
     track_login_attempt(request, username, password=None, is_success=is_success, user=user, is_duress=is_duress, send_notification=send_notification)
 
@@ -189,7 +189,7 @@ class ZeroKnowledgeLoginView(APIView):
     
     def post(self, request):
         import threading
-        from .views import send_duress_alert_email
+        from api.views import send_duress_alert_email
         
         username = request.data.get('username', '').strip()
         auth_hash = request.data.get('auth_hash', '').strip().lower()
@@ -650,7 +650,7 @@ class ZeroKnowledgeSwitchModeView(APIView):
     
     def post(self, request):
         import threading
-        from .views import send_duress_alert_email
+        from api.views import send_duress_alert_email
         
         auth_hash = request.data.get('auth_hash', '').strip().lower()
         

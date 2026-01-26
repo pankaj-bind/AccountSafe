@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 
 from .models import PasswordResetOTP, UserProfile, Category, Organization, Profile, LoginRecord, CuratedOrganization, UserSession, DuressSession
-from .email_utils import parse_user_agent, get_alert_context
+from .features.common import parse_user_agent, get_alert_context
 from .serializers import (
     OTPRequestSerializer,
     OTPVerifySerializer,
@@ -28,7 +28,7 @@ from .serializers import (
     ProfileSerializer,
     LoginRecordSerializer,
 )
-from .turnstile import verify_turnstile_token, get_client_ip
+from .features.common import verify_turnstile_token, get_client_ip
 
 
 class CheckUsernameView(APIView):
@@ -1816,10 +1816,10 @@ class SecurityHealthScoreView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        from .health_score import calculate_health_score
+        from .features.security.services import SecurityService
         
         try:
-            score_data = calculate_health_score(request.user)
+            score_data = SecurityService.calculate_health_score(request.user)
             return Response(score_data)
         except Exception as e:
             return Response(
@@ -1836,7 +1836,7 @@ class UpdatePasswordStrengthView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, profile_id):
-        from .health_score import update_password_strength
+        from .features.security.services import SecurityService
         
         strength_score = request.data.get('strength_score')
         
@@ -1873,7 +1873,7 @@ class UpdatePasswordStrengthView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        success = update_password_strength(profile_id, strength_score)
+        success = SecurityService.update_password_strength(profile_id, strength_score)
         if success:
             return Response({'message': 'Password strength updated successfully'})
         else:
@@ -1891,7 +1891,7 @@ class UpdateBreachStatusView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, profile_id):
-        from .health_score import update_breach_status
+        from .features.security.services import SecurityService
         
         is_breached = request.data.get('is_breached')
         breach_count = request.data.get('breach_count', 0)
@@ -1916,7 +1916,7 @@ class UpdateBreachStatusView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        success = update_breach_status(profile_id, bool(is_breached), int(breach_count))
+        success = SecurityService.update_breach_status(profile_id, bool(is_breached))
         if success:
             return Response({'message': 'Breach status updated successfully'})
         else:
@@ -1934,7 +1934,7 @@ class UpdatePasswordHashView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, profile_id):
-        from .health_score import update_password_hash
+        from .features.security.services import SecurityService
         
         password_hash = request.data.get('password_hash')
         
@@ -1958,7 +1958,7 @@ class UpdatePasswordHashView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        success = update_password_hash(profile_id, password_hash)
+        success = SecurityService.update_password_hash(profile_id, password_hash)
         if success:
             return Response({'message': 'Password hash updated successfully'})
         else:
@@ -1976,7 +1976,7 @@ class BatchUpdateSecurityMetricsView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        from .health_score import update_password_strength, update_breach_status
+        from .features.security.services import SecurityService
         from django.utils import timezone
         
         updates = request.data.get('updates', [])
@@ -2020,13 +2020,13 @@ class BatchUpdateSecurityMetricsView(APIView):
                 try:
                     strength_score = int(strength_score)
                     if 0 <= strength_score <= 4:
-                        update_password_strength(profile_id, strength_score)
+                        SecurityService.update_password_strength(profile_id, strength_score)
                 except ValueError:
                     pass
             
             # Update breach status if provided
             if is_breached is not None:
-                update_breach_status(profile_id, bool(is_breached))
+                SecurityService.update_breach_status(profile_id, bool(is_breached))
             
             # Update last_password_update to now if not already set
             if not profile.last_password_update:

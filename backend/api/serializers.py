@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from .models import UserProfile, Category, Organization, Profile, LoginRecord, UserSession
-from .turnstile import verify_turnstile_token, get_client_ip
+from .features.common import verify_turnstile_token, get_client_ip
 
 
 class CustomRegisterSerializer(RegisterSerializer):

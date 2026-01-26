@@ -46,16 +46,16 @@ from api.views import (
     RevokeAllSessionsView,
 )
 
-# Shared secret views
-from api.shared_secret_views import (
+# Shared secret views (moved to features/shared_secret/)
+from api.features.shared_secret.legacy_views import (
     create_shared_secret,
     view_shared_secret,
     list_user_shared_secrets,
     revoke_shared_secret,
 )
 
-# Zero-Knowledge Vault views
-from api.vault_views import (
+# Zero-Knowledge Vault views (moved to features/vault/)
+from api.features.vault.zk_views import (
     VaultView,
     VaultSaltView,
     VaultAuthHashView,
@@ -73,8 +73,8 @@ from api.features.security.views import (
     CanaryTrapTriggerView,
 )
 
-# TRUE Zero-Knowledge Authentication views (password NEVER sent to server)
-from api.zero_knowledge_auth import (
+# TRUE Zero-Knowledge Authentication views (moved to features/auth/)
+from api.features.auth.zero_knowledge import (
     ZeroKnowledgeRegisterView,
     ZeroKnowledgeLoginView,
     ZeroKnowledgeGetSaltView,
