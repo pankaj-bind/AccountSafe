@@ -567,7 +567,7 @@ class ZeroKnowledgeVaultService:
         
         return {
             'message': 'Vault updated successfully',
-            'last_sync': profile.last_vault_sync.isoformat(),
+            'last_sync': profile.last_vault_sync.isoformat() if profile.last_vault_sync else None,
         }
     
     @staticmethod
@@ -634,5 +634,5 @@ class ZeroKnowledgeVaultService:
         
         return {
             'message': 'Vault imported successfully',
-            'last_sync': profile.last_vault_sync.isoformat(),
+            'last_sync': profile.last_vault_sync.isoformat() if profile.last_vault_sync else None,
         }

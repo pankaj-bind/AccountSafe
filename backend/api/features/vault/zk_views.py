@@ -139,7 +139,7 @@ class VaultView(APIView):
         
         return Response({
             'message': 'Vault updated successfully',
-            'last_sync': profile.last_vault_sync.isoformat(),
+            'last_sync': profile.last_vault_sync.isoformat() if profile.last_vault_sync else None,
         })
     
     def delete(self, request):
@@ -373,5 +373,5 @@ class VaultImportView(APIView):
         
         return Response({
             'message': 'Vault imported successfully',
-            'last_sync': profile.last_vault_sync.isoformat(),
+            'last_sync': profile.last_vault_sync.isoformat() if profile.last_vault_sync else None,
         })

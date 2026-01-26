@@ -32,9 +32,9 @@ class FireAndForget(threading.Thread):
         # With completion callback
         def on_done(success, result, error):
             if success:
-                print(f"Email sent: {result}")
+                logger.info(f"Email sent: {result}")
             else:
-                print(f"Email failed: {error}")
+                logger.error(f"Email failed: {error}")
         
         FireAndForget(
             send_email, 
