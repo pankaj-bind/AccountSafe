@@ -1,11 +1,37 @@
 # core/urls.py
+"""
+AccountSafe URL Configuration
+
+This is the master URL router that delegates to feature modules.
+All API endpoints are organized under /api/ with feature-based routing.
+
+Architecture:
+    /api/zk/*           -> Auth features (register, login, password reset, PIN)
+    /api/vault/*        -> Vault features (categories, organizations, profiles)
+    /api/security/*     -> Security features (health, sessions, canary traps)
+    /api/shared-secrets/* -> Shared secret features
+    /api/profile/*      -> User profile management
+"""
 
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.views.static import serve
 
+# Import user profile views (minimal views kept in api.views)
 from api.views import (
+    get_user_profile,
+    update_user_profile,
+    root_route,
+)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FEATURE-BASED IMPORTS
+# All views are now organized by feature module
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Authentication Features
+from api.features.auth.views import (
     CheckUsernameView,
     CustomLoginView,
     RequestPasswordResetOTPView,
@@ -13,67 +39,14 @@ from api.views import (
     SetNewPasswordView,
     ChangePasswordView,
     DeleteAccountView,
-    get_user_profile,
-    update_user_profile,
-    CategoryListCreateView,
-    CategoryDetailView,
-    OrganizationListCreateView,
-    OrganizationDetailView,
-    ProfileListCreateView,
-    ProfileDetailView,
-    # Trash / Recycle Bin views
-    TrashListView,
-    ProfileRestoreView,
-    ProfileShredView,
     SetupPinView,
     VerifyPinView,
     PinStatusView,
     ClearPinView,
     ResetPinView,
-    dashboard_statistics,
-    login_records,
-    SecurityHealthScoreView,
-    UpdatePasswordStrengthView,
-    UpdateBreachStatusView,
-    UpdatePasswordHashView,
-    BatchUpdateSecurityMetricsView,
-    SecuritySettingsView,
-    search_organizations,
-    lookup_organization_by_url,
-    ActiveSessionsView,
-    ValidateSessionView,
-    RevokeSessionView,
-    RevokeAllSessionsView,
 )
 
-# Shared secret views (moved to features/shared_secret/)
-from api.features.shared_secret.legacy_views import (
-    create_shared_secret,
-    view_shared_secret,
-    list_user_shared_secrets,
-    revoke_shared_secret,
-)
-
-# Zero-Knowledge Vault views (moved to features/vault/)
-from api.features.vault.zk_views import (
-    VaultView,
-    VaultSaltView,
-    VaultAuthHashView,
-    VaultExportView,
-    VaultImportView,
-)
-
-# Smart Import view
-from api.features.vault.views import SmartImportView
-
-# Canary Trap (Honeytoken) views
-from api.features.security.views import (
-    CanaryTrapListCreateView,
-    CanaryTrapDetailView,
-    CanaryTrapTriggerView,
-)
-
-# TRUE Zero-Knowledge Authentication views (moved to features/auth/)
+# Zero-Knowledge Authentication
 from api.features.auth.zero_knowledge import (
     ZeroKnowledgeRegisterView,
     ZeroKnowledgeLoginView,
@@ -84,20 +57,88 @@ from api.features.auth.zero_knowledge import (
     ZeroKnowledgeClearDuressView,
     ZeroKnowledgeVerifyView,
     ZeroKnowledgeSwitchModeView,
-    # REMOVED: ZeroKnowledgeMigrateView - Attack Surface Reduction
 )
 
+# Vault Features
+from api.features.vault.views import (
+    CategoryListCreateView,
+    CategoryDetailView,
+    OrganizationListCreateView,
+    OrganizationDetailView,
+    ProfileListCreateView,
+    ProfileDetailView,
+    TrashListView,
+    ProfileRestoreView,
+    ProfileShredView,
+    SmartImportView,
+)
+
+# Zero-Knowledge Vault
+from api.features.vault.zk_views import (
+    VaultView,
+    VaultSaltView,
+    VaultAuthHashView,
+    VaultExportView,
+    VaultImportView,
+)
+
+# Security Features
+from api.features.security.views import (
+    SecurityHealthScoreView,
+    UpdatePasswordStrengthView,
+    UpdateBreachStatusView,
+    UpdatePasswordHashView,
+    BatchUpdateSecurityMetricsView,
+    SecuritySettingsView,
+    ActiveSessionsView,
+    ValidateSessionView,
+    RevokeSessionView,
+    RevokeAllSessionsView,
+    CanaryTrapListCreateView,
+    CanaryTrapDetailView,
+    CanaryTrapTriggerView,
+    dashboard_statistics,
+    login_records,
+    search_organizations,
+    lookup_organization_by_url,
+)
+
+# Shared Secrets
+from api.features.shared_secret.legacy_views import (
+    create_shared_secret,
+    view_shared_secret,
+    list_user_shared_secrets,
+    revoke_shared_secret,
+)
+
+
 urlpatterns = [
+    # ═══════════════════════════════════════════════════════════════════════════
+    # ADMIN
+    # ═══════════════════════════════════════════════════════════════════════════
     path('admin/', admin.site.urls),
-    path('api/check-username/', CheckUsernameView.as_view(), name='check-username'),
     
-    # Custom login with tracking
+    # ═══════════════════════════════════════════════════════════════════════════
+    # API ROOT
+    # ═══════════════════════════════════════════════════════════════════════════
+    path('api/', root_route, name='api-root'),
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FEATURE-BASED ROUTING (New Architecture)
+    # ═══════════════════════════════════════════════════════════════════════════
+    path('api/features/', include('api.features.urls')),
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # AUTHENTICATION ENDPOINTS
+    # ═══════════════════════════════════════════════════════════════════════════
+    path('api/check-username/', CheckUsernameView.as_view(), name='check-username'),
     path('api/auth/login/', CustomLoginView.as_view(), name='custom-login'),
     
     # Dashboard and login records
     path('api/dashboard/statistics/', dashboard_statistics, name='dashboard-statistics'),
     path('api/login-records/', login_records, name='login-records'),
     
+    # Password Reset
     path('api/password-reset/request-otp/', RequestPasswordResetOTPView.as_view(), name='request-otp'),
     path('api/password-reset/verify-otp/', VerifyPasswordResetOTPView.as_view(), name='verify-otp'),
     path('api/password-reset/set-new-password/', SetNewPasswordView.as_view(), name='set-new-password'),

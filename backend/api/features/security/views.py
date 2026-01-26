@@ -642,3 +642,197 @@ class CanaryTrapTriggerView(APIView):
 </html>
         """
         return HttpResponse(html, status=403, content_type='text/html')
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DASHBOARD STATISTICS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_statistics(request):
+    """Get dashboard statistics for the authenticated user."""
+    from api.models import Organization, Profile, LoginRecord
+    
+    user = request.user
+    
+    organization_count = Organization.objects.filter(category__user=user).count()
+    profile_count = Profile.objects.filter(organization__category__user=user).count()
+    
+    recent_logins = LoginRecord.objects.filter(
+        username_attempted=user.username
+    ).order_by('-timestamp')[:10]
+    
+    login_serializer = LoginRecordSerializer(recent_logins, many=True, context={'request': request})
+    
+    return Response({
+        'organization_count': organization_count,
+        'profile_count': profile_count,
+        'recent_logins': login_serializer.data
+    })
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ORGANIZATION SEARCH (Hybrid: Local + Clearbit API)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@api_view(['GET'])
+@permission_classes([])
+def lookup_organization_by_url(request):
+    """
+    Look up organization info by URL/domain.
+    Extracts domain from URL and fetches organization name and logo.
+    """
+    import requests
+    from urllib.parse import urlparse
+    import re
+    from bs4 import BeautifulSoup
+    from api.models import CuratedOrganization
+    
+    url_input = request.GET.get('url', '').strip()
+    
+    if not url_input:
+        return Response({"error": "URL parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Extract domain from URL
+    url_clean = url_input.lower().strip()
+    if not url_clean.startswith(('http://', 'https://')):
+        url_clean = 'https://' + url_clean
+    
+    try:
+        parsed = urlparse(url_clean)
+        domain = parsed.netloc or parsed.path.split('/')[0]
+    except Exception:
+        domain = re.sub(r'^(https?://)?', '', url_input.lower())
+        domain = domain.split('/')[0].split('?')[0]
+    
+    if not domain:
+        return Response({"error": "Could not extract domain"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Remove common subdomains
+    subdomain_patterns = ['www.', 'accounts.', 'auth.', 'login.', 'signin.', 'app.', 
+                          'my.', 'portal.', 'console.', 'dashboard.', 'api.', 'm.', 'mobile.']
+    main_domain = domain
+    for pattern in subdomain_patterns:
+        if main_domain.startswith(pattern):
+            main_domain = main_domain[len(pattern):]
+            break
+    
+    domain_name = main_domain.split('.')[0]
+    
+    # Step 1: Search local database
+    try:
+        local_org = CuratedOrganization.objects.filter(domain__icontains=main_domain).first()
+        if local_org:
+            return Response({
+                'name': local_org.name,
+                'domain': local_org.domain,
+                'logo': local_org.get_logo(),
+                'website_link': local_org.website_link or f'https://{local_org.domain}',
+                'source': 'local',
+                'is_verified': local_org.is_verified
+            })
+    except Exception:
+        pass
+    
+    # Step 2: Try Clearbit API
+    try:
+        clearbit_url = f'https://autocomplete.clearbit.com/v1/companies/suggest?query={main_domain}'
+        response = requests.get(clearbit_url, timeout=3)
+        
+        if response.status_code == 200:
+            clearbit_data = response.json()
+            for item in clearbit_data:
+                item_domain = item.get('domain', '').lower()
+                if item_domain == main_domain or item_domain == domain:
+                    return Response({
+                        'name': item.get('name', domain_name.capitalize()),
+                        'domain': item_domain,
+                        'logo': item.get('logo', f'https://www.google.com/s2/favicons?domain={item_domain}&sz=128'),
+                        'website_link': f'https://{item_domain}',
+                        'source': 'clearbit',
+                        'is_verified': False
+                    })
+    except requests.RequestException:
+        pass
+    
+    # Step 3: Fallback
+    org_name = ' '.join(word.capitalize() for word in domain_name.replace('-', ' ').replace('_', ' ').split())
+    
+    return Response({
+        'name': org_name or main_domain.split('.')[0].capitalize(),
+        'domain': main_domain,
+        'logo': f'https://www.google.com/s2/favicons?domain={main_domain}&sz=128',
+        'website_link': f'https://{main_domain}',
+        'source': 'fallback',
+        'is_verified': False
+    })
+
+
+@api_view(['GET'])
+@permission_classes([])
+def search_organizations(request):
+    """
+    Hybrid organization search: Local database first, then Clearbit API fallback.
+    """
+    import requests
+    from django.db.models import Case, When, Value, IntegerField
+    from api.models import CuratedOrganization
+    
+    query = request.GET.get('q', '').strip()
+    
+    if not query or len(query) < 2:
+        return Response({"error": "Query must be at least 2 characters"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    results = []
+    seen_domains = set()
+    
+    # Step 1: Search Local Database
+    local_orgs = CuratedOrganization.objects.filter(
+        name__icontains=query
+    ).annotate(
+        relevance=Case(
+            When(name__iexact=query, then=Value(3)),
+            When(name__istartswith=query, then=Value(2)),
+            default=Value(1),
+            output_field=IntegerField()
+        )
+    ).order_by('-relevance', '-priority', 'name')[:10]
+    
+    for org in local_orgs:
+        results.append({
+            'name': org.name,
+            'domain': org.domain,
+            'logo': org.get_logo(),
+            'website_link': org.website_link or f'https://{org.domain}',
+            'source': 'local',
+            'is_verified': org.is_verified
+        })
+        seen_domains.add(org.domain.lower())
+    
+    # Step 2: Clearbit API Fallback
+    if len(results) < 3:
+        try:
+            clearbit_url = f'https://autocomplete.clearbit.com/v1/companies/suggest?query={query}'
+            response = requests.get(clearbit_url, timeout=3)
+            
+            if response.status_code == 200:
+                clearbit_data = response.json()
+                for item in clearbit_data[:6]:
+                    domain = item.get('domain', '').lower()
+                    if domain and domain not in seen_domains:
+                        results.append({
+                            'name': item.get('name', ''),
+                            'domain': domain,
+                            'logo': item.get('logo', f'https://www.google.com/s2/favicons?domain={domain}&sz=128'),
+                            'website_link': f'https://{domain}',
+                            'source': 'clearbit',
+                            'is_verified': False
+                        })
+                        seen_domains.add(domain)
+                        if len(results) >= 6:
+                            break
+        except requests.RequestException as e:
+            logger.debug(f"Clearbit API error: {e}")
+    
+    return Response(results)
