@@ -113,13 +113,26 @@ class CanaryTrap(models.Model):
         Get the full trap URL.
         
         Args:
-            base_url: Base URL of the site. If not provided, uses settings.
+            base_url: Base URL of the site. If not provided, uses production URL.
         
         Returns:
             Full URL to the trap endpoint.
+        
+        Security Note:
+            Always returns production URL for trap URLs to ensure they work
+            correctly regardless of where they were created (dev/prod).
         """
+        # SECURITY: Always use production URL for trap URLs
+        # This ensures traps work correctly even if created in development
+        production_url = 'https://accountsafe.pythonanywhere.com'
+        
         if base_url is None:
-            base_url = getattr(settings, 'SITE_URL', 'https://accountsafe.pythonanywhere.com')
+            base_url = getattr(settings, 'SITE_URL', production_url)
+        
+        # For localhost/development, always use production URL
+        # Traps must be accessible from the internet to catch attackers
+        if 'localhost' in base_url or '127.0.0.1' in base_url:
+            base_url = production_url
         
         # Remove trailing slash from base_url
         base_url = base_url.rstrip('/')

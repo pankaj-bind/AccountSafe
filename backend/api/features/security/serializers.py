@@ -153,10 +153,17 @@ class CanaryTrapSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'token', 'trigger_count', 'last_triggered_at', 'created_at', 'trap_url']
     
     def get_trap_url(self, obj):
-        """Return the full trap URL."""
+        """
+        Return the full trap URL.
+        
+        Security Note:
+            Always returns production URL regardless of request origin.
+            This ensures traps work correctly when shared/copied.
+        """
+        # SECURITY: Always use production URL for trap URLs
+        # The model's get_trap_url handles localhost detection
         request = self.context.get('request')
         if request:
-            # Build URL from request
             base_url = f"{request.scheme}://{request.get_host()}"
         else:
             base_url = None

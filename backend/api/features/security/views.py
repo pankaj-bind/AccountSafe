@@ -387,6 +387,13 @@ class CanaryTrapDetailView(APIView):
         return Response({'message': 'Trap deleted successfully'}, status=status.HTTP_200_OK)
 
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+import time
+import random
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class CanaryTrapTriggerView(APIView):
     """
     The "Tripwire" endpoint - PUBLICLY ACCESSIBLE.
@@ -397,6 +404,11 @@ class CanaryTrapTriggerView(APIView):
     3. Returns a deceptive response (403 Forbidden or fake login page)
     
     CRITICAL: This endpoint must be UNAUTHENTICATED so attackers can trigger it.
+    
+    Security Features:
+    - CSRF exempt (allows POST from any origin)
+    - Timing attack protection (random delay)
+    - Consistent response for all cases (no information leakage)
     """
     permission_classes = []  # No authentication required!
     authentication_classes = []  # No authentication classes!
@@ -414,6 +426,10 @@ class CanaryTrapTriggerView(APIView):
         from .models import CanaryTrap
         from .services import SecurityService
         from django.http import HttpResponse
+        
+        # Timing attack protection: Add random delay to prevent
+        # attackers from distinguishing valid vs invalid tokens
+        time.sleep(random.uniform(0.1, 0.3))
         
         try:
             trap = CanaryTrap.objects.get(token=token)
