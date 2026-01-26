@@ -50,9 +50,9 @@ def constant_time_compare(a: str, b: str) -> bool:
 
 def track_zk_login_attempt(request, username: str, is_success: bool, user=None, is_duress: bool = False, send_notification: bool = True):
     """Track login attempt for zero-knowledge auth."""
-    from api.views import track_login_attempt
+    from api.features.security.services import SecurityService
     # We don't pass password since we never have it
-    track_login_attempt(request, username, password=None, is_success=is_success, user=user, is_duress=is_duress, send_notification=send_notification)
+    SecurityService.track_login_attempt(request, username, is_success=is_success, user=user, is_duress=is_duress, send_notification=send_notification)
 
 
 class ZeroKnowledgeRegisterView(APIView):
@@ -189,7 +189,7 @@ class ZeroKnowledgeLoginView(APIView):
     
     def post(self, request):
         import threading
-        from api.views import send_duress_alert_email
+        from api.features.security.services import SecurityService
         
         username = request.data.get('username', '').strip()
         auth_hash = request.data.get('auth_hash', '').strip().lower()
@@ -267,7 +267,7 @@ class ZeroKnowledgeLoginView(APIView):
             )
             # Send SOS alert in background
             threading.Thread(
-                target=send_duress_alert_email,
+                target=SecurityService.send_duress_alert,
                 args=(user, request),
                 daemon=True
             ).start()
@@ -650,7 +650,7 @@ class ZeroKnowledgeSwitchModeView(APIView):
     
     def post(self, request):
         import threading
-        from api.views import send_duress_alert_email
+        from api.features.security.services import SecurityService
         
         auth_hash = request.data.get('auth_hash', '').strip().lower()
         
@@ -709,7 +709,7 @@ class ZeroKnowledgeSwitchModeView(APIView):
             
             # Send SOS alert in background
             threading.Thread(
-                target=send_duress_alert_email,
+                target=SecurityService.send_duress_alert,
                 args=(request.user, request),
                 daemon=True
             ).start()
