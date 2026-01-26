@@ -60,3 +60,52 @@ export interface SecuritySettings {
 export interface PinStatus {
   has_pin: boolean;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Canary Traps (Honeytokens)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type CanaryTrapType = 'web_login' | 'api_key' | 'webhook';
+
+export interface CanaryTrap {
+  id: number;
+  token: string;
+  label: string;
+  description?: string;
+  trap_type: CanaryTrapType;
+  vault_profile_id?: number;
+  is_active: boolean;
+  trigger_count: number;
+  last_triggered_at?: string;
+  created_at: string;
+  trap_url: string;
+}
+
+export interface CanaryTrapTrigger {
+  id: number;
+  trap_label: string;
+  ip_address: string;
+  user_agent?: string;
+  referer?: string;
+  country?: string;
+  isp?: string;
+  alert_sent: boolean;
+  triggered_at: string;
+  triggered_at_display: string;
+}
+
+export interface CanaryTrapCreateRequest {
+  label: string;
+  description?: string;
+  trap_type: CanaryTrapType;
+}
+
+export interface CanaryTrapsResponse {
+  count: number;
+  traps: CanaryTrap[];
+}
+
+export interface CanaryTrapDetailResponse {
+  trap: CanaryTrap;
+  triggers: CanaryTrapTrigger[];
+}

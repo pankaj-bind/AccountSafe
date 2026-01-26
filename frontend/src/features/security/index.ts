@@ -3,7 +3,7 @@
  * Security Feature Module
  * 
  * Exports all security-related functionality:
- * - Components: SecuritySettings, SessionList, etc.
+ * - Components: SecuritySettings, SessionList, CanaryTrapManager, etc.
  * - Services: Security API calls, PIN management
  * - Hooks: useSecurity, useSessions
  * - Types: Security-related TypeScript types
@@ -13,3 +13,4 @@
 export * from './services';
 export * from './hooks';
 export * from './types';
+export * from './components';

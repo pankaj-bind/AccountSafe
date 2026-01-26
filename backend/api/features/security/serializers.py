@@ -130,3 +130,62 @@ class UserSessionSerializer(serializers.ModelSerializer):
             return f"{days} day{'s' if days != 1 else ''} ago"
         else:
             return obj.last_active.strftime('%b %d, %Y')
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Canary Trap Serializers
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class CanaryTrapSerializer(serializers.ModelSerializer):
+    """Serializer for Canary Traps."""
+    
+    trap_url = serializers.SerializerMethodField()
+    trigger_count = serializers.IntegerField(source='triggered_count', read_only=True)
+    
+    class Meta:
+        from .models import CanaryTrap
+        model = CanaryTrap
+        fields = [
+            'id', 'token', 'label', 'description', 'trap_type',
+            'vault_profile_id', 'is_active', 'trigger_count',
+            'last_triggered_at', 'created_at', 'trap_url'
+        ]
+        read_only_fields = ['id', 'token', 'trigger_count', 'last_triggered_at', 'created_at', 'trap_url']
+    
+    def get_trap_url(self, obj):
+        """Return the full trap URL."""
+        request = self.context.get('request')
+        if request:
+            # Build URL from request
+            base_url = f"{request.scheme}://{request.get_host()}"
+        else:
+            base_url = None
+        return obj.get_trap_url(base_url)
+    
+    def create(self, validated_data):
+        """Create a new canary trap for the authenticated user."""
+        from .models import CanaryTrap
+        validated_data['user'] = self.context['request'].user
+        return CanaryTrap.objects.create(**validated_data)
+
+
+class CanaryTrapTriggerSerializer(serializers.ModelSerializer):
+    """Serializer for Canary Trap Triggers (read-only forensic data)."""
+    
+    trap_label = serializers.CharField(source='trap.label', read_only=True)
+    triggered_at_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        from .models import CanaryTrapTrigger
+        model = CanaryTrapTrigger
+        fields = [
+            'id', 'trap_label', 'ip_address', 'user_agent', 'referer',
+            'country', 'isp', 'alert_sent', 'triggered_at', 'triggered_at_display'
+        ]
+        read_only_fields = fields
+    
+    def get_triggered_at_display(self, obj):
+        """Return human-readable trigger time."""
+        if obj.triggered_at:
+            return obj.triggered_at.strftime('%b %d, %Y at %I:%M %p')
+        return None
