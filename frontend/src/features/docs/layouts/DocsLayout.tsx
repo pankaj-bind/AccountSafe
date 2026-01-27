@@ -233,7 +233,7 @@ const DocsLayout: React.FC = () => {
                     })}
                   </div>
                   <a 
-                    href={`https://github.com/pankajkumar037/AccountSafe/edit/main/docs/${currentDoc.file}`}
+                    href={`https://github.com/pankaj-bind/AccountSafe/edit/main/docs/${currentDoc.file}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-slate-900 dark:hover:text-white transition-colors"
