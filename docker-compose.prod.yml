@@ -163,6 +163,61 @@ services:
         reservations:
           memory: 64M
 
+  # ===========================================================================
+  # Automated Database Backup (The Doomsday Protocol)
+  # ===========================================================================
+  # Schedule: Every 6 hours | Retention: 7 days | Format: gzip compressed SQL
+  # Backups are stored in ./backups/ for easy sync to S3/GCS/Azure Blob
+  # 
+  # Optional Encryption: Set BACKUP_ENCRYPTION_KEY env var to GPG-encrypt dumps
+  # ===========================================================================
+  backup:
+    image: prodrigestivill/postgres-backup-local:15-alpine
+    container_name: accountsafe-backup
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database connection
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${DB_NAME:-accountsafe}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      
+      # Backup schedule (cron format) - Every 6 hours
+      SCHEDULE: "0 */6 * * *"
+      
+      # Retention policy
+      BACKUP_KEEP_DAYS: 7       # Delete backups older than 7 days
+      BACKUP_KEEP_WEEKS: 4      # Keep 4 weekly backups
+      BACKUP_KEEP_MONTHS: 3     # Keep 3 monthly backups
+      
+      # Backup settings
+      BACKUP_SUFFIX: .sql.gz
+      HEALTHCHECK_PORT: 8080
+      
+      # Optional: GPG encryption (uncomment and set in .env)
+      # ENCRYPT: "true"
+      # BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
+    volumes:
+      - ./backups:/backups
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          memory: 64M
+
 # =============================================================================
 # Networks
 # =============================================================================
