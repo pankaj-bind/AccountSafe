@@ -45,6 +45,28 @@ cp backend/.env.example backend/.env
 | `EMAIL_USE_TLS` | Enable TLS for email. | `True` |
 | `DEFAULT_FROM_EMAIL` | Default sender email address. | - |
 
+### Backup Configuration
+
+These variables configure the automated backup service. See [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) for full documentation.
+
+| Variable | Description | Default |
+|----------|-------------|--------|
+| `SCHEDULE` | Cron expression for backup frequency. | `0 */6 * * *` (every 6 hours) |
+| `BACKUP_KEEP_DAYS` | Days to retain daily backups. | `7` |
+| `BACKUP_KEEP_WEEKS` | Weeks to retain weekly backups. | `4` |
+| `BACKUP_KEEP_MONTHS` | Months to retain monthly backups. | `3` |
+| `BACKUP_ENCRYPTION_KEY` | GPG passphrase for encrypted backups. If not set, backups are unencrypted. | - |
+
+**Example: Enable encrypted backups every 12 hours**
+
+```bash
+SCHEDULE=0 */12 * * *
+BACKUP_ENCRYPTION_KEY=your-very-strong-gpg-passphrase-here
+BACKUP_KEEP_DAYS=14
+```
+
+> **WARNING:** Store `BACKUP_ENCRYPTION_KEY` securely. If you lose this key, you **cannot restore encrypted backups**.
+
 ### Database Configuration
 
 For local development (SQLite):

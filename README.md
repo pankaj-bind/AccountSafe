@@ -15,28 +15,29 @@ The server is blind.
 
 AccountSafe encrypts all sensitive data in the browser before transmission. The server stores only ciphertext. A compromised database yields no usable information.
 
-```
-Browser                                Server
-   |                                      |
-   |  master_password                     |
-   |        |                             |
-   |        v                             |
-   |  PBKDF2 (600k iterations)            |
-   |        |                             |
-   |   +----+----+                        |
-   |   |         |                        |
-   |   v         v                        |
-   | auth_key  enc_key                    |
-   |   |         |                        |
-   |   |         +---> AES-256-GCM        |
-   |   |                    |             |
-   |   |              ciphertext -------> | Store
-   |   |                                  |
-   |   +---> auth_hash -----------------> | Verify
-   |                                      |
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant B as Browser (Client)
+    participant S as Server (Django)
+    participant DB as Database
+
+    Note over U,B: ZERO KNOWLEDGE ZONE
+    U->>B: Input Master Password
+    B->>B: PBKDF2 Key Derivation (Salt+Pass)
+    B->>B: Generate Auth Hash & Encryption Key
+    
+    Note right of B: Key NEVER leaves Browser
+    
+    B->>S: Send Auth Hash ONLY
+    S->>DB: Verify Auth Hash
+    DB-->>S: OK
+    S-->>B: Return Encrypted Data Blobs
+    B->>B: Decrypt Data with Key
+    B-->>U: Display Vault
 ```
 
-The encryption key never leaves your device.
+**The encryption key never leaves your device.**
 
 ---
 
@@ -66,6 +67,12 @@ The encryption key never leaves your device.
 - **Smart Import**: Bulk import from browser password exports (Chrome, Firefox, Edge)
 - **Brand Detection**: Automatic logo fetching for organizations
 
+### Data Safety
+- **Automated Backups**: PostgreSQL dumps every 6 hours with 7-day retention
+- **One-Command Restore**: Full disaster recovery via `./scripts/restore.sh`
+- **Encrypted Backups**: Optional GPG encryption for backup files
+- **Off-site Ready**: Backups stored in `./backups/` for easy S3/GCS sync
+
 ---
 
 ## Quick Start
@@ -87,6 +94,12 @@ docker compose -f docker-compose.prod.yml up -d
 ```
 
 > **Note:** The `--build` flag is required on first run and after dependency updates. All dependencies are strictly pinned to prevent supply chain attacks.
+
+**Migrating from another server?**
+```bash
+# Copy backups folder from old server, then:
+./scripts/restore.sh
+```
 
 ### Development
 
@@ -129,6 +142,8 @@ cd frontend && npm install && npm start
 |----------|-------------|
 | [docs/API.md](docs/API.md) | API endpoints and request/response formats |
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | Environment variables and deployment settings |
+| [docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md) | Backup and restore runbook |
+| [docs/ADMINISTRATION.md](docs/ADMINISTRATION.md) | System administration and operations guide |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development guidelines and code standards |
 | [SECURITY.md](SECURITY.md) | Vulnerability reporting and security policy |
 

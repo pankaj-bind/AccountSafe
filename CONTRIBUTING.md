@@ -282,6 +282,11 @@ cd backend
 python -m pytest -v --cov=api --cov-report=term-missing
 ```
 
+**Or use the test script (recommended before PRs):**
+```bash
+./scripts/run_tests.sh
+```
+
 Required test categories:
 - Unit tests for encryption/decryption
 - Integration tests for API endpoints
