@@ -1,18 +1,11 @@
 # AccountSafe
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg)](frontend/)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776ab.svg)](backend/)
-[![Security: Zero-Knowledge](https://img.shields.io/badge/Security-Zero--Knowledge-green.svg)](#why-accountsafe)
-
 A self-hosted, zero-knowledge credential manager.
 
 ---
-
 ## Why AccountSafe
 
 The server is blind.
-
 AccountSafe encrypts all sensitive data in the browser before transmission. The server stores only ciphertext. A compromised database yields no usable information.
 
 ```mermaid
@@ -40,7 +33,6 @@ sequenceDiagram
 **The encryption key never leaves your device.**
 
 ---
-
 ## Features
 
 ### Zero-Knowledge Security

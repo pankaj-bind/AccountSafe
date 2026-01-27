@@ -38,10 +38,10 @@ const DigitalWalletGrid: React.FC<DigitalWalletGridProps> = ({
 }) => {
   return (
     <div className={className}>
-      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
         Select Document Type
       </label>
-      <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+      <div className="grid grid-cols-1 xs:grid-cols-2 gap-1.5 sm:gap-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
         {documents.map((doc) => {
           const isSelected = selectedLabel === doc.label;
           
@@ -51,7 +51,7 @@ const DigitalWalletGrid: React.FC<DigitalWalletGridProps> = ({
               type="button"
               onClick={() => onSelect(doc)}
               className={`
-                flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-left
+                flex items-center gap-2 p-2.5 sm:p-3 rounded-xl border-2 transition-all text-left touch-target
                 ${isSelected 
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' 
                   : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
