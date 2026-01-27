@@ -50,6 +50,16 @@ gunicorn==23.0.0
 django-ratelimit==4.1.0
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# Observability Dependencies
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# JSON-formatted logging for cloud log aggregators
+python-json-logger==2.0.7
+
+# Error tracking (opt-in via SENTRY_DSN environment variable)
+sentry-sdk[django]==2.19.2
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Testing Dependencies
 # ═══════════════════════════════════════════════════════════════════════════════
 pytest==8.3.4
