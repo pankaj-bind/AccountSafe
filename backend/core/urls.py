@@ -111,6 +111,9 @@ from api.features.shared_secret.legacy_views import (
     revoke_shared_secret,
 )
 
+# Health Check (Observability)
+from api.features.common.health import health_check
+
 
 urlpatterns = [
     # ═══════════════════════════════════════════════════════════════════════════
@@ -122,6 +125,11 @@ urlpatterns = [
     # API ROOT
     # ═══════════════════════════════════════════════════════════════════════════
     path('api/', root_route, name='api-root'),
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # HEALTH CHECK (Observability - no auth required)
+    # ═══════════════════════════════════════════════════════════════════════════
+    path('api/health/', health_check, name='health-check'),
     
     # ═══════════════════════════════════════════════════════════════════════════
     # FEATURE-BASED ROUTING (New Architecture)

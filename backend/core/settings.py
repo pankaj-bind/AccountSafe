@@ -197,12 +197,20 @@ else:
     CORS_ALLOWED_ORIGIN_REGEXES = []
 
 # =============================================================================
-# LOGGING CONFIGURATION (Production)
+# LOGGING CONFIGURATION (Production-Ready Structured JSON)
 # =============================================================================
+# In production, logs are JSON-formatted for easy parsing by:
+# - AWS CloudWatch Logs
+# - DigitalOcean App Platform
+# - Google Cloud Logging
+# - Any log aggregator (no Logstash/Elasticsearch required)
+# =============================================================================
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
+        # Human-readable format for development
         'verbose': {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
@@ -211,11 +219,17 @@ LOGGING = {
             'format': '{levelname} {message}',
             'style': '{',
         },
+        # JSON format for production (machine-readable)
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'format': '%(asctime)s %(levelname)s %(name)s %(module)s %(funcName)s %(lineno)d %(message)s',
+            'datefmt': '%Y-%m-%dT%H:%M:%S%z',
+        },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'json' if not DEBUG else 'simple',
         },
     },
     'root': {
@@ -233,5 +247,68 @@ LOGGING = {
             'level': 'WARNING',
             'propagate': False,
         },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # Application-specific loggers
+        'api': {
+            'handlers': ['console'],
+            'level': 'INFO' if not DEBUG else 'DEBUG',
+            'propagate': False,
+        },
+        'api.features.security': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
+
+# =============================================================================
+# SENTRY ERROR TRACKING (Opt-In)
+# =============================================================================
+# To enable Sentry, set the SENTRY_DSN environment variable.
+# This is completely optional - the app works fine without it.
+# Get your DSN from: https://sentry.io/
+# =============================================================================
+
+SENTRY_DSN = os.getenv('SENTRY_DSN', '')
+
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(
+                transaction_style='url',
+                middleware_spans=True,
+            ),
+            LoggingIntegration(
+                level=None,        # Capture logs at all levels
+                event_level='ERROR',  # Only send ERROR+ to Sentry
+            ),
+        ],
+        # Performance monitoring (sample 10% of transactions in production)
+        traces_sample_rate=0.1 if not DEBUG else 1.0,
+        # Associate errors with releases
+        release=os.getenv('APP_VERSION', '1.0.0'),
+        environment='production' if not DEBUG else 'development',
+        # Don't send PII (emails, usernames) to Sentry
+        send_default_pii=False,
+        # Filter out health check noise
+        before_send=lambda event, hint: _filter_sentry_event(event, hint),
+    )
+
+    def _filter_sentry_event(event, hint):
+        """Filter out noisy events from Sentry."""
+        # Don't send 404 errors (expected behavior)
+        if event.get('level') == 'error':
+            exception = event.get('exception', {}).get('values', [{}])[0]
+            if 'Http404' in str(exception.get('type', '')):
+                return None
+        return event
