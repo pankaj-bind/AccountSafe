@@ -68,7 +68,57 @@ Canary Traps are "honey credentials" you can plant in exports or share intention
    - User-agent of the attacker's browser
 3. You know your data has been compromised before any real damage occurs
 
-** WARNING:** Do NOT use canary credentials on real services. They are designed to trigger alerts when accessed. Using a canary password on a real account will lock you out.
+> **WARNING:** Do NOT use canary credentials on real services. They are designed to trigger alerts when accessed. Using a canary password on a real account will lock you out.
+
+---
+
+### Notice for Security Researchers
+
+#### Canary Traps Are Intentional (Not Vulnerabilities)
+
+If you are auditing AccountSafe and discover credentials that appear to trigger alerts, logging mechanisms, or "phone home" behavior—**this is by design**.
+
+**What you may observe:**
+- API endpoints at `/api/security/traps/` that create, list, and trigger honeytokens
+- Database entries in `CanaryTrap` model with fake service names
+- Email alerts sent when specific credentials are "used"
+- Logging entries with `[CANARY TRIGGER]` prefixes
+
+**These are NOT security vulnerabilities.** They are:
+1. User-created honeypot credentials for breach detection
+2. Part of the documented Active Defense feature set
+3. Managed via `backend/api/features/security/` module
+
+**When to report (real vulnerabilities):**
+- Ability to trigger another user's canary traps without their credentials
+- Canary trap data leakage to unauthenticated users
+- Bypass of authentication to access canary management endpoints
+- Information disclosure of real credentials via canary mechanisms
+
+If in doubt, reference [tests/CANARY_TRAP_TESTING.md](tests/CANARY_TRAP_TESTING.md) for implementation details before filing a report.
+
+#### Duress Mode Is Intentional (Not a Backdoor)
+
+Similarly, if you discover a secondary authentication path that reveals different vault contents—**this is the Duress Mode (Ghost Vault) feature**.
+
+**What you may observe:**
+- `DuressSession` model tracking special authentication tokens
+- `is_duress_session()` checks throughout vault endpoints
+- Fake credential generation for duress logins
+- Silent SOS email dispatch functions
+
+**These are NOT backdoors.** They are:
+1. A coercion-protection feature allowing users to reveal fake vaults under duress
+2. Documented in user-facing help and this security policy
+3. Cryptographically separated from real vault data
+
+**When to report (real vulnerabilities):**
+- Ability to force another user into duress mode
+- Real vault data leakage during duress sessions
+- Duress mode SOS alerts disclosing sensitive information
+- Privilege escalation from duress session to real session
+
+<!-- MERMAID DIAGRAM: Insert Active Defense Architecture diagram here -->
 
 ### In Scope
 

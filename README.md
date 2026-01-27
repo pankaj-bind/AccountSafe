@@ -78,8 +78,15 @@ cd AccountSafe
 cp backend/.env.example backend/.env    # Configure backend settings
 cp frontend/.env.example frontend/.env  # Configure frontend API URL
 make init-ssl                            # Initialize Let's Encrypt certificates
-docker compose -f docker-compose.prod.yml up -d  # Deploy production stack
+
+# First deployment (builds images with pinned dependencies)
+docker compose -f docker-compose.prod.yml up -d --build
+
+# Subsequent runs (uses cached images)
+docker compose -f docker-compose.prod.yml up -d
 ```
+
+> **Note:** The `--build` flag is required on first run and after dependency updates. All dependencies are strictly pinned to prevent supply chain attacks.
 
 ### Development
 
@@ -104,12 +111,15 @@ cd frontend && npm install && npm start
 
 | Component | Technology |
 |-----------|------------|
-| Frontend | React 18, TypeScript 5.x, Tailwind CSS |
-| Backend | Django 5.x, Django REST Framework |
+| Frontend | React 18.3.1, TypeScript 4.9.5, Tailwind CSS |
+| Backend | Django 5.2 LTS, Django REST Framework 3.15.2 |
 | Database | PostgreSQL 15+ |
 | Encryption | AES-256-GCM (Web Crypto API) |
-| Auth | JWT with refresh rotation |
+| Key Derivation | PBKDF2 (600k iterations) / Argon2id |
+| Auth | JWT with refresh rotation, Zero-Knowledge |
 | Deployment | Docker Compose, Nginx, Let's Encrypt |
+
+> **Dependency Policy:** All versions are strictly pinned (no `^` or `~`) to prevent supply chain attacks. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ---
 
