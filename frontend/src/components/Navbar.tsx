@@ -50,6 +50,12 @@ const ChevronDownIcon = () => (
   </svg>
 );
 
+const BookOpenIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+  </svg>
+);
+
 const Navbar: React.FC = () => {
   const { token, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -172,6 +178,15 @@ const Navbar: React.FC = () => {
               )}
             </div>
             
+            {/* Documentation Link - Trust Signal */}
+            <Link
+              to="/docs"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center gap-2 mr-2"
+            >
+              <BookOpenIcon />
+              Documentation
+            </Link>
+
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
               {/* Panic/Lock Button */}
@@ -432,6 +447,18 @@ const Navbar: React.FC = () => {
                     Trash
                   </Link>
                   
+                  {/* Documentation Link for Authenticated Mobile Users */}
+                  <Link
+                    to="/docs"
+                    onClick={closeMenus}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                    </svg>
+                    Documentation
+                  </Link>
+                  
                   <div className="my-2 border-t border-zinc-200 dark:border-zinc-800"></div>
                   
                   <button 
@@ -447,6 +474,15 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <div className="p-3 space-y-2">
+                {/* Documentation Link for Mobile */}
+                <Link
+                  to="/docs"
+                  onClick={closeMenus}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all border border-zinc-200 dark:border-zinc-700"
+                >
+                  <BookOpenIcon />
+                  Documentation
+                </Link>
                 <Link 
                   to="/login" 
                   onClick={closeMenus} 

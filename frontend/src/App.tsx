@@ -33,6 +33,7 @@ import SecuritySettingsPage from './pages/SecuritySettingsPage';
 import OrganizationPage from './pages/OrganizationPage';
 import SharedSecretPage from './pages/SharedSecretPage';
 import TrashPage from './pages/TrashPage';
+import { DocsLayout } from './features/docs';
 import './App.css';
 
 const App: React.FC = () => {
@@ -61,6 +62,10 @@ const App: React.FC = () => {
                           
                           {/* Shared Secret Route - Public */}
                           <Route path="/shared/:secretId" element={<SharedSecretPage />} />
+                          
+                          {/* Documentation Routes - Public */}
+                          <Route path="/docs" element={<DocsLayout />} />
+                          <Route path="/docs/:slug" element={<DocsLayout />} />
                           
                           {/* Protected Routes - VaultGuard ensures vault is unlocked */}
                           <Route path="/dashboard" element={<ProtectedRoute><VaultGuard><DashboardPage /></VaultGuard></ProtectedRoute>} />
