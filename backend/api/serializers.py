@@ -308,8 +308,8 @@ class LoginRecordSerializer(serializers.ModelSerializer):
         # Check if current request is from a duress session
         request = self.context.get('request')
         if request:
-            from api.views import is_duress_session
-            if is_duress_session(request):
+            from api.features.vault.services import VaultService
+            if VaultService.is_duress_session(request):
                 # In duress mode: hide the duress flag (show all as 'success')
                 data['is_duress'] = False
                 if data['status'] == 'duress':
