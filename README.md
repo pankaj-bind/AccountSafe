@@ -144,6 +144,7 @@ cd frontend && npm install && npm start
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | Environment variables and deployment settings |
 | [docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md) | Backup and restore runbook |
 | [docs/ADMINISTRATION.md](docs/ADMINISTRATION.md) | System administration and operations guide |
+| [docs/AI_ML_PHD_RESEARCH_ROADMAP.md](docs/AI_ML_PHD_RESEARCH_ROADMAP.md) | 17-month deep research roadmap for MIT PhD-level AI/ML expertise |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development guidelines and code standards |
 | [SECURITY.md](SECURITY.md) | Vulnerability reporting and security policy |
 
