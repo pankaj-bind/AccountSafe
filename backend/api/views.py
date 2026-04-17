@@ -18,12 +18,16 @@ separation of concerns principles.
 """
 
 import logging
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import UserProfile
+from .features.common import error_response, validation_error_response, normalize_django_validation_error
 from .serializers import UserProfileSerializer, UserProfileUpdateSerializer
 
 logger = logging.getLogger(__name__)
@@ -106,7 +110,10 @@ def get_user_profile(request):
         serializer = UserProfileSerializer(profile, context={"request": request})
         return Response(serializer.data)
     except UserProfile.DoesNotExist:
-        return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        return error_response("Profile not found", status.HTTP_404_NOT_FOUND)
+    except Exception:
+        logger.exception("Unexpected profile fetch failure", extra={"user_id": request.user.id})
+        return error_response("Failed to load profile. Please try again.", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["PUT", "PATCH"])
@@ -119,10 +126,21 @@ def update_user_profile(request):
         profile = UserProfile.objects.create(user=request.user)
 
     serializer = UserProfileUpdateSerializer(profile, data=request.data, partial=True)
-    if serializer.is_valid():
+
+    try:
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         profile.refresh_from_db()
         profile.user.refresh_from_db()
         response_serializer = UserProfileSerializer(profile, context={"request": request})
         return Response(response_serializer.data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except DRFValidationError as exc:
+        return validation_error_response(exc.detail)
+    except DjangoValidationError as exc:
+        return validation_error_response(normalize_django_validation_error(exc))
+    except IntegrityError:
+        logger.warning("Profile update conflicted with existing data", extra={"user_id": request.user.id})
+        return error_response("Profile update conflicted with existing data.", status.HTTP_400_BAD_REQUEST)
+    except Exception:
+        logger.exception("Unexpected profile update failure", extra={"user_id": request.user.id})
+        return error_response("Failed to update profile. Please try again.", status.HTTP_500_INTERNAL_SERVER_ERROR)

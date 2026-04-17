@@ -3,7 +3,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from dj_rest_auth.registration.serializers import RegisterSerializer
-from .models import UserProfile, Category, Organization, Profile, LoginRecord, UserSession
+from .models import UserProfile, Category, Organization, Profile, LoginRecord, UserSession, validate_file_size
 from .features.common import verify_turnstile_token, get_client_ip
 
 
@@ -125,6 +125,15 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             "username",
             "encryption_salt",
         ]
+
+    def validate_profile_picture(self, value):
+        """
+        Reuse the same upload limit as other user-managed files so oversized
+        images fail fast with a clear validation error.
+        """
+        if value:
+            validate_file_size(value)
+        return value
 
     def validate_username(self, value):
         """Check if username is already taken by another user"""
