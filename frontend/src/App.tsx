@@ -21,6 +21,7 @@ import GlobalPanicHandler from './components/GlobalPanicHandler';
 import PrivacyGuard from './components/PrivacyGuard';
 import SessionMonitor from './components/SessionMonitor';
 import VaultGuard from './components/VaultGuard';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 // Import Page Components
 import HomePage from './pages/HomePage';
@@ -52,7 +53,7 @@ const App: React.FC = () => {
                     <SessionMonitor />
                     <div className="bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-200 font-sans">
                       <Navbar />
-                      <main>
+                      <main className="pb-16 sm:pb-0">
                         <Routes>
                           {/* Public/Mixed Routes */}
                           <Route path="/" element={<HomePage />} />
@@ -75,6 +76,7 @@ const App: React.FC = () => {
                           <Route path="/vault/trash" element={<ProtectedRoute><VaultGuard><TrashPage /></VaultGuard></ProtectedRoute>} />
                         </Routes>
                       </main>
+                      <MobileBottomNav />
                     </div>
                   </PrivacyGuard>
                 </PrivacyGuardProvider>

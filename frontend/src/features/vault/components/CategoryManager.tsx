@@ -12,7 +12,21 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Search, 
+  Plus, 
+  Folder, 
+  Key, 
+  Lock, 
+  Globe, 
+  MoreVertical, 
+  Grid, 
+  List,
+  Filter,
+  RefreshCcw,
+  Check
+} from 'lucide-react';
 
 // Contexts
 import { useAuth } from '../../../contexts/AuthContext';
@@ -47,41 +61,7 @@ import type { ViewMode } from './CategorySection';
 // Icons
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const SearchIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-  </svg>
-);
-
-const PlusIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-  </svg>
-);
-
-const FolderIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-  </svg>
-);
-
-const KeyIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-  </svg>
-);
-
-const LockIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-  </svg>
-);
-
-const GlobeIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-  </svg>
-);
+// Icons are now imported from lucide-react
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Component
@@ -320,23 +300,33 @@ const CategoryManager: React.FC = () => {
         
         {/* Header Section */}
         <div className="mb-4 sm:mb-6 md:mb-8">
-          <div className="flex flex-col gap-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                <div className="p-2 sm:p-2.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg sm:rounded-xl border border-emerald-200 dark:border-emerald-500/20 overflow-hidden">
-                  <img src="/logo.png" alt="AccountSafe" className="w-5 h-5 sm:w-6 sm:h-6 object-contain" />
-                </div>
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">Secure Vault</h1>
-                {hasPin && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-xs font-medium text-green-700 dark:text-green-400">
-                    <LockIcon className="w-3 h-3" />
-                    <span className="hidden sm:inline">PIN Protected</span>
-                  </span>
-                )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-2.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg sm:rounded-xl border border-emerald-200 dark:border-emerald-500/20 overflow-hidden">
+                <img src="/logo.png" alt="AccountSafe" className="w-5 h-5 sm:w-6 sm:h-6 object-contain" />
               </div>
-              <p className="text-zinc-600 dark:text-zinc-400 text-xs sm:text-sm">
-                Organize and manage your credentials securely
-              </p>
+              <div>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">Vault</h1>
+                <p className="text-zinc-500 dark:text-zinc-500 text-[10px] sm:text-xs uppercase tracking-widest font-medium hidden sm:block">
+                  Zero-Knowledge Storage
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => fetchCategories()}
+                className="p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all"
+                title="Refresh"
+              >
+                <RefreshCcw className={clsx("w-5 h-5", isLoading && "animate-spin")} />
+              </button>
+              {hasPin && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-[10px] font-bold text-green-500 uppercase tracking-wider">
+                  <Lock className="w-3 h-3" />
+                  <span className="hidden sm:inline">Protected</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -457,9 +447,9 @@ interface StatsBarProps {
 
 const StatsBar: React.FC<StatsBarProps> = ({ stats }) => (
   <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
-    <StatCard icon={<FolderIcon className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />} value={stats.totalCategories} label="Categories" color="purple" />
-    <StatCard icon={<GlobeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />} value={stats.totalOrganizations} label="Organizations" color="blue" />
-    <StatCard icon={<KeyIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />} value={stats.totalCredentials} label="Credentials" color="emerald" />
+    <StatCard icon={<Folder className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />} value={stats.totalCategories} label="Categories" color="purple" />
+    <StatCard icon={<Globe className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />} value={stats.totalOrganizations} label="Organizations" color="blue" />
+    <StatCard icon={<Key className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />} value={stats.totalCredentials} label="Credentials" color="emerald" />
   </div>
 );
 
@@ -483,34 +473,32 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ searchQuery, onSearchChange, onNewCategory, showPulse }) => (
-  <div className="sticky top-0 z-10 bg-white dark:bg-[#09090b] pb-4 sm:pb-6 md:pb-8 -mx-3 px-3 sm:-mx-4 sm:px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 pt-2">
+  <div className="sticky top-16 z-10 bg-white dark:bg-[#09090b] pb-4 sm:pb-6 md:pb-8 -mx-3 px-3 sm:-mx-4 sm:px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 pt-2">
     <div className="flex gap-2 sm:gap-3">
       <div className="relative flex-1">
-        <SearchIcon className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-zinc-500 dark:text-zinc-500" />
+        <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-zinc-500 dark:text-zinc-500" />
         <input
           type="text"
-          placeholder="Search categories and organizations..."
+          placeholder="Search..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-10 sm:pl-12 pr-10 py-3 text-sm sm:text-base bg-white dark:bg-zinc-900/80 border-2 border-zinc-300 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+          className="w-full pl-10 sm:pl-12 pr-10 py-2.5 sm:py-3 text-sm sm:text-base bg-zinc-100 dark:bg-zinc-900 border-none rounded-xl text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
         />
         {searchQuery && (
           <button
             onClick={() => onSearchChange('')}
             className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>
       <button
         onClick={onNewCategory}
-        className={`as-btn-primary flex items-center justify-center gap-2 group text-sm sm:text-base py-2.5 sm:py-3 px-3 sm:px-4 whitespace-nowrap ${showPulse ? 'animate-pulse' : ''}`}
+        className={`as-btn-primary flex items-center justify-center gap-2 group text-sm sm:text-base py-2.5 sm:py-3 px-3 sm:px-4 whitespace-nowrap rounded-xl ${showPulse ? 'animate-pulse' : ''}`}
       >
-        <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:rotate-90" />
-        <span className="hidden sm:inline">New Category</span>
+        <Plus className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:rotate-90" />
+        <span className="hidden sm:inline">Add Category</span>
       </button>
     </div>
   </div>
