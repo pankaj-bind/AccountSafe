@@ -12,6 +12,7 @@
  * - Right: Action Buttons (Launch URL, Chevron)
  */
 
+import React, { useState, useRef, useCallback } from 'react';
 import { 
   ExternalLink, 
   ChevronRight, 

@@ -12,20 +12,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import { motion } from 'framer-motion';
+import { clsx } from 'clsx';
   Search, 
   Plus, 
   Folder, 
   Key, 
   Lock, 
   Globe, 
-  MoreVertical, 
-  Grid, 
-  List,
-  Filter,
   RefreshCcw,
-  Check
+  X
 } from 'lucide-react';
 
 // Contexts
@@ -284,7 +280,7 @@ const CategoryManager: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
         <div className="as-card p-8 text-center">
-          <LockIcon className="w-12 h-12 text-zinc-500 mx-auto mb-4" />
+          <Lock className="w-12 h-12 text-zinc-500 mx-auto mb-4" />
           <p className="text-zinc-400">Please log in to access your vault</p>
         </div>
       </div>
@@ -358,7 +354,7 @@ const CategoryManager: React.FC = () => {
             className="as-card p-6 sm:p-8 md:p-12"
           >
             <EmptyState
-              icon={<FolderIcon className="w-8 h-8 text-zinc-400 dark:text-zinc-500" />}
+              icon={<Folder className="w-8 h-8 text-zinc-400 dark:text-zinc-500" />}
               title="Your vault is empty"
               description="Start organizing your credentials securely. Create categories for different types of accounts like Social Media, Finance, or Work."
               action={{
@@ -522,7 +518,7 @@ const Alert: React.FC<{ message: string; onClose: () => void }> = ({ message, on
 
 const NoResults: React.FC<{ searchQuery: string }> = ({ searchQuery }) => (
   <div className="as-card p-6 sm:p-8 md:p-12 text-center">
-    <SearchIcon className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-3 sm:mb-4" />
+    <Search className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-3 sm:mb-4" />
     <h3 className="text-base sm:text-lg font-medium text-zinc-900 dark:text-white mb-2">No results found</h3>
     <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
       No categories or organizations match "{searchQuery}"
@@ -561,7 +557,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
       <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-zinc-300 dark:border-zinc-800">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="p-1.5 sm:p-2 bg-blue-500/10 rounded-lg">
-            <FolderIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+            <Folder className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
           </div>
           <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white">Create Category</h3>
         </div>
@@ -690,7 +686,7 @@ const OrganizationModal: React.FC<OrganizationModalProps> = ({
                   <path d="M2 9h20"/>
                 </svg>
               ) : (
-                <GlobeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
               )}
             </div>
             <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white">
