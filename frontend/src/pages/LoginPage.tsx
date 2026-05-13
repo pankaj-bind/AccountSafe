@@ -75,7 +75,7 @@ const LoginPage: React.FC = () => {
         const renderWidget = () => {
             if (window.turnstile && turnstileRef.current && !widgetId) {
                 const id = window.turnstile.render(turnstileRef.current, {
-                    sitekey: process.env.REACT_APP_TURNSTILE_SITE_KEY || '',
+                    sitekey: process.env.REACT_APP_TURNSTILE_SITE_KEY || '1x00000000000000000000AA',
                     callback: (token: string) => {
                         setTurnstileToken(token);
                     },
