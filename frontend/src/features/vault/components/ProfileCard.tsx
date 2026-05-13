@@ -9,6 +9,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import CredentialField from './CredentialField';
+import { BreachStatus } from './BreachStatus';
 import type { Profile } from '../types/profile.types';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -201,6 +202,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 </span>
               </div>
             </div>
+            {profile.password && (
+              <div className="hidden sm:block">
+                <BreachStatus password={profile.password} />
+              </div>
+            )}
           </div>
 
           {/* Pin/Favorite Star and Kebab Menu */}
@@ -323,6 +329,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 onTogglePassword={onTogglePassword}
                 mono
               />
+            )}
+
+            {!isExpanded && profile.password && (
+               <div className="sm:hidden px-4">
+                 <BreachStatus password={profile.password} />
+               </div>
             )}
           </div>
         )}
