@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { CategoryManager } from '../features/vault/components';
 import { Check } from 'lucide-react';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const HomePage: React.FC = () => {
   const { token } = useAuth();
@@ -10,7 +11,9 @@ const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-[#09090b]">
       {token ? (
-        <CategoryManager />
+        <ErrorBoundary>
+          <CategoryManager />
+        </ErrorBoundary>
       ) : (
         <div className="flex items-start sm:items-center justify-center min-h-screen px-4 py-8 pt-8 sm:pt-0">
           <div className="text-center max-w-2xl mx-auto">

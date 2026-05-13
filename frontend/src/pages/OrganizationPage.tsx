@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ProfileManager } from '../features/vault/components';
 import type { Organization } from '../features/vault/types/profile.types';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const OrganizationPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,10 +28,12 @@ const OrganizationPage: React.FC = () => {
   };
 
   return (
-    <ProfileManager 
-      organization={organization}
-      onBack={handleBack}
-    />
+    <ErrorBoundary>
+      <ProfileManager 
+        organization={organization}
+        onBack={handleBack}
+      />
+    </ErrorBoundary>
   );
 };
 

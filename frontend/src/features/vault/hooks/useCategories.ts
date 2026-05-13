@@ -66,13 +66,17 @@ export const useCategories = (): UseCategoriesReturn => {
   // Computed Stats
   // ─────────────────────────────────────────────────────────────────────────────
   const stats = useMemo<CategoryStats>(() => {
+    if (!Array.isArray(categories)) {
+      return { totalCategories: 0, totalOrganizations: 0, totalCredentials: 0 };
+    }
+
     const totalOrganizations = categories.reduce(
-      (sum, cat) => sum + cat.organizations.length,
+      (sum, cat) => sum + (cat?.organizations?.length || 0),
       0
     );
     const totalCredentials = categories.reduce(
       (sum, cat) =>
-        sum + cat.organizations.reduce((orgSum, org) => orgSum + org.profile_count, 0),
+        sum + (cat?.organizations?.reduce((orgSum, org) => orgSum + (org?.profile_count || 0), 0) || 0),
       0
     );
     return {
@@ -272,13 +276,15 @@ export const useCategories = (): UseCategoriesReturn => {
   // Filtering
   // ─────────────────────────────────────────────────────────────────────────────
   const filterCategories = useCallback((searchQuery: string): Category[] => {
-    if (!searchQuery) return categories;
+    if (!searchQuery) return categories || [];
+    if (!Array.isArray(categories)) return [];
     
     const query = searchQuery.toLowerCase();
     return categories.filter(cat => {
-      const nameMatch = cat.name.toLowerCase().includes(query);
-      const orgMatch = cat.organizations.some(org =>
-        org.name.toLowerCase().includes(query)
+      if (!cat) return false;
+      const nameMatch = cat.name?.toLowerCase().includes(query);
+      const orgMatch = cat.organizations?.some(org =>
+        org?.name?.toLowerCase().includes(query)
       );
       return nameMatch || orgMatch;
     });
