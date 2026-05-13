@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCrypto } from '../services/CryptoContext';
 import { storeKeyData } from '../services/encryptionService';
 import PinSetupModal from '../components/PinSetupModal';
+import { User, Lock, CheckCircle2, AlertCircle, RefreshCcw } from 'lucide-react';
 
 // Cloudflare Turnstile
 interface TurnstileInstance {
@@ -20,25 +21,6 @@ declare global {
         turnstile: TurnstileInstance | undefined;
     }
 }
-
-// Icons
-const UserIcon = () => (
-    <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-);
-
-const LockIcon = () => (
-    <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
-);
-
-const ShieldIcon = () => (
-    <div className="p-2 sm:p-2.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg sm:rounded-xl border border-emerald-200 dark:border-emerald-500/20 overflow-hidden">
-        <img src="/logo.png" alt="AccountSafe" className="w-12 h-12 sm:w-14 sm:h-14 object-contain" />
-    </div>
-);
 
 const LoginPage: React.FC = () => {
     const [username, setUsername] = useState('');
@@ -138,7 +120,7 @@ const LoginPage: React.FC = () => {
                     setIsLoading(false);
                     return;
                 }
-                logger.log('✅ Vault unlocked successfully after login');
+                logger.log('[OK] Vault unlocked successfully after login');
             } else {
                 setError('No encryption salt found. Please contact support.');
                 setIsLoading(false);
@@ -175,7 +157,9 @@ const LoginPage: React.FC = () => {
                 {/* Logo and Title */}
                 <div className="text-center mb-6 sm:mb-8">
                     <div className="flex justify-center mb-4 sm:mb-5">
-                        <ShieldIcon />
+                        <div className="p-2 sm:p-2.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg sm:rounded-xl border border-emerald-200 dark:border-emerald-500/20 overflow-hidden">
+                            <img src="/logo.png" alt="AccountSafe" className="w-12 h-12 sm:w-14 sm:h-14 object-contain" />
+                        </div>
                     </div>
                     <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white">Welcome back</h1>
                     <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Sign in to your AccountSafe vault</p>
@@ -185,18 +169,14 @@ const LoginPage: React.FC = () => {
                 <div className="w-full bg-transparent p-0 md:bg-white md:dark:bg-zinc-900/40 md:backdrop-blur-md md:border md:border-zinc-200 md:dark:border-zinc-800/50 md:rounded-2xl md:shadow-xl md:dark:shadow-2xl md:dark:shadow-black/20 md:p-8">
                     {message && (
                         <div className="as-alert-success mb-6">
-                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
+                            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                             {message}
                         </div>
                     )}
                     
                     {error && (
                         <div className="as-alert-danger mb-6">
-                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
                             {error}
                         </div>
                     )}
@@ -208,7 +188,7 @@ const LoginPage: React.FC = () => {
                             </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <UserIcon />
+                                    <User className="w-5 h-5 text-zinc-500" />
                                 </div>
                                 <input
                                     type="text"
@@ -233,7 +213,7 @@ const LoginPage: React.FC = () => {
                             </div>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <LockIcon />
+                                    <Lock className="w-5 h-5 text-zinc-500" />
                                 </div>
                                 <input
                                     type="password"
@@ -259,10 +239,7 @@ const LoginPage: React.FC = () => {
                         >
                             {isLoading ? (
                                 <>
-                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
+                                    <RefreshCcw className="animate-spin h-4 w-4" />
                                     <span>Signing in...</span>
                                 </>
                             ) : (

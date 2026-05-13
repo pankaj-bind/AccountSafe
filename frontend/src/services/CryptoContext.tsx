@@ -5,12 +5,12 @@
 // This context manages the master encryption key in MEMORY ONLY.
 // 
 // CRITICAL SECURITY RULES:
-// 1. ❌ NEVER store masterKey in localStorage
-// 2. ❌ NEVER store masterKey in sessionStorage
-// 3. ❌ NEVER send masterKey to server
-// 4. ✅ Keep masterKey in React state (memory only)
-// 5. ✅ Wipe masterKey on logout/lock
-// 6. ✅ Require re-authentication after inactivity
+// 1. [SEC] NEVER store masterKey in localStorage
+// 2. [SEC] NEVER store masterKey in sessionStorage
+// 3. [SEC] NEVER send masterKey to server
+// 4. [OK] Keep masterKey in React state (memory only)
+// 5. [OK] Wipe masterKey on logout/lock
+// 6. [OK] Require re-authentication after inactivity
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -175,7 +175,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Log initial state for debugging
   useEffect(() => {
-    logger.log('🔑 CryptoContext initialized. Initial state:');
+    logger.log('[KEY] CryptoContext initialized. Initial state:');
     logger.log('  - isUnlocked:', isUnlocked);
     logger.log('  - isLoading:', isLoading);
     logger.log('  - masterKey exists:', masterKeyRef.current !== null);
@@ -187,7 +187,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // ═══════════════════════════════════════════════════════════════════════════
   
   const lock = useCallback((reason: LockReason = 'manual') => {
-    logger.log('🔒 Locking vault - wiping master key from memory. Reason:', reason);
+    logger.log('[LOCK] Locking vault - wiping master key from memory. Reason:', reason);
     logger.debug('Lock function call stack:'); // Add stack trace to see who called lock
     
     // Store the reason for UI messaging
@@ -288,7 +288,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (tabHiddenTimeRef.current && isUnlocked) {
           const hiddenDuration = Date.now() - tabHiddenTimeRef.current;
           if (hiddenDuration > CONFIG.REFOCUS_REAUTH_THRESHOLD_MS) {
-            logger.log('⏱️ Tab was hidden too long - requiring re-authentication');
+            logger.log('[TIMER] Tab was hidden too long - requiring re-authentication');
             lock();
           }
         }
@@ -324,33 +324,33 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return { success: false, error: 'No encryption salt found. Please re-register.' };
       }
       
-      logger.log('🔐 Deriving keys with Argon2id...');
+      logger.log('[CRYPTO] Deriving keys with Argon2id...');
       const startTime = Date.now();
       
       // Derive both master key and auth hash
       const { masterKey, authHash } = await deriveAllKeys(password, userSalt);
       
       const derivationTime = Date.now() - startTime;
-      logger.log(`✅ Key derivation completed in ${derivationTime}ms`);
+      logger.log(`[OK] Key derivation completed in ${derivationTime}ms`);
       
       // ZERO-KNOWLEDGE: Verify auth_hash with server FIRST
       // This ensures we know if password is correct before trying to decrypt vault
       try {
         const verifyResponse = await apiClient.post('/zk/verify/', { auth_hash: authHash });
         if (!verifyResponse.data.verified) {
-          logger.log('❌ Auth hash verification failed - wrong password');
+          logger.log('[SEC] Auth hash verification failed - wrong password');
           return { success: false, error: 'Invalid password' };
         }
-        logger.log('✅ Password verified via zero-knowledge auth');
+        logger.log('[OK] Password verified via zero-knowledge auth');
       } catch (verifyError: unknown) {
         // If verify endpoint returns 401, password is wrong
         const status = (verifyError as { response?: { status?: number } })?.response?.status;
         if (status === 401) {
-          logger.log('❌ Auth hash verification failed - wrong password');
+          logger.log('[SEC] Auth hash verification failed - wrong password');
           return { success: false, error: 'Invalid password' };
         }
         // Other errors - continue anyway (fallback to vault decryption check)
-        console.warn('⚠️ Auth verification request failed, falling back to vault decryption', verifyError);
+        console.warn('[WARN] Auth verification request failed, falling back to vault decryption', verifyError);
       }
       
       // Store key in memory only (NOT in storage)
@@ -362,7 +362,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const vaultResponse = await apiClient.get('/vault/');
         
         if (vaultResponse.data.vault_blob) {
-          logger.log('📦 Decrypting vault...');
+          logger.log('[VAULT] Decrypting vault...');
           try {
             const decryptedVault = await decryptVault(vaultResponse.data.vault_blob, masterKey);
             setVault(decryptedVault);
@@ -371,30 +371,30 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // Main vault decryption failed - check if this might be duress mode
             if (vaultResponse.data.decoy_vault_blob) {
               try {
-                logger.log('🔓 Attempting duress vault decryption...');
+                logger.log('[UNLOCK] Attempting duress vault decryption...');
                 const decoyVault = await decryptVault(
                   vaultResponse.data.decoy_vault_blob,
                   masterKey
                 );
                 setVault(decoyVault);
                 setIsDuressMode(true);
-                logger.log('⚠️ Duress mode activated - showing decoy vault');
+                logger.log('[WARN] Duress mode activated - showing decoy vault');
               } catch {
                 // Decoy decryption also failed - vault is corrupted
                 // Password was already verified, so create fresh vault
-                console.warn('⚠️ Vault corrupted. Creating new vault...');
+                console.warn('[WARN] Vault corrupted. Creating new vault...');
                 setVault(createEmptyVault());
               }
             } else {
               // Vault decryption failed but password was verified
               // This means vault data is corrupted - create fresh vault
-              console.warn('⚠️ Vault decryption failed but password verified. Creating new vault...');
+              console.warn('[WARN] Vault decryption failed but password verified. Creating new vault...');
               setVault(createEmptyVault());
             }
           }
         } else {
           // No vault exists - create empty one
-          logger.log('📦 Creating new vault...');
+          logger.log('[VAULT] Creating new vault...');
           setVault(createEmptyVault());
         }
       } catch (vaultError: unknown) {
@@ -405,7 +405,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       setIsUnlocked(true);
-      logger.log('✅ Vault unlocked successfully! isUnlocked should now be true.');
+      logger.log('[OK] Vault unlocked successfully! isUnlocked should now be true.');
       resetInactivityTimer();
       
       return { success: true };
@@ -435,14 +435,14 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setVault(updatedVault);
     
     // Encrypt and sync to server
-    logger.log('📤 Encrypting and syncing vault...');
+    logger.log('[SYNC] Encrypting and syncing vault...');
     const encryptedBlob = await encryptVault(updatedVault, masterKeyRef.current);
     
     await apiClient.put('/vault/', {
       vault_blob: encryptedBlob,
     });
     
-    logger.log('✅ Vault synced to server');
+    logger.log('[OK] Vault synced to server');
   }, [vault]);
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -498,14 +498,14 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsLoading(true);
     
     try {
-      logger.log(`🔐 Fast unlock for ${isDuress ? 'DURESS' : 'NORMAL'} mode...`);
+      logger.log(`[CRYPTO] Fast unlock for ${isDuress ? 'DURESS' : 'NORMAL'} mode...`);
       const startTime = Date.now();
       
       // Derive master key only (skip auth hash since already verified by switch-mode)
       const masterKey = await deriveMasterKey(password, userSalt);
       
       const derivationTime = Date.now() - startTime;
-      logger.log(`✅ Key derivation completed in ${derivationTime}ms`);
+      logger.log(`[OK] Key derivation completed in ${derivationTime}ms`);
       
       // Store key in memory only
       masterKeyRef.current = masterKey;
@@ -516,7 +516,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const vaultResponse = await apiClient.get('/vault/');
         
         if (vaultResponse.data.vault_blob) {
-          logger.log('📦 Decrypting vault...');
+          logger.log('[VAULT] Decrypting vault...');
           try {
             const decryptedVault = await decryptVault(vaultResponse.data.vault_blob, masterKey);
             setVault(decryptedVault);
@@ -524,12 +524,12 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // Decryption failed - this could happen if vault is corrupted
             // Since password was verified by switch-mode, create empty vault
             const message = decryptError instanceof Error ? decryptError.message : 'Unknown error';
-            console.warn('⚠️ Vault decryption failed, creating new vault:', message);
+            console.warn('[WARN] Vault decryption failed, creating new vault:', message);
             setVault(createEmptyVault());
           }
         } else {
           // No vault exists - create empty one
-          logger.log('📦 Creating new vault...');
+          logger.log('[VAULT] Creating new vault...');
           setVault(createEmptyVault());
         }
       } catch (vaultError: unknown) {
@@ -543,7 +543,7 @@ export const CryptoProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setIsUnlocked(true);
       resetInactivityTimer();
       
-      logger.log(`✅ Fast unlock complete in ${Date.now() - startTime}ms`);
+      logger.log(`[OK] Fast unlock complete in ${Date.now() - startTime}ms`);
       
       return { success: true };
     } catch (error: unknown) {

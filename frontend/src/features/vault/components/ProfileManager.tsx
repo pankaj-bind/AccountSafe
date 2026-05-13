@@ -13,6 +13,24 @@
 import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
+import { 
+  ArrowLeft, 
+  Plus, 
+  Key, 
+  User, 
+  Mail, 
+  FileText, 
+  FileCheck, 
+  Shield, 
+  Sparkles, 
+  Check, 
+  X, 
+  CreditCard as CreditCardIcon,
+  Share2,
+  Copy,
+  Upload,
+  AlertCircle
+} from 'lucide-react';
 
 // Context
 import { useCrypto } from '../../../services/CryptoContext';
@@ -50,65 +68,18 @@ import type {
 // Icon Components
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ArrowLeftIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-  </svg>
-);
-
-const PlusIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-  </svg>
-);
-
-const KeyIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-  </svg>
-);
-
-const UserIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
-
-const MailIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-  </svg>
-);
-
-const DocumentIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-  </svg>
-);
-
-const NotesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-  </svg>
-);
-
-const ShieldIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-  </svg>
-);
-
-const SparklesIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-  </svg>
-);
-
-const CheckIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-  </svg>
-);
+// Icon components replaced by Lucide imports
+const ArrowLeftIcon = ({ className = "w-5 h-5" }: { className?: string }) => <ArrowLeft className={className} />;
+const PlusIcon = ({ className = "w-5 h-5" }: { className?: string }) => <Plus className={className} />;
+const KeyIcon = ({ className = "w-5 h-5" }: { className?: string }) => <Key className={className} />;
+const UserIcon = ({ className = "w-4 h-4" }: { className?: string }) => <User className={className} />;
+const MailIcon = ({ className = "w-4 h-4" }: { className?: string }) => <Mail className={className} />;
+const DocumentIcon = ({ className = "w-4 h-4" }: { className?: string }) => <FileText className={className} />;
+const NotesIcon = ({ className = "w-4 h-4" }: { className?: string }) => <FileCheck className={className} />;
+const ShieldIcon = ({ className = "w-4 h-4" }: { className?: string }) => <Shield className={className} />;
+const SparklesIcon = ({ className = "w-4 h-4" }: { className?: string }) => <Sparkles className={className} />;
+const CheckIcon = ({ className = "w-5 h-5" }: { className?: string }) => <Check className={className} />;
+const CreditCardIconWrapper = ({ className = "w-5 h-5" }: { className?: string }) => <CreditCardIcon className={className} />;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Digital Wallet Documents
@@ -414,9 +385,9 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({ organization, onBack })
     }
 
     return (
-      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-        <span className="text-white font-bold text-lg sm:text-xl">
-          {orgData?.name ? orgData.name.charAt(0).toUpperCase() : 'O'}
+      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-500/10 rounded-xl flex items-center justify-center flex-shrink-0 border border-blue-500/20">
+        <span className="text-blue-500 font-bold text-lg sm:text-xl">
+          {orgData?.name ? orgData.name.charAt(0).toUpperCase() : 'AS'}
         </span>
       </div>
     );
@@ -589,18 +560,14 @@ const Alert: React.FC<{ type: 'error' | 'success'; message: string; onClose: () 
   <div className={`${type === 'error' ? 'as-alert-danger' : 'as-alert-success'} mb-6 flex items-center justify-between`}>
     <div className="flex items-center gap-3">
       {type === 'error' ? (
-        <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-        </svg>
+        <AlertCircle className="w-5 h-5 flex-shrink-0" />
       ) : (
         <CheckIcon className="w-5 h-5 flex-shrink-0" />
       )}
       <span>{message}</span>
     </div>
     <button onClick={onClose} className="hover:opacity-70 transition-opacity">
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-      </svg>
+      <X className="w-5 h-5" />
     </button>
   </div>
 );
@@ -631,9 +598,7 @@ const EmptyState: React.FC<{ onAddClick: () => void; onImportClick?: () => void 
       </button>
       {onImportClick && (
         <button onClick={onImportClick} className="as-btn-secondary inline-flex items-center justify-center gap-2">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-          </svg>
+          <Upload className="w-5 h-5" />
           <span>Import from Browser</span>
         </button>
       )}
@@ -659,9 +624,7 @@ const ShareModal: React.FC<{
     >
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center">
-          <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
+          <Share2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
         </div>
         <div>
           <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Share Credential</h3>
@@ -747,9 +710,7 @@ const ShareModal: React.FC<{
                   className={`px-4 py-3 rounded-lg transition-colors ${copiedShare ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
                 >
                   {copiedShare ? <CheckIcon className="w-5 h-5" /> : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
+                    <Copy className="w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -825,9 +786,7 @@ const ProfileFormModal: React.FC<ProfileFormModalProps> = ({
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-lg ${isCreditCardOrg ? 'bg-emerald-500/10' : 'bg-blue-500/10'}`}>
             {isCreditCardOrg ? (
-              <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
+              <CreditCardIconWrapper className="w-5 h-5 text-emerald-400" />
             ) : (
               <KeyIcon className="w-5 h-5 text-blue-400" />
             )}
@@ -840,9 +799,7 @@ const ProfileFormModal: React.FC<ProfileFormModalProps> = ({
           </h3>
         </div>
         <button onClick={onClose} className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X className="w-5 h-5" />
         </button>
       </div>
 

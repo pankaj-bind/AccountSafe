@@ -18,77 +18,21 @@ import {
   updateCanaryTrap 
 } from '../services/securityService';
 import type { CanaryTrap, CanaryTrapType, CanaryTrapTrigger } from '../types';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ICONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const TrapIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285zM12 12.75h.007v.008H12v-.008z" />
-  </svg>
-);
-
-const PlusIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-  </svg>
-);
-
-const CopyIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
-  </svg>
-);
-
-const TrashIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-  </svg>
-);
-
-const AlertIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-  </svg>
-);
-
-const LinkIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-  </svg>
-);
-
-const KeyIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-  </svg>
-);
-
-const WebhookIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-  </svg>
-);
-
-const XIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
-
-const EyeIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
+import { 
+  ShieldAlert, 
+  Plus, 
+  Copy, 
+  Trash2, 
+  AlertTriangle, 
+  Link as LinkIcon, 
+  Key, 
+  Globe, 
+  Check, 
+  X, 
+  Eye,
+  Lightbulb,
+  AlertCircle
+} from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRAP TYPE CONFIG
@@ -111,18 +55,22 @@ const TRAP_TYPE_CONFIG: Record<CanaryTrapType, {
   api_key: {
     label: 'API Key',
     description: 'A fake API key. If someone tries to use it, you\'ll be alerted.',
-    icon: KeyIcon,
+    icon: Key,
     color: 'purple',
     template: 'AWS Production Key'
   },
   webhook: {
     label: 'Webhook URL',
     description: 'A webhook endpoint that triggers when called.',
-    icon: WebhookIcon,
+    icon: Globe,
     color: 'emerald',
     template: 'Slack Webhook'
   }
 };
+
+// Icon components
+const AlertIcon = ({ className = "w-5 h-5" }: { className?: string }) => <AlertCircle className={className} />;
+const TrapIcon = ({ className = "w-10 h-10" }: { className?: string }) => <ShieldAlert className={className} />;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE TRAP MODAL
@@ -182,8 +130,8 @@ const CreateTrapModal: React.FC<CreateTrapModalProps> = ({ isOpen, onClose, onCr
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-600 to-orange-500 px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
-              <TrapIcon />
+            <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/20 text-white">
+              <ShieldAlert className="w-5 h-5" />
             </span>
             <div>
               <h3 className="text-lg font-semibold text-white">Create Security Trap</h3>
@@ -191,7 +139,7 @@ const CreateTrapModal: React.FC<CreateTrapModalProps> = ({ isOpen, onClose, onCr
             </div>
           </div>
           <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
-            <XIcon />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -209,7 +157,7 @@ const CreateTrapModal: React.FC<CreateTrapModalProps> = ({ isOpen, onClose, onCr
           <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4">
             <div className="flex gap-3">
               <div className="text-amber-600 dark:text-amber-400 mt-0.5">
-                <AlertIcon />
+                <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
                 <h4 className="font-semibold text-amber-800 dark:text-amber-300 text-sm">What is a Security Trap?</h4>
@@ -319,7 +267,7 @@ const CreateTrapModal: React.FC<CreateTrapModalProps> = ({ isOpen, onClose, onCr
               </>
             ) : (
               <>
-                <TrapIcon />
+                <ShieldAlert className="w-4 h-4" />
                 Create Trap
               </>
             )}
@@ -402,7 +350,7 @@ const TrapDetailModal: React.FC<TrapDetailModalProps> = ({ trap, onClose, onDele
             </div>
           </div>
           <button onClick={onClose} className="text-zinc-400 hover:text-white transition-colors">
-            <XIcon />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -425,13 +373,16 @@ const TrapDetailModal: React.FC<TrapDetailModalProps> = ({ trap, onClose, onDele
                     : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600'
                 }`}
               >
-                {copied ? <CheckIcon /> : <CopyIcon />}
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
-            <p className="text-xs text-zinc-500 mt-2">
-              💡 Tip: Save this URL as the password or login URL for a fake credential in your vault.
-            </p>
+            <div className="flex items-center gap-2 mt-2.5">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+              <p className="text-xs text-zinc-500">
+                Tip: Save this URL as the password or login URL for a fake credential in your vault.
+              </p>
+            </div>
           </div>
 
           {/* Stats */}
@@ -459,7 +410,7 @@ const TrapDetailModal: React.FC<TrapDetailModalProps> = ({ trap, onClose, onDele
           {/* Trigger History */}
           <div>
             <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
-              <AlertIcon />
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
               Trigger History
             </h4>
             {isLoading ? (
@@ -470,7 +421,7 @@ const TrapDetailModal: React.FC<TrapDetailModalProps> = ({ trap, onClose, onDele
             ) : triggers.length === 0 ? (
               <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-lg p-6 text-center">
                 <div className="text-green-600 dark:text-green-400 mb-2">
-                  <CheckIcon />
+                  <Check className="w-5 h-5 mx-auto" />
                 </div>
                 <p className="text-green-700 dark:text-green-400 font-medium">No triggers yet</p>
                 <p className="text-sm text-green-600 dark:text-green-500 mt-1">
@@ -515,7 +466,7 @@ const TrapDetailModal: React.FC<TrapDetailModalProps> = ({ trap, onClose, onDele
             disabled={isDeleting}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
           >
-            <TrashIcon />
+            <Trash2 className="w-4 h-4" />
             {isDeleting ? 'Deleting...' : 'Delete Trap'}
           </button>
           <div className="flex gap-3">
@@ -612,7 +563,7 @@ const CanaryTrapManager: React.FC<CanaryTrapManagerProps> = ({ className = '' })
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
             <span className="text-amber-500 dark:text-amber-400 flex-shrink-0">
-              <TrapIcon />
+              <ShieldAlert className="w-5 h-5" />
             </span>
             Security Traps (Honeytokens)
           </h3>
@@ -624,7 +575,7 @@ const CanaryTrapManager: React.FC<CanaryTrapManagerProps> = ({ className = '' })
           onClick={() => setShowCreateModal(true)}
           className="as-btn-primary inline-flex items-center gap-2 flex-shrink-0 whitespace-nowrap"
         >
-          <PlusIcon />
+          <Plus className="w-5 h-5" />
           <span className="hidden sm:inline">Create Trap</span>
         </button>
       </div>
@@ -653,7 +604,7 @@ const CanaryTrapManager: React.FC<CanaryTrapManagerProps> = ({ className = '' })
             onClick={() => setShowCreateModal(true)}
             className="as-btn-primary mt-4 inline-flex items-center gap-2"
           >
-            <PlusIcon />
+            <Plus className="w-5 h-5" />
             Create Your First Trap
           </button>
         </div>
@@ -683,7 +634,7 @@ const CanaryTrapManager: React.FC<CanaryTrapManagerProps> = ({ className = '' })
                     )}
                     {trap.trigger_count > 0 && (
                       <span className="text-xs bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
-                        <AlertIcon />
+                        <AlertTriangle className="w-3.5 h-3.5" />
                         {trap.trigger_count} trigger{trap.trigger_count !== 1 ? 's' : ''}
                       </span>
                     )}
@@ -698,7 +649,7 @@ const CanaryTrapManager: React.FC<CanaryTrapManagerProps> = ({ className = '' })
                     className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white transition-colors"
                     title="Copy URL"
                   >
-                    <CopyIcon />
+                    <Copy className="w-4 h-4" />
                   </button>
                   <button
                     onClick={(e) => {
@@ -708,7 +659,7 @@ const CanaryTrapManager: React.FC<CanaryTrapManagerProps> = ({ className = '' })
                     className="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white transition-colors"
                     title="View Details"
                   >
-                    <EyeIcon />
+                    <Eye className="w-4 h-4" />
                   </button>
                 </div>
               </div>

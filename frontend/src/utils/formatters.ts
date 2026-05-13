@@ -155,20 +155,20 @@ export const maskSensitiveData = (
     case 'email': {
       const [local, domain] = value.split('@');
       if (!domain) return maskSensitiveData(value, { type: 'full' });
-      const maskedLocal = local.slice(0, showChars) + '•'.repeat(Math.max(0, local.length - showChars));
+      const maskedLocal = local.slice(0, showChars) + '*'.repeat(Math.max(0, local.length - showChars));
       return `${maskedLocal}@${domain}`;
     }
     case 'username': {
-      if (value.length <= showChars) return '•'.repeat(value.length);
-      return value.slice(0, showChars) + '•'.repeat(value.length - showChars);
+      if (value.length <= showChars) return '*'.repeat(value.length);
+      return value.slice(0, showChars) + '*'.repeat(value.length - showChars);
     }
     case 'phone': {
-      if (value.length <= 4) return '•'.repeat(value.length);
-      return '•'.repeat(value.length - 4) + value.slice(-4);
+      if (value.length <= 4) return '*'.repeat(value.length);
+      return '*'.repeat(value.length - 4) + value.slice(-4);
     }
     case 'full':
     default:
-      return '•'.repeat(value.length);
+      return '*'.repeat(value.length);
   }
 };
 

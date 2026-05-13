@@ -26,7 +26,7 @@ export const logoutEvent = new LogoutEventEmitter();
  * Force logout by clearing all auth data and triggering logout event
  */
 export const forceLogout = () => {
-  console.warn('🔒 Force logout triggered - session revoked');
+  console.warn('[AUTH] Force logout triggered - session revoked');
   
   // Clear all auth-related data
   localStorage.removeItem('authToken');
@@ -34,7 +34,7 @@ export const forceLogout = () => {
   localStorage.removeItem('username');
   sessionStorage.clear();
   
-  // 📡 Broadcast session expiry to all other tabs
+  // [BROADCAST] Broadcast session expiry to all other tabs
   broadcastLogout('SESSION_EXPIRED');
   
   // Emit logout event to all listeners

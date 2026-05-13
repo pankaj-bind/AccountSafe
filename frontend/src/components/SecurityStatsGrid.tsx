@@ -175,7 +175,10 @@ const StorageCard: React.FC<StorageCardProps> = ({ storageUsed, storageLimit }) 
       <div className={`text-[10px] sm:text-xs font-medium mt-1.5 ${colors.text}`}>
         {percentage.toFixed(1)}% used
         {percentage >= 90 && (
-          <span className="ml-1 text-red-500">⚠️ Almost full!</span>
+          <span className="ml-1 text-red-500 flex items-center gap-1 inline-flex">
+            <AlertTriangle className="w-3 h-3" />
+            Almost full!
+          </span>
         )}
       </div>
     </div>

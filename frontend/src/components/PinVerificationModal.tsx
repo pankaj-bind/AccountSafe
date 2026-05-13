@@ -1,28 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { verifyPin } from '../services/pinService';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Icons
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const ShieldCheckIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-  </svg>
-);
-
-const CheckIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-  </svg>
-);
-
-const LockClosedIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-  </svg>
-);
+import { ShieldCheck, Check, Lock, AlertCircle, RefreshCcw } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Animation Variants
@@ -247,7 +226,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
                     animate="visible"
                     className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-green-500 flex items-center justify-center mb-4 shadow-lg shadow-green-500/25"
                   >
-                    <CheckIcon className="w-10 h-10 text-white" />
+                    <Check className="w-10 h-10 text-white" />
                   </motion.div>
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
@@ -271,13 +250,13 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
                   {/* Header */}
                   <div className="flex items-center justify-center gap-3 p-6 pb-2">
                     <motion.div 
-                      className="p-3 bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl border border-blue-500/20"
+                      className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20"
                       whileHover={{ scale: 1.05 }}
                     >
                       {error ? (
-                        <LockClosedIcon className="w-6 h-6 text-red-400" />
+                        <Lock className="w-6 h-6 text-red-500" />
                       ) : (
-                        <ShieldCheckIcon className="w-6 h-6 text-blue-400" />
+                        <ShieldCheck className="w-6 h-6 text-blue-500" />
                       )}
                     </motion.div>
                   </div>
@@ -310,9 +289,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
                           className="overflow-hidden"
                         >
                           <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
-                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
                             <span>{error}</span>
                             {getRemainingAttempts() && (
                               <span className="ml-auto text-xs opacity-75">
@@ -400,16 +377,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
                       >
                         {isLoading ? (
                           <span className="flex items-center justify-center gap-2">
-                            <motion.svg
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </motion.svg>
+                            <RefreshCcw className="animate-spin h-4 w-4" />
                             Verifying
                           </span>
                         ) : 'Verify'}

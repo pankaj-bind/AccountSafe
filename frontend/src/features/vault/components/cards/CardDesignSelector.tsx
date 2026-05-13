@@ -1,6 +1,7 @@
 import React from 'react';
 import { CardDesignType, CARD_DESIGNS } from './types';
 import CreditCard from './CreditCard';
+import { Check } from 'lucide-react';
 
 export interface CardDesignSelectorProps {
   selectedDesign: CardDesignType;
@@ -73,17 +74,8 @@ export const CardDesignSelector: React.FC<CardDesignSelectorProps> = ({
               
               {/* Selected Indicator */}
               {selectedDesign === design.id && (
-                <div className="absolute top-2 right-2">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="10" fill="#22c55e" />
-                    <path 
-                      d="M6 10l3 3 5-6" 
-                      stroke="white" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                    />
-                  </svg>
+                <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-green-500 rounded-full">
+                  <Check className="w-3.5 h-3.5 text-white" />
                 </div>
               )}
             </button>

@@ -170,11 +170,11 @@ describe('Encryption Round-Trip', () => {
 
   test('unicode strings encrypt and decrypt correctly', async () => {
     const testCases = [
-      'Hello 世界 🌍',
+      'Hello World [GLOBE]',
       'Ñoño señor',
       'مرحبا بالعالم',
       '日本語テスト',
-      '🔐🔑🔒🔓',
+      '[LOCK][KEY][SECURE][UNLOCK]',
       'Ελληνικά',
       'Кириллица',
     ];

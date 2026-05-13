@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { setupPin } from '../services/pinService';
+import { Lock, AlertCircle, RefreshCcw } from 'lucide-react';
 
 interface PinSetupModalProps {
   isOpen: boolean;
@@ -106,9 +107,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onClose, onSucces
         <div className="bg-gradient-to-r from-blue-600 to-blue-500 -m-6 mb-6 px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+              <Lock className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-white">Set Up Security PIN</h3>
@@ -121,9 +120,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onClose, onSucces
         <div>
           {error && (
             <div className="as-alert-danger mb-4">
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
           )}
@@ -187,10 +184,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onClose, onSucces
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <RefreshCcw className="animate-spin h-4 w-4" />
                   Setting up...
                 </span>
               ) : step === 'enter' ? 'Continue' : 'Confirm PIN'}

@@ -294,7 +294,7 @@ export const useCategories = (): UseCategoriesReturn => {
   // Listen for vault mode changes (normal ↔ duress)
   useEffect(() => {
     const handleModeChange = () => {
-      logger.log('🔄 Mode changed - refetching categories...');
+      logger.log('[SYNC] Mode changed - refetching categories...');
       fetchCategories();
     };
     

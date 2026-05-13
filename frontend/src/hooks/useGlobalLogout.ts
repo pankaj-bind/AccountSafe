@@ -25,7 +25,7 @@ export const useGlobalLogout = (onLogout: () => void) => {
   useEffect(() => {
     // Check if BroadcastChannel API is supported
     if (typeof BroadcastChannel === 'undefined') {
-      console.warn('⚠️ BroadcastChannel API not supported in this browser');
+      console.warn('[WARN] BroadcastChannel API not supported in this browser');
       return;
     }
 
@@ -36,24 +36,24 @@ export const useGlobalLogout = (onLogout: () => void) => {
     // Listen for logout messages from other tabs
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'LOGOUT') {
-        logger.log('🔒 Cross-tab logout detected - logging out this tab');
+        logger.log('[LOCK] Cross-tab logout detected - logging out this tab');
         onLogout();
       } else if (event.data?.type === 'SESSION_EXPIRED') {
-        logger.log('⏱️ Cross-tab session expiry detected - logging out this tab');
+        logger.log('[TIMER] Cross-tab session expiry detected - logging out this tab');
         onLogout();
       }
     };
 
     channel.addEventListener('message', handleMessage);
 
-    logger.log('✅ Global logout listener initialized');
+    logger.log('[OK] Global logout listener initialized');
 
     // Cleanup: Close the channel when component unmounts
     return () => {
       channel.removeEventListener('message', handleMessage);
       channel.close();
       channelRef.current = null;
-      logger.log('🧹 Global logout listener cleaned up');
+      logger.log('[CLEAN] Global logout listener cleaned up');
     };
   }, [onLogout]);
 
@@ -68,7 +68,7 @@ export const useGlobalLogout = (onLogout: () => void) => {
 export const broadcastLogout = (reason: 'USER_LOGOUT' | 'SESSION_EXPIRED' = 'USER_LOGOUT') => {
   // Check if BroadcastChannel API is supported
   if (typeof BroadcastChannel === 'undefined') {
-    console.warn('⚠️ BroadcastChannel API not supported - skipping broadcast');
+    console.warn('[WARN] BroadcastChannel API not supported - skipping broadcast');
     return;
   }
 
@@ -83,11 +83,11 @@ export const broadcastLogout = (reason: 'USER_LOGOUT' | 'SESSION_EXPIRED' = 'USE
       reason,
     });
     
-    logger.log(`📡 Broadcast sent: ${messageType}`);
+    logger.log(`[BC] Broadcast sent: ${messageType}`);
     
     // Close the channel after sending the message
     channel.close();
   } catch (error) {
-    console.error('❌ Failed to broadcast logout:', error);
+    console.error('[ERR] Failed to broadcast logout:', error);
   }
 };

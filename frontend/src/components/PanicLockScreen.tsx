@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useProfile } from '../contexts/ProfileContext';
+import { Lock, AlertCircle, RefreshCcw, ShieldCheck, Shield } from 'lucide-react';
 
 interface PanicLockScreenProps {
   isOpen: boolean;
   onUnlock: (password: string) => void;
   onLogout: () => void;
 }
-
-const LockIcon = () => (
-  <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-  </svg>
-);
 
 const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onLogout }) => {
   const [password, setPassword] = useState('');
@@ -32,7 +27,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onL
   // Focus input when modal opens
   useEffect(() => {
     if (isOpen) {
-      const input = document.getElementById('panic-password-input');
+      const input = document.getElementById('panic-password-input') as HTMLInputElement;
       if (input) {
         setTimeout(() => input.focus(), 100);
       }
@@ -104,7 +99,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onL
             </div>
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-white mb-2 flex items-center justify-center gap-2">
-            <LockIcon />
+            <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             Session Verification
           </h2>
           <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400 px-4">
@@ -137,9 +132,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onL
 
           {error && (
             <div className="mb-5 md:mb-6 p-3 md:p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg flex items-center gap-3 text-red-600 dark:text-red-400 text-xs md:text-sm animate-in slide-in-from-top duration-200">
-              <svg className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <AlertCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
               {error}
             </div>
           )}
@@ -180,10 +173,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onL
               >
                 {isUnlocking ? (
                   <>
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <RefreshCcw className="animate-spin h-4 w-4" />
                     <span>Unlocking...</span>
                   </>
                 ) : (
@@ -196,9 +186,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onL
           {/* Security Notice */}
           <div className="mt-5 md:mt-6 pt-5 md:pt-6 border-t border-zinc-200 dark:border-zinc-800">
             <div className="flex items-start gap-2.5 md:gap-3 text-[10px] md:text-xs text-zinc-600 dark:text-zinc-500">
-              <svg className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-              </svg>
+              <ShieldCheck className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 mt-0.5" />
               <p>
                 Your session was locked for security. Click "Logout" to sign out completely.
               </p>
@@ -207,9 +195,10 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onL
         </div>
 
         {/* Footer Hint */}
-        <p className="mt-4 md:mt-6 text-center text-[10px] md:text-xs text-zinc-500 dark:text-zinc-600">
-          🔐 End-to-end encrypted • Zero-knowledge architecture
-        </p>
+        <div className="mt-4 md:mt-6 flex items-center justify-center gap-1.5 text-[10px] md:text-xs text-zinc-500 dark:text-zinc-600">
+          <Shield className="w-3.5 h-3.5" />
+          <span>End-to-end encrypted • Zero-knowledge architecture</span>
+        </div>
       </div>
     </div>
   );

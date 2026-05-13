@@ -12,6 +12,16 @@
 
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useSmartImport, type ImportPhase } from '../hooks/useSmartImport';
+import { 
+  CheckCircle, 
+  XCircle, 
+  ShieldCheck, 
+  FileText, 
+  Check, 
+  X,
+  UploadCloud,
+  FileUp
+} from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -27,35 +37,12 @@ interface ImportCredentialsModalProps {
 // ICONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const UploadIcon = () => (
-  <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-  </svg>
-);
-
-const CheckCircleIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-
-const XCircleIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-
-const ShieldCheckIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-  </svg>
-);
-
-const DocumentIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-  </svg>
-);
+// Icon components replaced by Lucide imports
+const UploadIcon = () => <UploadCloud className="w-12 h-12" />;
+const CheckCircleIcon = () => <CheckCircle className="w-6 h-6" />;
+const XCircleIcon = () => <XCircle className="w-6 h-6" />;
+const ShieldCheckIcon = () => <ShieldCheck className="w-5 h-5" />;
+const DocumentIcon = () => <FileText className="w-5 h-5" />;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // STEP INDICATOR
@@ -107,9 +94,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ phase }) => {
                 `}
               >
                 {status === 'complete' ? (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="w-5 h-5" />
                 ) : (
                   index + 1
                 )}
@@ -246,9 +231,7 @@ const ImportCredentialsModal: React.FC<ImportCredentialsModalProps> = ({
             disabled={isProcessing}
             className="text-white/80 hover:text-white transition-colors disabled:opacity-50"
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-6 h-6" />
           </button>
         </div>
         
@@ -423,9 +406,7 @@ const ImportCredentialsModal: React.FC<ImportCredentialsModalProps> = ({
           {phase === 'DONE' && result && (
             <div className="text-center py-4">
               <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
               </div>
               
               <h4 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
@@ -523,9 +504,7 @@ const ImportCredentialsModal: React.FC<ImportCredentialsModalProps> = ({
               disabled={!selectedFile}
               className="as-btn-primary disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
+              <FileUp className="w-4 h-4" />
               Start Import
             </button>
           </div>
