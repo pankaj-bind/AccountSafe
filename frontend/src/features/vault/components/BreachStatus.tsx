@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePwnedCheck } from '../../../hooks/usePwnedCheck';
-import { Shield, ShieldAlert, ShieldCheck, Loader2 } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface BreachStatusProps {
