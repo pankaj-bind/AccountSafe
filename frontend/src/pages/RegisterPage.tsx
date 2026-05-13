@@ -6,6 +6,7 @@ import { register, checkUsername } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 import { initializeUserEncryption, storeKeyData } from '../services/encryptionService';
 import RecoveryKeyModal from '../components/RecoveryKeyModal';
+import { PasswordStrengthMeter } from '../components/ui/PasswordStrengthMeter';
 
 // Cloudflare Turnstile
 interface TurnstileInstance {
@@ -348,7 +349,7 @@ const RegisterPage: React.FC = () => {
                                     required
                                 />
                             </div>
-                            {renderPasswordFeedback()}
+                            <PasswordStrengthMeter password={password} />
                         </div>
 
                         <div>

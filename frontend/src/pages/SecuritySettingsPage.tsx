@@ -8,6 +8,7 @@ import ActiveSessionsList from "../components/ActiveSessionsList";
 import ImportCredentialsModal from "../features/vault/components/ImportCredentialsModal";
 import ExportVaultModal from "../features/vault/components/ExportVaultModal";
 import { CanaryTrapManager } from "../features/security";
+import { PasswordStrengthMeter } from "../components/ui/PasswordStrengthMeter";
 
 // Icons
 const LockIcon = () => (
@@ -384,6 +385,7 @@ const SecuritySettingsPage: React.FC = () => {
                     placeholder="Enter new password (min 8 characters)"
                   />
                 </div>
+                <PasswordStrengthMeter password={newPassword} />
               </div>
             </div>
 
