@@ -4,6 +4,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // Import Context Providers
+import { ToastProvider } from './contexts/ToastContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProfileProvider } from './contexts/ProfileContext';
@@ -39,8 +40,9 @@ import './App.css';
 const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <AuthProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <AuthProvider>
           <CryptoProvider>
             <PanicProvider>
               <ProfileProvider>
@@ -83,7 +85,8 @@ const App: React.FC = () => {
           </CryptoProvider>
         </AuthProvider>
       </BrowserRouter>
-    </ThemeProvider>
+    </ToastProvider>
+  </ThemeProvider>
   );
 };
 
