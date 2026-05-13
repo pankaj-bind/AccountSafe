@@ -238,34 +238,6 @@ const RegisterPage: React.FC = () => {
         return null;
     };
     
-    const renderPasswordFeedback = () => {
-        if (!password) return null;
-        const requirements = [
-            { text: "8+ characters", valid: password.length >= 8 },
-            { text: "Lowercase", valid: /[a-z]/.test(password) },
-            { text: "Uppercase", valid: /[A-Z]/.test(password) },
-            { text: "Number", valid: /[0-9]/.test(password) },
-            { text: "Special char", valid: /[\W_]/.test(password) },
-        ];
-
-        return (
-            <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
-                {requirements.map(req => (
-                    <span 
-                        key={req.text} 
-                        className={`inline-flex items-center text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ${
-                            req.valid 
-                                ? 'bg-green-500/10 text-green-400 border border-green-500/30' 
-                                : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
-                        }`}
-                    >
-                        {req.valid ? <CheckIcon /> : <XIcon />}
-                        <span className="ml-0.5 sm:ml-1 whitespace-nowrap">{req.text}</span>
-                    </span>
-                ))}
-            </div>
-        );
-    };
 
     return (
         <div className="min-h-screen flex items-start sm:items-center justify-center px-4 py-8 sm:py-12 bg-white dark:bg-[#09090b] pt-8 sm:pt-0">
