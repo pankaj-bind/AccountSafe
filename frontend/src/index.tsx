@@ -3,6 +3,17 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 
+// Intercept and ignore cross-origin third-party script errors (e.g. Cloudflare Turnstile blocks) in dev mode
+if (process.env.NODE_ENV === 'development') {
+  const ignoredErrors = ['Script error.', 'ResizeObserver loop limit exceeded', 'ResizeObserver loop completed with undelivered notifications.'];
+  window.addEventListener('error', (event) => {
+    if (ignoredErrors.includes(event.message) || !event.error) {
+      event.stopImmediatePropagation();
+      event.preventDefault();
+    }
+  }, true); // Use capture phase to intercept before React Dev Server's bubbling listener triggers the overlay
+}
+
 // Dynamically set favicon and apple-touch-icon from env var (build-time)
 const logoUrl = process.env.REACT_APP_LOGO_URL || '/account-safe-logo.png';
 function setFavicon(href: string) {
