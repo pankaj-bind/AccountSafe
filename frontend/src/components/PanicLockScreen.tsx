@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProfile } from '../contexts/ProfileContext';
+import { PasswordInput } from './ui';
 
 interface PanicLockScreenProps {
   isOpen: boolean;
@@ -149,8 +150,7 @@ const PanicLockScreen: React.FC<PanicLockScreenProps> = ({ isOpen, onUnlock, onL
               <label htmlFor="panic-password-input" className="block text-xs md:text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Password
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 id="panic-password-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

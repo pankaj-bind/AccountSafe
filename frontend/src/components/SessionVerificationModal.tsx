@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { verifyPassword } from '../services/securityService';
+import { PasswordInput } from './ui';
 
 interface SessionVerificationModalProps {
   isOpen: boolean;
@@ -106,9 +107,8 @@ const SessionVerificationModal: React.FC<SessionVerificationModalProps> = ({ isO
               <label htmlFor="session-password" className="block text-sm font-medium text-zinc-300 mb-2">
                 Password
               </label>
-              <input
+              <PasswordInput
                 ref={inputRef}
-                type="password"
                 id="session-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

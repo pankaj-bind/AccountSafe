@@ -25,6 +25,11 @@ export {
   type InputSize,
 } from './Input';
 
+export {
+  PasswordInput,
+  type PasswordInputProps,
+} from './PasswordInput';
+
 // Card Components
 export { 
   Card, 

@@ -8,6 +8,7 @@ import ActiveSessionsList from "../components/ActiveSessionsList";
 import ImportCredentialsModal from "../features/vault/components/ImportCredentialsModal";
 import ExportVaultModal from "../features/vault/components/ExportVaultModal";
 import { CanaryTrapManager } from "../features/security";
+import { PasswordInput } from "../components/ui";
 
 // Icons
 const LockIcon = () => (
@@ -345,22 +346,15 @@ const SecuritySettingsPage: React.FC = () => {
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                   Current Password
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
-                    <LockIcon />
-                  </div>
-                  <input
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => {
-                      setCurrentPassword(e.target.value);
-                      setPasswordError(null);
-                      setPasswordSuccess(null);
-                    }}
-                    className="as-input pl-10"
-                    placeholder="Enter current password"
-                  />
-                </div>
+                <PasswordInput
+                  value={currentPassword}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+                    setPasswordError(null);
+                    setPasswordSuccess(null);
+                  }}
+                  placeholder="Enter current password"
+                />
               </div>
 
               {/* New Password */}
@@ -368,22 +362,15 @@ const SecuritySettingsPage: React.FC = () => {
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                   New Password
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
-                    <LockIcon />
-                  </div>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value);
-                      setPasswordError(null);
-                      setPasswordSuccess(null);
-                    }}
-                    className="as-input pl-10"
-                    placeholder="Enter new password (min 8 characters)"
-                  />
-                </div>
+                <PasswordInput
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    setPasswordError(null);
+                    setPasswordSuccess(null);
+                  }}
+                  placeholder="Enter new password (min 8 characters)"
+                />
               </div>
             </div>
 
@@ -613,22 +600,15 @@ const SecuritySettingsPage: React.FC = () => {
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Enter your password to confirm
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500">
-                    <LockIcon />
-                  </div>
-                  <input
-                    type="password"
-                    value={deletePassword}
-                    onChange={(e) => {
-                      setDeletePassword(e.target.value);
-                      setDeleteError(null);
-                    }}
-                    className="as-input pl-10"
-                    placeholder="Enter your password"
-                    autoFocus
-                  />
-                </div>
+                <PasswordInput
+                  value={deletePassword}
+                  onChange={(e) => {
+                    setDeletePassword(e.target.value);
+                    setDeleteError(null);
+                  }}
+                  placeholder="Enter your password"
+                  autoFocus
+                />
               </div>
             </div>
 
