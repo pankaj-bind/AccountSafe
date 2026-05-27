@@ -35,14 +35,14 @@ describe('PasswordInput', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it('omits the leading icon by default and renders it when requested', () => {
-    const { rerender, container } = render(
+  it('reserves room for the leading icon only when it is shown', () => {
+    const { rerender } = render(
       <PasswordInput value="" onChange={() => {}} placeholder="pw" />
     );
-    expect(container.querySelectorAll('svg')).toHaveLength(1); // eye toggle only
+    expect(screen.getByPlaceholderText('pw')).not.toHaveClass('pl-10');
 
     rerender(<PasswordInput value="" onChange={() => {}} placeholder="pw" showLeftIcon />);
-    expect(container.querySelectorAll('svg')).toHaveLength(2); // lock + eye toggle
+    expect(screen.getByPlaceholderText('pw')).toHaveClass('pl-10');
   });
 
   it('links the toggle to the input via aria-controls', () => {
