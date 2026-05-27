@@ -6,6 +6,7 @@ import { register, checkUsername } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 import { initializeUserEncryption, storeKeyData } from '../services/encryptionService';
 import RecoveryKeyModal from '../components/RecoveryKeyModal';
+import { PasswordInput } from '../components/ui';
 
 // Cloudflare Turnstile
 interface TurnstileInstance {
@@ -30,12 +31,6 @@ const UserIcon = () => (
 const EmailIcon = () => (
     <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-);
-
-const LockIcon = () => (
-    <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
     </svg>
 );
 
@@ -334,39 +329,31 @@ const RegisterPage: React.FC = () => {
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Password</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <LockIcon />
-                                </div>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="as-input pl-10 h-11 md:h-12"
-                                    placeholder="Create a password"
-                                    required
-                                />
-                            </div>
+                            <PasswordInput
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="h-11 md:h-12"
+                                placeholder="Create a password"
+                                autoComplete="new-password"
+                                showLeftIcon
+                                required
+                            />
                             {renderPasswordFeedback()}
                         </div>
 
                         <div>
                             <label htmlFor="password2" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Confirm Password</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <LockIcon />
-                                </div>
-                                <input
-                                    type="password"
-                                    id="password2"
-                                    value={password2}
-                                    onChange={(e) => setPassword2(e.target.value)}
-                                    className="as-input pl-10 h-11 md:h-12"
-                                    placeholder="Confirm your password"
-                                    required
-                                />
-                            </div>
+                            <PasswordInput
+                                id="password2"
+                                value={password2}
+                                onChange={(e) => setPassword2(e.target.value)}
+                                className="h-11 md:h-12"
+                                placeholder="Confirm your password"
+                                autoComplete="new-password"
+                                showLeftIcon
+                                required
+                            />
                             {password2 && password !== password2 && (
                                 <p className="text-xs text-red-500 mt-1.5 flex items-center"><XIcon /><span className="ml-1">Passwords do not match</span></p>
                             )}

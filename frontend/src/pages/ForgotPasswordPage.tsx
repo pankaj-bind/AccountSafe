@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { requestPasswordResetOTP, verifyPasswordResetOTP, setNewPasswordWithOTP } from '../services/authService';
+import { PasswordInput } from '../components/ui';
 
 // Cloudflare Turnstile
 interface TurnstileInstance {
@@ -27,12 +28,6 @@ const EmailIcon = () => (
 const KeyIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-  </svg>
-);
-
-const LockIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
   </svg>
 );
 
@@ -543,38 +538,28 @@ const ForgotPasswordPage: React.FC = () => {
             <form onSubmit={handlePasswordSubmit} noValidate className="space-y-4">
               <div>
                 <label htmlFor="password" className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">New Password</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 dark:text-zinc-500">
-                    <LockIcon />
-                  </div>
-                  <input 
-                    type="password" 
-                    id="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    className="as-input pl-10" 
-                    placeholder="Create new password"
-                    required 
-                  />
-                </div>
+                <PasswordInput
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create new password"
+                  autoComplete="new-password"
+                  showLeftIcon
+                  required
+                />
                 {renderPasswordFeedback()}
               </div>
               <div>
                 <label htmlFor="password2" className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Confirm Password</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 dark:text-zinc-500">
-                    <LockIcon />
-                  </div>
-                  <input 
-                    type="password" 
-                    id="password2" 
-                    value={password2} 
-                    onChange={(e) => setPassword2(e.target.value)} 
-                    className="as-input pl-10" 
-                    placeholder="Confirm new password"
-                    required 
-                  />
-                </div>
+                <PasswordInput
+                  id="password2"
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
+                  placeholder="Confirm new password"
+                  autoComplete="new-password"
+                  showLeftIcon
+                  required
+                />
               </div>
               <button type="submit" disabled={isLoading || passwordErrors.length > 0} className="w-full as-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50">
                 {isLoading ? (

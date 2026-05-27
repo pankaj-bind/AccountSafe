@@ -4,6 +4,7 @@ import { storeKeyData } from '../services/encryptionService';
 import { logger } from '../utils/logger';
 import { useCrypto } from '../services/CryptoContext';
 import axios from 'axios';
+import { PasswordInput } from './ui';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api/';
 
@@ -152,13 +153,12 @@ const PasswordReentryModal: React.FC<PasswordReentryModalProps> = ({
                 <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Password
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                   required
                   autoFocus
                 />

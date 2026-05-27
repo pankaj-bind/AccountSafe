@@ -10,6 +10,7 @@ import {
   PanicDuressSettings
 } from '../services/securityService';
 import { usePrivacyGuard } from '../contexts/PrivacyGuardContext';
+import { PasswordInput } from './ui';
 
 // Icons
 const KeyboardIcon = () => (
@@ -541,11 +542,9 @@ const SecuritySettingsPanel: React.FC = () => {
                 <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Master Password (to confirm)
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={duressFormData.masterPassword}
                   onChange={e => setDuressFormData(prev => ({ ...prev, masterPassword: e.target.value }))}
-                  className="as-input"
                   placeholder="Enter your master password"
                 />
               </div>
@@ -554,11 +553,9 @@ const SecuritySettingsPanel: React.FC = () => {
                 <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Duress Password
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={duressFormData.duressPassword}
                   onChange={e => setDuressFormData(prev => ({ ...prev, duressPassword: e.target.value }))}
-                  className="as-input"
                   placeholder="Enter duress password (min 8 chars)"
                 />
               </div>
@@ -567,11 +564,9 @@ const SecuritySettingsPanel: React.FC = () => {
                 <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Confirm Duress Password
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={duressFormData.confirmDuressPassword}
                   onChange={e => setDuressFormData(prev => ({ ...prev, confirmDuressPassword: e.target.value }))}
-                  className="as-input"
                   placeholder="Confirm duress password"
                 />
               </div>
@@ -629,11 +624,9 @@ const SecuritySettingsPanel: React.FC = () => {
               {duressError && (
                 <div className="as-alert-danger text-sm mb-4">{duressError}</div>
               )}
-              <input
-                type="password"
+              <PasswordInput
                 value={clearMasterPassword}
                 onChange={e => setClearMasterPassword(e.target.value)}
-                className="as-input"
                 placeholder="Enter master password"
               />
             </div>
