@@ -354,6 +354,8 @@ const SecuritySettingsPage: React.FC = () => {
                     setPasswordSuccess(null);
                   }}
                   placeholder="Enter current password"
+                  autoComplete="current-password"
+                  showLeftIcon
                 />
               </div>
 
@@ -370,6 +372,8 @@ const SecuritySettingsPage: React.FC = () => {
                     setPasswordSuccess(null);
                   }}
                   placeholder="Enter new password (min 8 characters)"
+                  autoComplete="new-password"
+                  showLeftIcon
                 />
               </div>
             </div>
@@ -607,6 +611,8 @@ const SecuritySettingsPage: React.FC = () => {
                     setDeleteError(null);
                   }}
                   placeholder="Enter your password"
+                  autoComplete="current-password"
+                  showLeftIcon
                   autoFocus
                 />
               </div>

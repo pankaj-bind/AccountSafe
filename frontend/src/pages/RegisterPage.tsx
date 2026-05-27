@@ -335,6 +335,8 @@ const RegisterPage: React.FC = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="h-11 md:h-12"
                                 placeholder="Create a password"
+                                autoComplete="new-password"
+                                showLeftIcon
                                 required
                             />
                             {renderPasswordFeedback()}
@@ -348,6 +350,8 @@ const RegisterPage: React.FC = () => {
                                 onChange={(e) => setPassword2(e.target.value)}
                                 className="h-11 md:h-12"
                                 placeholder="Confirm your password"
+                                autoComplete="new-password"
+                                showLeftIcon
                                 required
                             />
                             {password2 && password !== password2 && (

@@ -538,23 +538,27 @@ const ForgotPasswordPage: React.FC = () => {
             <form onSubmit={handlePasswordSubmit} noValidate className="space-y-4">
               <div>
                 <label htmlFor="password" className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">New Password</label>
-                <PasswordInput 
-                  id="password" 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
+                <PasswordInput
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create new password"
-                  required 
+                  autoComplete="new-password"
+                  showLeftIcon
+                  required
                 />
                 {renderPasswordFeedback()}
               </div>
               <div>
                 <label htmlFor="password2" className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Confirm Password</label>
-                <PasswordInput 
-                  id="password2" 
-                  value={password2} 
-                  onChange={(e) => setPassword2(e.target.value)} 
+                <PasswordInput
+                  id="password2"
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
                   placeholder="Confirm new password"
-                  required 
+                  autoComplete="new-password"
+                  showLeftIcon
+                  required
                 />
               </div>
               <button type="submit" disabled={isLoading || passwordErrors.length > 0} className="w-full as-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50">

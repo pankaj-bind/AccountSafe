@@ -232,6 +232,8 @@ const LoginPage: React.FC = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="h-11 md:h-12"
                                 placeholder="Enter your password"
+                                autoComplete="current-password"
+                                showLeftIcon
                                 required
                             />
                         </div>

@@ -112,7 +112,6 @@ const SessionVerificationModal: React.FC<SessionVerificationModalProps> = ({ isO
                 id="session-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="Enter your password"
                 disabled={isVerifying}
                 autoComplete="current-password"

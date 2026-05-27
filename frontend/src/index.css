@@ -2,11 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Suppress React Dev Server's intrusive full-screen error overlay iframe in development */
-body > iframe {
-  display: none !important;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════
    AccountSafe Design System - MAANG-Grade Enterprise Security UI
    Version 2.0 - Dark Theme Optimized
