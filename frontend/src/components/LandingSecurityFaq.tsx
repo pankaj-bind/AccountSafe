@@ -5,43 +5,51 @@ import { HelpCircle, ShieldCheck } from 'lucide-react';
 type FaqItem = {
   question: string;
   answer: string;
+  source: string;
 };
 
 const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'What does zero-knowledge mean in AccountSafe?',
     answer:
-      'Sensitive vault data is encrypted in your browser before it is sent anywhere. The server stores encrypted vault data, not readable credentials.',
+      'Sensitive vault data is encrypted in the browser before it is sent anywhere. The server stores encrypted vault data, not readable credentials.',
+    source: 'README and SECURITY.md',
   },
   {
     question: 'Does my master password leave my device?',
     answer:
       'No. The browser derives authentication and encryption material locally, then sends only the derived authentication hash needed for verification.',
+    source: 'SECURITY.md security model',
   },
   {
     question: 'What encryption protects vault data?',
     answer:
       'Vault data uses AES-256-GCM authenticated encryption with Argon2id key derivation, matching the project security documentation.',
+    source: 'README feature list',
   },
   {
     question: 'Can I export or restore my vault?',
     answer:
       'Yes. AccountSafe supports encrypted zero-knowledge export and import flows, so backups stay decryptable only by the account holder.',
+    source: 'README and disaster recovery docs',
   },
   {
     question: 'What is duress mode?',
     answer:
       'Duress mode lets a separate password open a decoy vault while keeping the real vault protected, which is useful for coercion-resistant access.',
+    source: 'README active defense section',
   },
   {
     question: 'How does shared-secret access work?',
     answer:
       'Shared secrets are protected with a passphrase and expiry controls so temporary access can be granted without exposing the entire vault.',
+    source: 'README and API docs',
   },
   {
     question: 'Can I self-host AccountSafe?',
     answer:
       'Yes. The repository includes local, Docker, and production setup guidance for running the Django backend and React frontend yourself.',
+    source: 'README and configuration docs',
   },
 ];
 
@@ -83,6 +91,9 @@ const LandingSecurityFaq: React.FC = () => {
               </summary>
               <p className="mt-3 pl-7 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
                 {item.answer}
+              </p>
+              <p className="mt-2 pl-7 text-xs font-medium text-zinc-500 dark:text-zinc-500">
+                Source: {item.source}
               </p>
             </details>
           ))}
