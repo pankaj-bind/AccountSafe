@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookOpen, ArrowRight, Check } from 'lucide-react';
 import { ButtonLink } from '../components/ui';
+import LandingSecurityFaq from '../components/LandingSecurityFaq';
 
 const LandingPage: React.FC = () => {
   return (
@@ -73,6 +74,7 @@ const LandingPage: React.FC = () => {
             </div>
         </div>
       </div>
+      <LandingSecurityFaq />
     </div>
   );
 };
