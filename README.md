@@ -291,7 +291,7 @@ make oracle-ssl-init           # issue Let's Encrypt cert for $DOMAIN
 make oracle-up                 # start the stack
 ```
 
-Day-to-day:
+Daily tasks:
 
 ```bash
 make oracle-deploy             # git pull + rebuild + migrate + restart
