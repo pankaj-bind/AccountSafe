@@ -244,10 +244,10 @@ export const FORBIDDEN_SHORTCUTS: string[][] = [
  * Check if a key combination is a forbidden browser shortcut
  */
 export function isForbiddenShortcut(keys: string[]): boolean {
-  const normalizedKeys = keys.map(k => k.toLowerCase()).sort();
+  const normalizedKeys = keys.map(k => k.toLowerCase()).sort((a, b) => a - b);
   
   return FORBIDDEN_SHORTCUTS.some(forbidden => {
-    const normalizedForbidden = forbidden.map(k => k.toLowerCase()).sort();
+    const normalizedForbidden = forbidden.map(k => k.toLowerCase()).sort((a, b) => a - b);
     if (normalizedKeys.length !== normalizedForbidden.length) return false;
     return normalizedKeys.every((key, index) => key === normalizedForbidden[index]);
   });
