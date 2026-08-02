@@ -225,7 +225,7 @@ export function useExport(): UseExportReturn {
       setProgressMessage(`Found ${orgIds.length} organizations...`);
       
       // Fetch all profiles from all organizations in parallel
-      const profilePromises = orgIds.map(orgId =>
+      const profilePromises = (orgIds ?? []).map(orgId =>
         apiClient.get<EncryptedProfile[]>(`/organizations/${orgId}/profiles/`)
           .then(res => ({ orgId, profiles: res.data }))
           .catch(() => ({ orgId, profiles: [] }))
