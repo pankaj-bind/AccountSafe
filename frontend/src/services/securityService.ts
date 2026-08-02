@@ -87,7 +87,7 @@ export const updatePasswordHash = async (
   const msgBuffer = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = (hashArray ?? []).map(b => b.toString(16).padStart(2, '0')).join('');
   
   await apiClient.post(`/security/profiles/${profileId}/hash/`, {
     password_hash: hashHex
@@ -161,7 +161,7 @@ export const checkPasswordBreach = async (
       if (hashSuffix.trim() === suffix) {
         return {
           isBreached: true,
-          breachCount: parseInt(count.trim(), 10)
+          breachCount: parseInt(count.trim(, 10), 10)
         };
       }
     }
