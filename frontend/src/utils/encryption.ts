@@ -269,7 +269,7 @@ export async function decryptCredentialFields(
   type IvKey = `${FieldName}_iv`;
   
   // Decrypt all fields in parallel for better performance
-  const decryptionPromises = fieldNames.map(async (fieldName) => {
+  const decryptionPromises = (fieldNames ?? []).map(async (fieldName) => {
     const encryptedKey = `${fieldName}_encrypted` as EncryptedKey;
     const ivKey = `${fieldName}_iv` as IvKey;
     const ciphertext = encryptedData[encryptedKey];
