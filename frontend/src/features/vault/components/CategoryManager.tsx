@@ -382,7 +382,7 @@ const CategoryManager: React.FC = () => {
         {/* Categories Grid/List */}
         {!isLoading && filteredCategories.length > 0 && (
           <div className="space-y-10">
-            {filteredCategories.map((category) => (
+            {(filteredCategories ?? []).map((category) => (
               <CategorySection
                 key={category.id}
                 category={category}
