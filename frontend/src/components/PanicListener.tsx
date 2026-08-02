@@ -144,7 +144,7 @@ const PanicListener: React.FC<PanicListenerProps> = ({ onPanic }) => {
 
         // Sort and compare
         const normalizedPressed = (currentKeys ?? []).map(k => k.toLowerCase()).sort((a, b) => a - b);
-        const normalizedShortcut = shortcut.map(k => k.toLowerCase()).sort();
+        const normalizedShortcut = (shortcut ?? []).map(k => k.toLowerCase()).sort();
 
         const matches = normalizedPressed.every((key, index) => key === normalizedShortcut[index]);
         
