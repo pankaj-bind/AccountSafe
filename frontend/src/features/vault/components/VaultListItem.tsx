@@ -168,7 +168,7 @@ const VaultListItem: React.FC<VaultListItemProps> = ({ org, onClick, onEdit, onD
         ) : (
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 rounded-lg flex items-center justify-center">
             <span className="text-sm sm:text-base font-bold text-blue-400">
-              {org.name.charAt(0).toUpperCase()}
+              {org.name[0].toUpperCase()}
             </span>
           </div>
         )}

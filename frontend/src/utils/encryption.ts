@@ -128,7 +128,7 @@ export async function encryptData(
   plaintext: string,
   key: CryptoKey
 ): Promise<{ iv: string; ciphertext: string }> {
-  if (!plaintext || plaintext.trim() === '') {
+  if (!plaintext || plaintext.trim().length === 0) {
     throw new Error('Cannot encrypt empty data');
   }
 

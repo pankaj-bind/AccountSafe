@@ -186,7 +186,7 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({ org, onDelete, onEd
           // Fallback: First letter
           <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 rounded-lg sm:rounded-xl flex items-center justify-center">
             <span className="text-lg sm:text-xl font-bold text-blue-400">
-              {org.name.charAt(0).toUpperCase()}
+              {org.name[0].toUpperCase()}
             </span>
           </div>
         )}
