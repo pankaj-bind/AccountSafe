@@ -825,7 +825,7 @@ const OrganizationModal: React.FC<OrganizationModalProps> = ({
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 rounded-lg flex items-center justify-center">
                     <span className="text-zinc-500 dark:text-zinc-400 font-bold text-2xl">
-                      {newOrg.name ? newOrg.name.charAt(0).toUpperCase() : '?'}
+                      {newOrg.name ? newOrg.name[0].toUpperCase() : '?'}
                     </span>
                   </div>
                 )}
