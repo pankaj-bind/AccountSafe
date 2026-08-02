@@ -87,7 +87,7 @@ export const updatePasswordHash = async (
   const msgBuffer = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = (hashArray ?? []).map(b => b.toString(16).padStart(2, '0')).join('');
   
   await apiClient.post(`/security/profiles/${profileId}/hash/`, {
     password_hash: hashHex
@@ -113,7 +113,7 @@ async function sha1(message: string): Promise<string> {
   const msgBuffer = new TextEncoder().encode(message);
   const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = (hashArray ?? []).map(b => b.toString(16).padStart(2, '0')).join('');
   return hashHex.toUpperCase();
 }
 
@@ -244,7 +244,7 @@ export const FORBIDDEN_SHORTCUTS: string[][] = [
  * Check if a key combination is a forbidden browser shortcut
  */
 export function isForbiddenShortcut(keys: string[]): boolean {
-  const normalizedKeys = keys.map(k => k.toLowerCase()).sort();
+  const normalizedKeys = keys.map(k => k.toLowerCase()).sort((a, b) => a - b);
   
   return FORBIDDEN_SHORTCUTS.some(forbidden => {
     const normalizedForbidden = forbidden.map(k => k.toLowerCase()).sort();
