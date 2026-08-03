@@ -148,7 +148,7 @@ export function useExport(): UseExportReturn {
    */
   const exportVault = useCallback(async (password: string, format: ExportFormat) => {
     // Validate inputs
-    if (!password || password.trim() === '') {
+    if (!password || password.trim().length === 0) {
       setError('Password is required');
       setPhase('ERROR');
       return;
