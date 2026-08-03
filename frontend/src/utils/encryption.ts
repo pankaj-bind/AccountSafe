@@ -311,3 +311,5 @@ export function storeMasterKey(_key: CryptoKey): void {
   // Note: Master key is stored in memory only (CryptoContext.tsx)
 }
 
+
+.catch(err => console.error("Promise.all failed:", err));
