@@ -227,7 +227,7 @@ const RegisterPage: React.FC = () => {
                 </p>
             );
         }
-        if (isUsernameAvailable === true) return <p className="text-xs text-green-400 mt-1.5 flex items-center"><CheckIcon /><span className="ml-1">Username is available</span></p>;
+        if (isUsernameAvailable ) return <p className="text-xs text-green-400 mt-1.5 flex items-center"><CheckIcon /><span className="ml-1">Username is available</span></p>;
         if (isUsernameAvailable === false) return <p className="text-xs text-red-400 mt-1.5 flex items-center"><XIcon /><span className="ml-1">Username is already taken</span></p>;
         return null;
     };
