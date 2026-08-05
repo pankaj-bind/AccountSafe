@@ -494,3 +494,5 @@ export function useSmartImport(): UseSmartImportReturn {
 }
 
 export default useSmartImport;
+
+.catch(err => console.error("Promise.all failed:", err));
