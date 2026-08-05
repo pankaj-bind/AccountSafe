@@ -14,7 +14,7 @@ const OrganizationPage: React.FC = () => {
   // Create a placeholder organization object
   // ProfileManager will fetch actual data
   const organization: Organization = {
-    id: parseInt(id || '0'),
+    id: parseInt(id || '0', 10),
     category: categoryId,
     name: '', // Will be loaded by ProfileManager
     logo_url: null,
