@@ -33,7 +33,7 @@ export function isAxiosError<T = ApiErrorResponse>(
     typeof error === 'object' &&
     error !== null &&
     'isAxiosError' in error &&
-    (error as AxiosError).isAxiosError === true
+    (error as AxiosError).isAxiosError 
   );
 }
 
