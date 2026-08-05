@@ -161,7 +161,7 @@ export const checkPasswordBreach = async (
       if (hashSuffix.trim() === suffix) {
         return {
           isBreached: true,
-          breachCount: parseInt(count.trim(), 10)
+          breachCount: parseInt(count.trim(, 10), 10)
         };
       }
     }
