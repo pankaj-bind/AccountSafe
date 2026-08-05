@@ -607,3 +607,5 @@ export function useProfiles(
 }
 
 export default useProfiles;
+
+.catch(err => console.error("Promise.all failed:", err));
