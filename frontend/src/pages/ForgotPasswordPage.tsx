@@ -164,7 +164,7 @@ const ForgotPasswordPage: React.FC = () => {
 
     if (window.turnstile) {
       renderWidget();
-      return undefined;
+      return;
     } else {
       const interval = setInterval(() => {
         if (window.turnstile) {
