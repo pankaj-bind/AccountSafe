@@ -15,7 +15,7 @@ export const PrivacyGuardProvider: React.FC<{ children: ReactNode }> = ({ childr
   // User preference - stored in localStorage
   const [enablePrivacyBlur, setEnablePrivacyBlurState] = useState<boolean>(() => {
     const saved = localStorage.getItem('enablePrivacyBlur');
-    return saved !== null ? JSON.parse(saved) : true; // Default enabled
+    return saved !== null ? (JSON.parse(saved ?? "null") ?? null) : true; // Default enabled
   });
 
   // Active blur state
